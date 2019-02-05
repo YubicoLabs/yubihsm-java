@@ -1,0 +1,94 @@
+package com.yubico.util;
+
+import com.yubico.exceptions.YubiHSMError;
+import com.yubico.exceptions.YubiHsmDeviceException;
+import com.yubico.exceptions.YubiHsmInvalidResponseException;
+import com.yubico.objects.Command;
+
+import java.nio.ByteBuffer;
+import java.util.logging.Logger;
+
+public class CommandUtils {
+
+    private static Logger logger = Logger.getLogger(CommandUtils.class.getName());
+
+
+    /**
+     * Add the command code and the length of the data in front of the data
+     *
+     * @param cmd  The command to be padded
+     * @param data The input to the command
+     * @return A byte array in the form: [command code (1 byte), length of data (2 bytes), data]
+     */
+    public static byte[] getTransceiveMessage(final Command cmd, final byte[] data) {
+        ByteBuffer ret = ByteBuffer.allocate(data.length + 3);
+        ret.put(cmd.getCommand());
+        ret.putShort((short) data.length);
+        if (data != null && data.length > 0) {
+            ret.put(data);
+        }
+        return ret.array();
+    }
+
+    /**
+     * Removes the leading response code and the length of the response and returns only the response data.
+     *
+     * @param cmd      The command respond to
+     * @param response The raw response to cmd
+     * @return The response data
+     * @throws YubiHsmDeviceException          If the response contains an error code
+     * @throws YubiHsmInvalidResponseException If the response cannot be parsed
+     */
+    public static byte[] getResponseData(final Command cmd, final byte[] response)
+            throws YubiHsmDeviceException, YubiHsmInvalidResponseException {
+        byte respCode = response[0];
+        if (respCode == cmd.getCommandResponse()) {
+            logger.fine("Received response from device for " + cmd.getName());
+        } else if (isErrorResponse(response)) {
+            final YubiHSMError error = YubiHSMError.getYubiHSMError(response[3]);
+            logger.severe("Device returned error code: " + error.toString());
+            throw new YubiHsmDeviceException(error);
+        } else {
+            final String err = "Unrecognized response: " + Utils.getPrintableBytes(response);
+            logger.severe(err);
+            throw new YubiHsmInvalidResponseException(err);
+        }
+
+        int expectedDataLength = (response[2] & 0xFF) | ((response[1] & 0xFF) << 8);
+        int dataLength = response.length - 3;
+        if (dataLength != expectedDataLength) {
+            final String err = "Unexpected length of response from device. Expected " + expectedDataLength + ", found " + dataLength;
+            logger.severe(err);
+            throw new YubiHsmInvalidResponseException(err);
+        }
+
+        if (dataLength > 0) {
+            ByteBuffer res = ByteBuffer.allocate(dataLength);
+            res.put(response, 3, dataLength);
+            return res.array();
+        }
+        return new byte[0];
+    }
+
+    /**
+     * Returns whether data is actually an error message as defined by the YubiHSM
+     *
+     * @param data The data to check
+     * @return True if data contains an error code. False otherwise
+     */
+    public static boolean isErrorResponse(final byte[] data) {
+        if (data.length != 4) {
+            return false;
+        }
+
+        byte[] errResp = {Command.ERROR.getCommand(), (byte) 0, (byte) 1};
+        for (int i = 0; i < errResp.length; i++) {
+            if (data[i] != errResp[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+}

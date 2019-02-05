@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="YubiHSMTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2019-02-05T10:11:57" hostname="yubico" time="0.252">
+  <properties/>
+  <testcase name="testGetDeviceInfo" classname="YubiHSMTest" time="0.015"/>
+  <testcase name="testPlainEcho" classname="YubiHSMTest" time="0.015"/>
+  <testcase name="testSecureEcho" classname="YubiHSMTest" time="0.22"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Feb 05, 2019 11:11:57 AM YubiHSMTest testGetDeviceInfo
+INFO: TEST START: testGetDeviceInfo()
+Feb 05, 2019 11:11:57 AM YubiHSMTest testGetDeviceInfo
+INFO: TEST END: testGetDeviceInfo()
+Feb 05, 2019 11:11:57 AM YubiHSMTest testPlainEcho
+INFO: TEST START: testPlainEcho()
+Feb 05, 2019 11:11:57 AM YubiHSMTest testPlainEcho
+INFO: TEST END: testPlainEcho()
+Feb 05, 2019 11:11:57 AM YubiHSMTest testSecureEcho
+INFO: TEST START: testAuthenticatedEcho()
+Feb 05, 2019 11:11:57 AM YubiHSMTest testSecureEcho
+INFO: TEST END: testAuthenticatedEcho()
+]]></system-err>
+</testsuite>

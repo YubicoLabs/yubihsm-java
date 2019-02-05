@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="YubiHSMSessionTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2019-02-05T10:11:57" hostname="yubico" time="0.185">
+  <properties/>
+  <testcase name="testSessionCreation" classname="YubiHSMSessionTest" time="0.185"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Feb 05, 2019 11:11:57 AM YubiHSMSessionTest testSessionCreation
+INFO: TEST START: testSessionCreation()
+Feb 05, 2019 11:11:57 AM YubiHSMSessionTest testSessionCreation
+INFO: TEST END: testSessionCreation()
+]]></system-err>
+</testsuite>
