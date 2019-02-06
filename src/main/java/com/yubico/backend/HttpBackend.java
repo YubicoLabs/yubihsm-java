@@ -1,6 +1,6 @@
 package com.yubico.backend;
 
-import com.yubico.exceptions.YubiHsmConnectionException;
+import com.yubico.exceptions.YHConnectionException;
 import com.yubico.util.Utils;
 
 import java.io.ByteArrayOutputStream;
@@ -49,9 +49,9 @@ public class HttpBackend implements Backend {
      * Opens an HTTP connection to the YubiHSM device if a connection does not already exist
      *
      * @return HTTP connection to the YubiHSM device
-     * @throws YubiHsmConnectionException if connection fails
+     * @throws YHConnectionException if connection fails
      */
-    private HttpURLConnection getConnection() throws YubiHsmConnectionException {
+    private HttpURLConnection getConnection() throws YHConnectionException {
         if (connection == null) {
             logger.finer("Opening HTTP connection to the device");
             HttpURLConnection conn;
@@ -63,7 +63,7 @@ public class HttpBackend implements Backend {
                 conn.setRequestProperty("Content-Type", "application/octet-stream");
                 connection = conn;
             } catch (IOException e) {
-                throw new YubiHsmConnectionException(e);
+                throw new YHConnectionException(e);
             }
         }
         return connection;
@@ -74,9 +74,9 @@ public class HttpBackend implements Backend {
      *
      * @param message the data to send to the device
      * @return the device response
-     * @throws YubiHsmConnectionException if connection to, writing to or reading from the device fail
+     * @throws YHConnectionException if connection to, writing to or reading from the device fail
      */
-    public byte[] transceive(byte[] message) throws YubiHsmConnectionException {
+    public byte[] transceive(byte[] message) throws YHConnectionException {
 
         logger.finest("SEND >> " + Utils.getPrintableBytes(message));
 
@@ -87,7 +87,7 @@ public class HttpBackend implements Backend {
             out.flush();
             out.close();
         } catch (IOException e1) {
-            throw new YubiHsmConnectionException(e1);
+            throw new YHConnectionException(e1);
         }
 
         InputStream in;
@@ -100,7 +100,7 @@ public class HttpBackend implements Backend {
                 in = conn.getErrorStream();
             }
         } catch (IOException e) {
-            throw new YubiHsmConnectionException(e);
+            throw new YHConnectionException(e);
         }
 
 
@@ -116,7 +116,7 @@ public class HttpBackend implements Backend {
             in.close();
             response = bos.toByteArray();
         } catch (IOException e) {
-            throw new YubiHsmConnectionException(e);
+            throw new YHConnectionException(e);
         }
         close();
         logger.finest("RECEIVE: " + Utils.getPrintableBytes(response));

@@ -1,5 +1,5 @@
-import com.yubico.YubiHSM;
-import com.yubico.YubiHSMSession;
+import com.yubico.YubiHsm;
+import com.yubico.YHSession;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
 import com.yubico.exceptions.*;
@@ -22,18 +22,18 @@ import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
-public class YubiHSMTest {
+public class YubiHsmTest {
 
 
-    Logger logger = Logger.getLogger(YubiHSMTest.class.getName());
+    Logger logger = Logger.getLogger(YubiHsmTest.class.getName());
 
-    private static YubiHSM yubihsm;
+    private static YubiHsm yubihsm;
 
     @BeforeClass
     public static void init() throws MalformedURLException {
         if (yubihsm == null) {
             Backend backend = new HttpBackend();
-            yubihsm = new YubiHSM(backend);
+            yubihsm = new YubiHsm(backend);
         }
     }
 
@@ -44,7 +44,7 @@ public class YubiHSMTest {
 
 
     @Test
-    public void testPlainEcho() throws YubiHsmDeviceException, YubiHsmInvalidResponseException, YubiHsmConnectionException, MalformedURLException {
+    public void testPlainEcho() throws YHDeviceException, YHInvalidResponseException, YHConnectionException, MalformedURLException {
         logger.info("TEST START: testPlainEcho()");
         for (int i = 0; i < 5; i++) {
             byte[] data = new byte[32];
@@ -58,11 +58,11 @@ public class YubiHSMTest {
 
     @Test
     public void testSecureEcho()
-            throws YubiHsmConnectionException, InvalidSession, NoSuchAlgorithmException, InvalidKeyException, YubiHsmDeviceException,
-                   NoSuchPaddingException, BadPaddingException, YubiHsmAuthenticationException, InvalidAlgorithmParameterException,
-                   YubiHsmInvalidResponseException, InvalidKeySpecException, IllegalBlockSizeException {
+            throws YHConnectionException, InvalidSession, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+                   NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
+                   YHInvalidResponseException, InvalidKeySpecException, IllegalBlockSizeException {
         logger.info("TEST START: testAuthenticatedEcho()");
-        YubiHSMSession session = new YubiHSMSession(yubihsm, (short) 1, "password".toCharArray());
+        YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
         for (int i = 0; i < 5; i++) {
             byte[] data = new byte[32];
             new Random().nextBytes(data);
@@ -74,7 +74,7 @@ public class YubiHSMTest {
     }
 
     @Test
-    public void testGetDeviceInfo() throws YubiHsmDeviceException, YubiHsmInvalidResponseException, YubiHsmConnectionException {
+    public void testGetDeviceInfo() throws YHDeviceException, YHInvalidResponseException, YHConnectionException {
         logger.info("TEST START: testGetDeviceInfo()");
         DeviceInfo info = yubihsm.getDeviceInfo();
         assertNotNull(info);
@@ -86,12 +86,12 @@ public class YubiHSMTest {
 
     //@Test
     public void testResetDevice()
-            throws InvalidKeySpecException, NoSuchAlgorithmException, YubiHsmConnectionException, InvalidSession, InvalidKeyException,
-                   YubiHsmDeviceException, NoSuchPaddingException, BadPaddingException, YubiHsmAuthenticationException,
-                   InvalidAlgorithmParameterException, YubiHsmInvalidResponseException, IllegalBlockSizeException, MalformedURLException {
+            throws InvalidKeySpecException, NoSuchAlgorithmException, YHConnectionException, InvalidSession, InvalidKeyException,
+                   YHDeviceException, NoSuchPaddingException, BadPaddingException, YHAuthenticationException,
+                   InvalidAlgorithmParameterException, YHInvalidResponseException, IllegalBlockSizeException, MalformedURLException {
         logger.info("TEST START: testResetDevice()");
 
-        YubiHSMSession session = new YubiHSMSession(yubihsm, (short) 1, "password".toCharArray());
+        YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
         assertNotNull("Failed to create an authenticated session", session);
 
         yubihsm.resetDevice(session);
@@ -102,11 +102,11 @@ public class YubiHSMTest {
 
     @Test
     public void testGetPseudoRandom()
-            throws YubiHsmConnectionException, InvalidSession, NoSuchAlgorithmException, InvalidKeyException, YubiHsmDeviceException,
-                   NoSuchPaddingException, BadPaddingException, YubiHsmAuthenticationException, InvalidAlgorithmParameterException,
-                   YubiHsmInvalidResponseException, InvalidKeySpecException, IllegalBlockSizeException {
+            throws YHConnectionException, InvalidSession, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+                   NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
+                   YHInvalidResponseException, InvalidKeySpecException, IllegalBlockSizeException {
         logger.info("TEST START: testGetPseudoRandom()");
-        YubiHSMSession session = new YubiHSMSession(yubihsm, (short) 1, "password".toCharArray());
+        YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
         for (int i = 1; i < 20; i++) {
             byte[] response = yubihsm.getRandom(session, i);
             assertEquals(i, response.length);

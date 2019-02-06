@@ -71,7 +71,7 @@ public class Utils {
     public static byte[] addPadding(final byte[] ba, final int blockSize) {
         int padLength = blockSize - (ba.length % blockSize);
         ByteBuffer res = ByteBuffer.allocate(ba.length + padLength);
-        res.put(ba).put((byte) 0x80).put(new byte[padLength-1]);
+        res.put(ba).put((byte) 0x80).put(new byte[padLength - 1]);
         return res.array();
     }
 

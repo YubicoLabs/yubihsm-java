@@ -1,5 +1,6 @@
 package com.yubico.objects;
 
+import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -43,15 +44,15 @@ public class DeviceInfo {
 
     public DeviceInfo(final byte[] info) {
         if (info != null && info.length > 0) {
-            version = info[0] + "." + info[1] + "." + info[2];
-            serialnumber = (info[6] & 0xFF) | ((info[5] & 0xFF) << 8) |
-                           ((info[4] & 0xFF) << 16) | ((info[3] & 0xFF) << 24);
-            logSize = info[7];
-            logUsed = info[8];
+            ByteBuffer bb = ByteBuffer.wrap(info);
+            version = bb.get() + "." + bb.get() + "." + bb.get();
+            serialnumber = bb.getInt();
+            logSize = bb.get();
+            logUsed = bb.get();
 
             supportedAlgorithms = new HashSet<Algorithm>();
-            for (int i = 9; i < info.length; i++) {
-                supportedAlgorithms.add(Algorithm.getAlgorithm(info[i]));
+            while (bb.hasRemaining()) {
+                supportedAlgorithms.add(Algorithm.getAlgorithm(bb.get()));
             }
         } else {
             init();

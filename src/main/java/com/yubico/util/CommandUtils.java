@@ -1,8 +1,8 @@
 package com.yubico.util;
 
-import com.yubico.exceptions.YubiHSMError;
-import com.yubico.exceptions.YubiHsmDeviceException;
-import com.yubico.exceptions.YubiHsmInvalidResponseException;
+import com.yubico.exceptions.YHDeviceException;
+import com.yubico.exceptions.YHError;
+import com.yubico.exceptions.YHInvalidResponseException;
 import com.yubico.objects.Command;
 
 import java.nio.ByteBuffer;
@@ -36,22 +36,22 @@ public class CommandUtils {
      * @param cmd      The command respond to
      * @param response The raw response to cmd
      * @return The response data
-     * @throws YubiHsmDeviceException          If the response contains an error code
-     * @throws YubiHsmInvalidResponseException If the response cannot be parsed
+     * @throws YHDeviceException          If the response contains an error code
+     * @throws YHInvalidResponseException If the response cannot be parsed
      */
     public static byte[] getResponseData(final Command cmd, final byte[] response)
-            throws YubiHsmDeviceException, YubiHsmInvalidResponseException {
+            throws YHDeviceException, YHInvalidResponseException {
         byte respCode = response[0];
         if (respCode == cmd.getCommandResponse()) {
             logger.fine("Received response from device for " + cmd.getName());
         } else if (isErrorResponse(response)) {
-            final YubiHSMError error = YubiHSMError.getYubiHSMError(response[3]);
+            final YHError error = YHError.getYubiHSMError(response[3]);
             logger.severe("Device returned error code: " + error.toString());
-            throw new YubiHsmDeviceException(error);
+            throw new YHDeviceException(error);
         } else {
             final String err = "Unrecognized response: " + Utils.getPrintableBytes(response);
             logger.severe(err);
-            throw new YubiHsmInvalidResponseException(err);
+            throw new YHInvalidResponseException(err);
         }
 
         int expectedDataLength = (response[2] & 0xFF) | ((response[1] & 0xFF) << 8);
@@ -59,7 +59,7 @@ public class CommandUtils {
         if (dataLength != expectedDataLength) {
             final String err = "Unexpected length of response from device. Expected " + expectedDataLength + ", found " + dataLength;
             logger.severe(err);
-            throw new YubiHsmInvalidResponseException(err);
+            throw new YHInvalidResponseException(err);
         }
 
         if (dataLength > 0) {

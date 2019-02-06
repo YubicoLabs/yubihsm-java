@@ -22,9 +22,9 @@ import java.util.logging.Logger;
 /**
  * Class to handle communication with the device over an authenticated session
  */
-public class YubiHSMSession {
+public class YHSession {
 
-    Logger logger = Logger.getLogger(YubiHSMSession.class.getName());
+    Logger logger = Logger.getLogger(YHSession.class.getName());
 
     public enum SessionStatus {
         NOT_INITIALIZED,
@@ -41,7 +41,7 @@ public class YubiHSMSession {
     private final int BLOCK_SIZE = 16;
     private final int HALF_BLOCK_SIZE = 8;
 
-    private YubiHSM yubihsm;
+    private YubiHsm yubihsm;
     private AuthenticationKey authenticationKey;
     private byte sessionID;
     private SessionStatus status;
@@ -52,13 +52,13 @@ public class YubiHSMSession {
     private long lowCounter;
     private long highCounter;
 
-    public YubiHSMSession(final YubiHSM hsm, final AuthenticationKey authKey) {
+    public YHSession(final YubiHsm hsm, final AuthenticationKey authKey) {
         yubihsm = hsm;
         authenticationKey = authKey;
         init();
     }
 
-    public YubiHSMSession(final YubiHSM hsm, final short authKeyId, final char[] password) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public YHSession(final YubiHsm hsm, final short authKeyId, final char[] password) throws NoSuchAlgorithmException, InvalidKeySpecException {
         yubihsm = hsm;
         authenticationKey = AuthenticationKey.getInstance(authKeyId, password);
         init();
@@ -105,23 +105,23 @@ public class YubiHSMSession {
     /**
      * Creates and authenticates a session with the device
      *
-     * @throws NoSuchAlgorithmException If a random 8 bytes fail to generate
-     * @throws YubiHsmDeviceException If the device returns an error
-     * @throws YubiHsmInvalidResponseException If the device returns a response that cannot be parsed
-     * @throws YubiHsmConnectionException If connection with the device fails
-     * @throws YubiHsmAuthenticationException If authenticating the session fails
+     * @throws NoSuchAlgorithmException   If a random 8 bytes fail to generate
+     * @throws YHDeviceException          If the device returns an error
+     * @throws YHInvalidResponseException If the device returns a response that cannot be parsed
+     * @throws YHConnectionException      If connection with the device fails
+     * @throws YHAuthenticationException  If authenticating the session fails
      */
     public void createAuthenticatedSession()
-            throws NoSuchAlgorithmException, YubiHsmDeviceException, YubiHsmInvalidResponseException, YubiHsmConnectionException,
-                   YubiHsmAuthenticationException {
+            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
+                   YHAuthenticationException {
 
-        if(status == SessionStatus.AUTHENTICATED) {
+        if (status == SessionStatus.AUTHENTICATED) {
             logger.fine("Session " + getSessionID() + " already authenticated. Doing nothing");
             return;
         }
 
         if (authenticationKey == null) {
-            throw new YubiHsmAuthenticationException("Authentication key is needed to open a session to the device");
+            throw new YHAuthenticationException("Authentication key is needed to open a session to the device");
         }
 
         byte[] challenge = SecureRandom.getInstanceStrong().generateSeed(8);
@@ -148,7 +148,7 @@ public class YubiHSMSession {
         logger.finer("Authenticate Session response data: " + Utils.getPrintableBytes(responseData));
         if (responseData.length > 0) {
             logger.severe("Received a non empty response from device");
-            throw new YubiHsmInvalidResponseException(YubiHSMError.AUTHENTICATION_FAILED);
+            throw new YHInvalidResponseException(YHError.AUTHENTICATION_FAILED);
         }
 
         status = SessionStatus.AUTHENTICATED;
@@ -160,26 +160,26 @@ public class YubiHSMSession {
      *
      * @param message The message to send
      * @return The message response in plain text (aka decrypted)
-     * @throws YubiHsmAuthenticationException If the session authentication fails
-     * @throws NoSuchPaddingException If the encryption/decryption fails
-     * @throws NoSuchAlgorithmException If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
      * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
-     * @throws InvalidKeyException If the encryption/decryption fails
-     * @throws BadPaddingException If the encryption/decryption fails
-     * @throws IllegalBlockSizeException If the encryption/decryption fails
-     * @throws YubiHsmConnectionException If the connection to the device fails
-     * @throws YubiHsmInvalidResponseException If the response from the device cannot be parsed
-     * @throws YubiHsmDeviceException If the device returns an error
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHDeviceException                  If the device returns an error
      */
     public byte[] secureTransceive(final byte[] message)
-            throws YubiHsmAuthenticationException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException,
-                   InvalidKeyException, BadPaddingException, IllegalBlockSizeException, YubiHsmConnectionException, YubiHsmInvalidResponseException,
-                   YubiHsmDeviceException {
+            throws YHAuthenticationException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException,
+                   InvalidKeyException, BadPaddingException, IllegalBlockSizeException, YHConnectionException, YHInvalidResponseException,
+                   YHDeviceException {
         if (status != SessionStatus.AUTHENTICATED) {
-            if(status == SessionStatus.NOT_INITIALIZED || status == SessionStatus.CREATED) {
+            if (status == SessionStatus.NOT_INITIALIZED || status == SessionStatus.CREATED) {
                 createAuthenticatedSession();
             } else {
-                throw new YubiHsmAuthenticationException("Session needs to be authenticated to send secure messages to the device");
+                throw new YHAuthenticationException("Session needs to be authenticated to send secure messages to the device");
             }
         }
 
@@ -227,20 +227,20 @@ public class YubiHSMSession {
     /**
      * Closes this session with the device
      *
-     * @throws YubiHsmAuthenticationException If the message or session authentication fails
-     * @throws NoSuchPaddingException If the encryption/decryption fails
-     * @throws NoSuchAlgorithmException If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the message or session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
      * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
-     * @throws InvalidKeyException If the encryption/decryption fails
-     * @throws BadPaddingException If the encryption/decryption fails
-     * @throws IllegalBlockSizeException If the encryption/decryption fails
-     * @throws YubiHsmConnectionException If the connection to the device fails
-     * @throws YubiHsmInvalidResponseException If the device returns a response that cannot be parsed
-     * @throws YubiHsmDeviceException If the device return an error
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws YHDeviceException                  If the device return an error
      */
-    public void closeSession() throws YubiHsmAuthenticationException, NoSuchPaddingException, NoSuchAlgorithmException,
+    public void closeSession() throws YHAuthenticationException, NoSuchPaddingException, NoSuchAlgorithmException,
                                       InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException,
-                                      YubiHsmConnectionException, YubiHsmInvalidResponseException, YubiHsmDeviceException {
+                                      YHConnectionException, YHInvalidResponseException, YHDeviceException {
         if (status != SessionStatus.CREATED && status != SessionStatus.AUTHENTICATED) {
             logger.info("Session is not open. Doing nothing");
             return;
@@ -254,13 +254,13 @@ public class YubiHSMSession {
                 sessionID = (byte) 0;
                 status = SessionStatus.CLOSED;
             } else {
-                final String err = "Received unexpected response from YubiHSM";
+                final String err = "Received unexpected response from YubiHsm";
                 logger.fine(err + ": " + Utils.getPrintableBytes(response));
-                throw new YubiHsmInvalidResponseException(err);
+                throw new YHInvalidResponseException(err);
             }
 
-        } catch (YubiHsmDeviceException e) {
-            if (e.getErrorCode().equals(YubiHSMError.INVALID_SESSION)) {
+        } catch (YHDeviceException e) {
+            if (e.getErrorCode().equals(YHError.INVALID_SESSION)) {
                 logger.info("Session " + sessionID + " no longer valid");
             } else {
                 throw e;
@@ -272,15 +272,16 @@ public class YubiHSMSession {
 
     /**
      * Sends CreateSession command to the device and returns a response
+     *
      * @param challenge 8 random bytes generated by the host
      * @return The device response for CreateSession command
-     * @throws YubiHsmInvalidResponseException If the response from the device cannot be parsed
-     * @throws YubiHsmConnectionException If the connection to the device fails
-     * @throws YubiHsmDeviceException If the device returns an error code
-     * @throws YubiHsmAuthenticationException If the session ID returned by the device is invalid (aka not in the range 0-15)
+     * @throws YHInvalidResponseException If the response from the device cannot be parsed
+     * @throws YHConnectionException      If the connection to the device fails
+     * @throws YHDeviceException          If the device returns an error code
+     * @throws YHAuthenticationException  If the session ID returned by the device is invalid (aka not in the range 0-15)
      */
-    private byte[] getCreateSessionResponse(final byte[] challenge) throws YubiHsmInvalidResponseException, YubiHsmConnectionException,
-                                                                           YubiHsmDeviceException, YubiHsmAuthenticationException {
+    private byte[] getCreateSessionResponse(final byte[] challenge) throws YHInvalidResponseException, YHConnectionException,
+                                                                           YHDeviceException, YHAuthenticationException {
         byte[] inputData = getCreateSessionInputData(challenge);
         logger.finer("Create Session data: " + Utils.getPrintableBytes(inputData));
         byte[] responseData = yubihsm.sendCmd(Command.CREATE_SESSION, inputData);
@@ -309,28 +310,28 @@ public class YubiHSMSession {
      * Sets the session ID after successfully creating a session with the device
      *
      * @param b The session ID
-     * @throws YubiHsmAuthenticationException If the specified session ID is not in the range 0-15
+     * @throws YHAuthenticationException If the specified session ID is not in the range 0-15
      */
-    private void setSessionID(final byte b) throws YubiHsmAuthenticationException {
+    private void setSessionID(final byte b) throws YHAuthenticationException {
         if (b >= ((byte) 0) && b < ((byte) 16)) { // Session ID is between 0 to 15
             sessionID = b;
             status = SessionStatus.CREATED;
         } else {
-            throw new YubiHsmAuthenticationException("Failed to obtain a valid session ID from the device");
+            throw new YHAuthenticationException("Failed to obtain a valid session ID from the device");
         }
     }
 
     /**
      * Assembles the 16 bytes challenge used for authenticating the session with the device.
      *
-     * @param hostChallenge 8 random bytes generated by the host
+     * @param hostChallenge   8 random bytes generated by the host
      * @param deviceChallenge 8 bytes received from the device
      * @return 16 bytes: 8 bytes `hostChallenge` + 8 bytes `deviceChallenge`
-     * @throws YubiHsmAuthenticationException If either hostChallenge of deviceChallenge are not 8 bytes long
+     * @throws YHAuthenticationException If either hostChallenge of deviceChallenge are not 8 bytes long
      */
-    private byte[] getSessionAuthenticationChallenge(final byte[] hostChallenge, final byte[] deviceChallenge) throws YubiHsmAuthenticationException {
+    private byte[] getSessionAuthenticationChallenge(final byte[] hostChallenge, final byte[] deviceChallenge) throws YHAuthenticationException {
         if (hostChallenge.length != 8 || deviceChallenge.length != 8) {
-            throw new YubiHsmAuthenticationException("Either the host challenge or the device challenge is not 8 bytes long");
+            throw new YHAuthenticationException("Either the host challenge or the device challenge is not 8 bytes long");
         }
         ByteBuffer ret = ByteBuffer.allocate(16);
         ret.put(hostChallenge);
@@ -353,15 +354,15 @@ public class YubiHSMSession {
      * Verifies the cryptogram received from the device by comparing it with a cryptogram generated using challenge
      *
      * @param cardCryptogram 8 bytes cryptogram received from the device
-     * @param challenge 16 bytes challenge consisting of 8 bytes generated by the host + 8 bytes received from the device
-     * @throws YubiHsmAuthenticationException If the device cryptogram does not match the generated cryptogram
+     * @param challenge      16 bytes challenge consisting of 8 bytes generated by the host + 8 bytes received from the device
+     * @throws YHAuthenticationException If the device cryptogram does not match the generated cryptogram
      */
     private void verifyCardCryptogram(final byte[] cardCryptogram, final byte[] challenge)
-            throws YubiHsmAuthenticationException {
+            throws YHAuthenticationException {
         logger.finer("Card cryptogram: " + Utils.getPrintableBytes(cardCryptogram));
         byte[] generatedCryptogram = deriveKey(sessionMacKey, CARD_CRYPTOGRAM, challenge, HALF_BLOCK_SIZE * 8);
         if (!Utils.isByteArrayEqual(generatedCryptogram, cardCryptogram)) {
-            throw new YubiHsmAuthenticationException(YubiHSMError.AUTHENTICATION_FAILED);
+            throw new YHAuthenticationException(YHError.AUTHENTICATION_FAILED);
         }
         logger.fine("Card cryptogram successfully verified");
     }
@@ -404,9 +405,9 @@ public class YubiHSMSession {
     /**
      * Calculate the MAC value of an input
      *
-     * @param key Key used to calculate the MAC
-     * @param chain 16 bytes
-     * @param input Data to calculate its MAC
+     * @param key       Key used to calculate the MAC
+     * @param chain     16 bytes
+     * @param input     Data to calculate its MAC
      * @param macLength Length of the MAC value
      * @return The MAC value of input
      */
@@ -429,10 +430,10 @@ public class YubiHSMSession {
     /**
      * Derives a short lived value from a long term key
      *
-     * @param key A long term key to use to derive a short lived value
-     * @param type Type of the derived key
+     * @param key       A long term key to use to derive a short lived value
+     * @param type      Type of the derived key
      * @param challenge 16 bytes challenge consisting of 8 bytes generated by the host + 8 bytes received from the device
-     * @param length Length of the value to generate
+     * @param length    Length of the value to generate
      * @return The first bytes of the derived value. The length of these bytes depend on `length`
      */
     private byte[] deriveKey(final byte[] key, final byte type, final byte[] challenge, final int length) {
@@ -499,15 +500,15 @@ public class YubiHSMSession {
      *
      * @param rawResponse
      * @param challenge
-     * @throws YubiHsmAuthenticationException If verification fails
+     * @throws YHAuthenticationException If verification fails
      */
-    private void verifyResponseMac(final byte[] rawResponse, final byte[] challenge) throws YubiHsmAuthenticationException {
+    private void verifyResponseMac(final byte[] rawResponse, final byte[] challenge) throws YHAuthenticationException {
         byte[] macInResponse = Utils.getSubArray(rawResponse, rawResponse.length - 8, 8);
         byte[] rmacToCalculate = Utils.getSubArray(rawResponse, 0, rawResponse.length - 8);
         byte[] fullResponseMac = getMac(sessionRMacKey, challenge, rmacToCalculate, BLOCK_SIZE);
         byte[] rmac = Utils.getSubArray(fullResponseMac, 0, 8);
         if (!Utils.isByteArrayEqual(rmac, macInResponse)) {
-            throw new YubiHsmAuthenticationException("Incorrect MAC");
+            throw new YHAuthenticationException("Incorrect MAC");
         }
     }
 
@@ -516,14 +517,14 @@ public class YubiHSMSession {
      *
      * @param rawResponse The device response to SessionMessage
      * @return The device's encrypted response to the command inside SessionMessage
-     * @throws YubiHsmInvalidResponseException If the session ID returned by the device does not match this session ID
-     * @throws YubiHsmDeviceException If the device had returned an error code
+     * @throws YHInvalidResponseException If the session ID returned by the device does not match this session ID
+     * @throws YHDeviceException          If the device had returned an error code
      */
     private byte[] getCommandResponse(final byte[] rawResponse)
-            throws YubiHsmInvalidResponseException, YubiHsmDeviceException {
+            throws YHInvalidResponseException, YHDeviceException {
         byte[] resp = CommandUtils.getResponseData(Command.SESSION_MESSAGE, rawResponse);
         if (resp[0] != sessionID) {
-            throw new YubiHsmInvalidResponseException("Incorrect session ID");
+            throw new YHInvalidResponseException("Incorrect session ID");
         }
 
         // extract the response to the command

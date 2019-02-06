@@ -1,5 +1,5 @@
-import com.yubico.YubiHSM;
-import com.yubico.YubiHSMSession;
+import com.yubico.YubiHsm;
+import com.yubico.YHSession;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
 import com.yubico.exceptions.*;
@@ -21,17 +21,17 @@ import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
-public class YubiHSMSessionTest {
+public class YHSessionTest {
 
-    Logger logger = Logger.getLogger(YubiHSMSessionTest.class.getName());
+    Logger logger = Logger.getLogger(YHSessionTest.class.getName());
 
-    private static YubiHSM yubihsm;
+    private static YubiHsm yubihsm;
 
     @BeforeClass
     public static void init() throws MalformedURLException {
         if (yubihsm == null) {
             Backend backend = new HttpBackend();
-            yubihsm = new YubiHSM(backend);
+            yubihsm = new YubiHsm(backend);
         }
     }
 
@@ -41,47 +41,47 @@ public class YubiHSMSessionTest {
     }
 
     @Test
-    public void testSessionCreation() throws InvalidKeySpecException, NoSuchAlgorithmException, YubiHsmDeviceException,
-                                             YubiHsmInvalidResponseException, YubiHsmConnectionException, YubiHsmAuthenticationException,
+    public void testSessionCreation() throws InvalidKeySpecException, NoSuchAlgorithmException, YHDeviceException,
+                                             YHInvalidResponseException, YHConnectionException, YHAuthenticationException,
                                              NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException,
                                              IllegalBlockSizeException, InvalidSession {
         logger.info("TEST START: testSessionCreation()");
 
-        YubiHSMSession session1 = new YubiHSMSession(yubihsm, (short) 1, "password".toCharArray());
+        YHSession session1 = new YHSession(yubihsm, (short) 1, "password".toCharArray());
         assertNotNull(session1);
         assertNotNull(session1.getAuthenticationKey());
         assertEquals((byte) -1, session1.getSessionID());
-        assertEquals(YubiHSMSession.SessionStatus.NOT_INITIALIZED, session1.getStatus());
+        assertEquals(YHSession.SessionStatus.NOT_INITIALIZED, session1.getStatus());
 
         session1.createAuthenticatedSession();
         assertEquals((byte) 0, session1.getSessionID());
-        assertEquals(YubiHSMSession.SessionStatus.AUTHENTICATED, session1.getStatus());
+        assertEquals(YHSession.SessionStatus.AUTHENTICATED, session1.getStatus());
 
 
-        YubiHSMSession session2 = new YubiHSMSession(yubihsm, (short) 1, "password".toCharArray());
+        YHSession session2 = new YHSession(yubihsm, (short) 1, "password".toCharArray());
         session2.createAuthenticatedSession();
         assertEquals((byte) 1, session2.getSessionID());
-        assertEquals(YubiHSMSession.SessionStatus.AUTHENTICATED, session2.getStatus());
+        assertEquals(YHSession.SessionStatus.AUTHENTICATED, session2.getStatus());
         session2.createAuthenticatedSession();
-        assertEquals(YubiHSMSession.SessionStatus.AUTHENTICATED, session2.getStatus());
+        assertEquals(YHSession.SessionStatus.AUTHENTICATED, session2.getStatus());
 
 
-        YubiHSMSession session3 = new YubiHSMSession(yubihsm, (short) 1, "PASSWORD".toCharArray());
+        YHSession session3 = new YHSession(yubihsm, (short) 1, "PASSWORD".toCharArray());
         assertNotNull(session3.getAuthenticationKey());
         assertEquals((byte) -1, session3.getSessionID());
-        assertEquals(YubiHSMSession.SessionStatus.NOT_INITIALIZED, session3.getStatus());
+        assertEquals(YHSession.SessionStatus.NOT_INITIALIZED, session3.getStatus());
 
         try {
             session3.createAuthenticatedSession();
-        } catch (YubiHsmAuthenticationException e) {
-            assertEquals(YubiHSMError.AUTHENTICATION_FAILED, e.getErrorCode());
+        } catch (YHAuthenticationException e) {
+            assertEquals(YHError.AUTHENTICATION_FAILED, e.getErrorCode());
         }
 
         session2.closeSession();
-        assertEquals(YubiHSMSession.SessionStatus.CLOSED, session2.getStatus());
+        assertEquals(YHSession.SessionStatus.CLOSED, session2.getStatus());
 
         session2.createAuthenticatedSession();
-        assertEquals(YubiHSMSession.SessionStatus.AUTHENTICATED, session2.getStatus());
+        assertEquals(YHSession.SessionStatus.AUTHENTICATED, session2.getStatus());
         session2.closeSession();
 
         byte[] data = new byte[32];
@@ -90,7 +90,7 @@ public class YubiHSMSessionTest {
         assertTrue(Utils.isByteArrayEqual(response, data));
 
         session1.closeSession();
-        assertEquals(YubiHSMSession.SessionStatus.CLOSED, session1.getStatus());
+        assertEquals(YHSession.SessionStatus.CLOSED, session1.getStatus());
 
 
         logger.info("TEST END: testSessionCreation()");

@@ -1,20 +1,16 @@
-import com.yubico.exceptions.YubiHsmConnectionException;
-import com.yubico.exceptions.YubiHsmDeviceException;
-import com.yubico.exceptions.YubiHsmInvalidResponseException;
 import com.yubico.util.Utils;
 import org.junit.Test;
 
-import java.net.MalformedURLException;
 import java.nio.ByteBuffer;
-import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.util.Random;
 import java.util.logging.Logger;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class UtilTest {
 
-    Logger logger = Logger.getLogger(YubiHSMSessionTest.class.getName());
+    Logger logger = Logger.getLogger(YHSessionTest.class.getName());
 
     @Test
     public void testIsByteArrayEqual() {
@@ -47,8 +43,8 @@ public class UtilTest {
         assertTrue("Failed to get a sub byte array", Utils.isByteArrayEqual(exp.array(), Utils.getSubArray(data, 0, 8)));
 
         exp = ByteBuffer.allocate(8);
-        exp.put(data, data.length-8, 8);
-        assertTrue("Failed to get a sub byte array", Utils.isByteArrayEqual(exp.array(), Utils.getSubArray(data, data.length-8, 8)));
+        exp.put(data, data.length - 8, 8);
+        assertTrue("Failed to get a sub byte array", Utils.isByteArrayEqual(exp.array(), Utils.getSubArray(data, data.length - 8, 8)));
 
         exp = ByteBuffer.allocate(8);
         exp.put(data, 10, 8);
@@ -64,7 +60,7 @@ public class UtilTest {
         byte[] pad = new byte[16];
         pad[0] = (byte) 0x80;
 
-        for(int i=0; i<20; i++) {
+        for (int i = 0; i < 20; i++) {
             testPadding(i, pad);
         }
         logger.info("TEST END: testAddPadding()");
@@ -74,11 +70,11 @@ public class UtilTest {
         byte[] data = new byte[dataLength];
         new Random().nextBytes(data);
         byte[] padded = Utils.addPadding(data, 16);
-        assertTrue("Padded data is not a multiple of 16", padded.length%16==0);
+        assertTrue("Padded data is not a multiple of 16", padded.length % 16 == 0);
 
         ByteBuffer bb = ByteBuffer.allocate(padded.length);
         bb.put(data);
-        bb.put(pad, 0, padded.length-dataLength);
+        bb.put(pad, 0, padded.length - dataLength);
         assertTrue("Adding padding failed", Utils.isByteArrayEqual(bb.array(), padded));
         assertTrue("Removing padding failed", Utils.isByteArrayEqual(data, Utils.removePadding(padded)));
     }

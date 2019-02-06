@@ -1,6 +1,6 @@
 package com.yubico.backend;
 
-import com.yubico.exceptions.YubiHsmConnectionException;
+import com.yubico.exceptions.YHConnectionException;
 
 public interface Backend {
 
@@ -9,12 +9,12 @@ public interface Backend {
      *
      * @param message The data to send to the device
      * @return The device response
-     * @throws YubiHsmConnectionException If connection with the device fails
+     * @throws YHConnectionException If connection with the device fails
      */
-    public byte[] transceive(byte[] message) throws YubiHsmConnectionException;
+    byte[] transceive(byte[] message) throws YHConnectionException;
 
     /**
      * Closes the connection with the device
      */
-    public void close();
+    void close();
 }
