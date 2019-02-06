@@ -5,10 +5,12 @@ import com.yubico.exceptions.*;
 import com.yubico.objects.Command;
 import com.yubico.objects.DeviceInfo;
 import com.yubico.util.CommandUtils;
+import com.yubico.util.Utils;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -108,11 +110,12 @@ public class YubiHSM {
 
     /**
      * Sends the Echo command with `data` as the input
+     *
      * @param data The input to the Echo command
      * @return The device response to the Echo command
-     * @throws YubiHsmDeviceException If the device return an error
+     * @throws YubiHsmDeviceException          If the device return an error
      * @throws YubiHsmInvalidResponseException If the device returns a response that cannot be parsed
-     * @throws YubiHsmConnectionException If the connection to the device fails
+     * @throws YubiHsmConnectionException      If the connection to the device fails
      */
     public byte[] echo(final byte[] data) throws YubiHsmDeviceException, YubiHsmInvalidResponseException, YubiHsmConnectionException {
         return sendCmd(Command.ECHO, data);
@@ -120,20 +123,21 @@ public class YubiHSM {
 
     /**
      * Sends the Echo command with `data` as the input over an authenticated session
+     *
      * @param session The session to send the command over
-     * @param data The input to the Echo command
+     * @param data    The input to the Echo command
      * @return The device response to the Echo command
-     * @throws YubiHsmConnectionException If the connection to the device fails
-     * @throws InvalidSession If `session` is null
-     * @throws NoSuchAlgorithmException If the message encryption/decryption fails
-     * @throws InvalidKeyException If the message encryption/decryption fails
-     * @throws YubiHsmDeviceException If the device returns an error
-     * @throws NoSuchPaddingException If the message encryption/decryption fails
-     * @throws BadPaddingException If the message encryption/decryption fails
-     * @throws YubiHsmAuthenticationException If the session or message authentication fails
+     * @throws YubiHsmConnectionException         If the connection to the device fails
+     * @throws InvalidSession                     If `session` is null
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YubiHsmDeviceException             If the device returns an error
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws YubiHsmAuthenticationException     If the session or message authentication fails
      * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
-     * @throws YubiHsmInvalidResponseException If the device returns a response that cannot be parsed
-     * @throws IllegalBlockSizeException If the message encryption/decryption fails
+     * @throws YubiHsmInvalidResponseException    If the device returns a response that cannot be parsed
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      */
     public byte[] secureEcho(final YubiHSMSession session, final byte[] data)
             throws YubiHsmConnectionException, InvalidSession, NoSuchAlgorithmException, InvalidKeyException, YubiHsmDeviceException,
@@ -156,6 +160,59 @@ public class YubiHSM {
         logger.fine("Got device info: " + info.toString());
         return info;
 
+    }
+
+    /**
+     * Reset the device
+     *
+     * @param session The session to send the command over
+     * @throws YubiHsmConnectionException         If the connection to the device fails
+     * @throws InvalidSession                     If `session` is null
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YubiHsmDeviceException             If the device returns an error
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws YubiHsmAuthenticationException     If the session or message authentication fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws YubiHsmInvalidResponseException    If the device returns a response that cannot be parsed
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     */
+    public void resetDevice(final YubiHSMSession session)
+            throws YubiHsmConnectionException, InvalidSession, NoSuchAlgorithmException, InvalidKeyException, YubiHsmDeviceException,
+                   NoSuchPaddingException, BadPaddingException, YubiHsmAuthenticationException, InvalidAlgorithmParameterException,
+                   YubiHsmInvalidResponseException, IllegalBlockSizeException {
+        byte[] resp = sendSecureCmd(session, Command.RESET_DEVICE, new byte[0]);
+        if (resp.length != 0) {
+            throw new YubiHsmInvalidResponseException("Expecting empty response. Found: " + Utils.getPrintableBytes(resp));
+        }
+    }
+
+    /**
+     * Get pseudo-random data of a specific length from the device
+     *
+     * @param session The session to send the command over
+     * @param length  The number of pseudo random bytes to return
+     * @return `length` pseudo random bytes
+     * @throws YubiHsmConnectionException         If the connection to the device fails
+     * @throws InvalidSession                     If `session` is null
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YubiHsmDeviceException             If the device returns an error
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws YubiHsmAuthenticationException     If the session or message authentication fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws YubiHsmInvalidResponseException    If the device returns a response that cannot be parsed
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     */
+    public byte[] getRandom(final YubiHSMSession session, final int length)
+            throws YubiHsmConnectionException, InvalidSession, NoSuchAlgorithmException, InvalidKeyException, YubiHsmDeviceException,
+                   NoSuchPaddingException, BadPaddingException, YubiHsmAuthenticationException, InvalidAlgorithmParameterException,
+                   YubiHsmInvalidResponseException, IllegalBlockSizeException {
+        ByteBuffer data = ByteBuffer.allocate(2);
+        data.putShort((short) length);
+        return sendSecureCmd(session, Command.GET_PSEUDO_RANDOM, data.array());
     }
 
 }
