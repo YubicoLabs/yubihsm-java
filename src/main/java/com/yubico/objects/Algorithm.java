@@ -74,79 +74,76 @@ public class Algorithm {
     }
 
     public static String getNameFromAlgorithm(final byte algorithm) {
-        Algorithm algo = (Algorithm) getAlgorithmsMap().get(algorithm);
+        Algorithm algo = (Algorithm) getAlgorithm(algorithm);
         if (algo != null) {
             return algo.getName();
         }
         return String.format("Algorithm 0x%02X not supported", algorithm);
     }
 
-    public static Algorithm getAlgorithm(final byte algo) {
-        return (Algorithm) getAlgorithmsMap().get(algo);
-    }
-
     public static boolean isSuppotedAlgorithm(final byte algorithm) {
-        return getAlgorithmsMap().containsKey(algorithm);
+        return getAlgorithm(algorithm) != null;
     }
 
     public String toString() {
         return String.format("0x%02X: " + name, algorithm);
     }
 
-    private static Map getAlgorithmsMap() {
-        Map algorithms = new HashMap();
-        algorithms.put((byte) 1, RSA_PKCS1_SHA1);
-        algorithms.put((byte) 2, RSA_PKCS1_SHA256);
-        algorithms.put((byte) 3, RSA_PKCS1_SHA384);
-        algorithms.put((byte) 4, RSA_PKCS1_SHA512);
-        algorithms.put((byte) 5, RSA_PSS_SHA1);
-        algorithms.put((byte) 6, RSA_PSS_SHA256);
-        algorithms.put((byte) 7, RSA_PSS_SHA384);
-        algorithms.put((byte) 8, RSA_PSS_SHA512);
-        algorithms.put((byte) 9, RSA_2048);
-        algorithms.put((byte) 10, RSA_3072);
-        algorithms.put((byte) 11, RSA_4096);
-        algorithms.put((byte) 25, RSA_OAEP_SHA1);
-        algorithms.put((byte) 26, RSA_OAEP_SHA256);
-        algorithms.put((byte) 27, RSA_OAEP_SHA384);
-        algorithms.put((byte) 28, RSA_OAEP_SHA512);
-        algorithms.put((byte) 32, RSA_MGF1_SHA1);
-        algorithms.put((byte) 33, RSA_MGF1_SHA256);
-        algorithms.put((byte) 34, RSA_MGF1_SHA384);
-        algorithms.put((byte) 35, RSA_MGF1_SHA512);
+    public static Algorithm getAlgorithm(byte id) {
+        switch (id) {
+            case 1: return RSA_PKCS1_SHA1;
+            case 2: return RSA_PKCS1_SHA256;
+            case 3: return RSA_PKCS1_SHA384;
+            case 4: return RSA_PKCS1_SHA512;
+            case 5: return RSA_PSS_SHA1;
+            case 6: return RSA_PSS_SHA256;
+            case 7: return RSA_PSS_SHA384;
+            case 8: return RSA_PSS_SHA512;
+            case 9: return RSA_2048;
+            case 10: return RSA_3072;
+            case 11: return RSA_4096;
+            case 25: return RSA_OAEP_SHA1;
+            case 26: return RSA_OAEP_SHA256;
+            case 27: return RSA_OAEP_SHA384;
+            case 28: return RSA_OAEP_SHA512;
+            case 32: return RSA_MGF1_SHA1;
+            case 33: return RSA_MGF1_SHA256;
+            case 34: return RSA_MGF1_SHA384;
+            case 35: return RSA_MGF1_SHA512;
 
-        algorithms.put((byte) 12, EC_P256);
-        algorithms.put((byte) 13, EC_P384);
-        algorithms.put((byte) 14, EC_P521);
-        algorithms.put((byte) 15, EC_K256);
-        algorithms.put((byte) 16, EC_BP256);
-        algorithms.put((byte) 17, EC_BP384);
-        algorithms.put((byte) 18, EC_BP512);
+            case 12: return EC_P256;
+            case 13: return EC_P384;
+            case 14: return EC_P521;
+            case 15: return EC_K256;
+            case 16: return EC_BP256;
+            case 17: return EC_BP384;
+            case 18: return EC_BP512;
 
-        algorithms.put((byte) 23, EC_ECDSA_SHA1);
-        algorithms.put((byte) 24, EC_ECDH);
+            case 23: return EC_ECDSA_SHA1;
+            case 24: return EC_ECDH;
 
-        algorithms.put((byte) 19, HMAC_SHA1);
-        algorithms.put((byte) 20, HMAC_SHA256);
-        algorithms.put((byte) 21, HMAC_SHA384);
-        algorithms.put((byte) 22, HMAC_SHA512);
+            case 19: return HMAC_SHA1;
+            case 20: return HMAC_SHA256;
+            case 21: return HMAC_SHA384;
+            case 22: return HMAC_SHA512;
 
-        algorithms.put((byte) 29, AES128_CCM_WRAP);
-        algorithms.put((byte) 30, OPAQUE_DATA);
-        algorithms.put((byte) 31, OPAQUE_X509_CERTIFICATE);
-        algorithms.put((byte) 36, TEMPLATE_SSH);
-        algorithms.put((byte) 37, AES128_YUBICO_OTP);
-        algorithms.put((byte) 38, AES128_YUBICO_AUTHENTICATION);
-        algorithms.put((byte) 39, AES192_YUBICO_OTP);
-        algorithms.put((byte) 40, AES256_YUBICO_OTP);
-        algorithms.put((byte) 41, AES192_CCM_WRAP);
-        algorithms.put((byte) 42, AES256_CCM_WRAP);
-        algorithms.put((byte) 43, EC_ECDSA_SHA256);
-        algorithms.put((byte) 44, EC_ECDSA_SHA384);
-        algorithms.put((byte) 45, EC_ECDSA_SHA512);
-        algorithms.put((byte) 46, EC_ED25519);
-        algorithms.put((byte) 47, EC_P224);
-        return algorithms;
+            case 29: return AES128_CCM_WRAP;
+            case 30: return OPAQUE_DATA;
+            case 31: return OPAQUE_X509_CERTIFICATE;
+            case 36: return TEMPLATE_SSH;
+            case 37: return AES128_YUBICO_OTP;
+            case 38: return AES128_YUBICO_AUTHENTICATION;
+            case 39: return AES192_YUBICO_OTP;
+            case 40: return AES256_YUBICO_OTP;
+            case 41: return AES192_CCM_WRAP;
+            case 42: return AES256_CCM_WRAP;
+            case 43: return EC_ECDSA_SHA256;
+            case 44: return EC_ECDSA_SHA384;
+            case 45: return EC_ECDSA_SHA512;
+            case 46: return EC_ED25519;
+            case 47: return EC_P224;
+            default: return null;
+        }
     }
 
 }
