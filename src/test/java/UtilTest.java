@@ -1,57 +1,19 @@
-import com.yubico.util.Utils;
+import com.yubico.internal.util.Utils;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class UtilTest {
 
     Logger logger = Logger.getLogger(YHSessionTest.class.getName());
-
-    @Test
-    public void testIsByteArrayEqual() {
-        logger.info("TEST START: testIsByteArrayEqual()");
-
-        for (int i = 0; i < 5; i++) {
-            byte[] data = new byte[32];
-            new Random().nextBytes(data);
-            assertTrue("Fail to detect when two byte arrays are equal", Utils.isByteArrayEqual(data, data));
-        }
-
-        byte[] data1 = new byte[32];
-        new Random().nextBytes(data1);
-        byte[] data2 = new byte[32];
-        new Random().nextBytes(data2);
-        assertFalse("Fail to detect when two byte arrays are not equal", Utils.isByteArrayEqual(data1, data2));
-
-        logger.info("TEST END: testIsByteArrayEqual()");
-    }
-
-    @Test
-    public void testGetSubArray() {
-        logger.info("TEST START: testGetSubArray()");
-
-        byte[] data = new byte[32];
-        new Random().nextBytes(data);
-
-        ByteBuffer exp = ByteBuffer.allocate(8);
-        exp.put(data, 0, 8);
-        assertTrue("Failed to get a sub byte array", Utils.isByteArrayEqual(exp.array(), Utils.getSubArray(data, 0, 8)));
-
-        exp = ByteBuffer.allocate(8);
-        exp.put(data, data.length - 8, 8);
-        assertTrue("Failed to get a sub byte array", Utils.isByteArrayEqual(exp.array(), Utils.getSubArray(data, data.length - 8, 8)));
-
-        exp = ByteBuffer.allocate(8);
-        exp.put(data, 10, 8);
-        assertTrue("Failed to get a sub byte array", Utils.isByteArrayEqual(exp.array(), Utils.getSubArray(data, 10, 8)));
-
-        logger.info("TEST END: testGetSubArray()");
-    }
 
 
     @Test
@@ -75,9 +37,52 @@ public class UtilTest {
         ByteBuffer bb = ByteBuffer.allocate(padded.length);
         bb.put(data);
         bb.put(pad, 0, padded.length - dataLength);
-        assertTrue("Adding padding failed", Utils.isByteArrayEqual(bb.array(), padded));
-        assertTrue("Removing padding failed", Utils.isByteArrayEqual(data, Utils.removePadding(padded)));
+        assertTrue("Adding padding failed", Arrays.equals(bb.array(), padded));
+        assertTrue("Removing padding failed", Arrays.equals(data, Utils.removePadding(padded, 16)));
     }
 
+    @Test
+    public void testGetShortFromList() {
+        logger.info("TEST START: testGetShortFromList()");
+
+        List<Integer> values = new ArrayList(Arrays.asList(2, 5, 8));
+        short expectedResult = 0x0092;
+        assertEquals(expectedResult, Utils.getShortFromList(values));
+
+        values = new ArrayList(Arrays.asList(1, 11));
+        expectedResult = 0x0401;
+        assertEquals(expectedResult, Utils.getShortFromList(values));
+
+        values = new ArrayList(Arrays.asList(1, 8, 10, 11, 16));
+        expectedResult = (short) 0x8681;
+        assertEquals(expectedResult, Utils.getShortFromList(values));
+
+        logger.info("TEST END: testGetShortFromList()");
+    }
+
+    @Test
+    public void testGetListFromShort() {
+        logger.info("TEST START: testGetListFromShort()");
+
+        short s = (short) 0x0092;
+        List<Integer> expectedResult = new ArrayList(Arrays.asList(2, 5, 8));
+        List<Integer> actualResult = Utils.getListFromShort(s);
+        assertEquals(expectedResult.size(), actualResult.size());
+        assertTrue(actualResult.containsAll(expectedResult));
+
+        s = (short) 0x0401;
+        expectedResult = new ArrayList(Arrays.asList(1, 11));
+        actualResult = Utils.getListFromShort(s);
+        assertEquals(expectedResult.size(), actualResult.size());
+        assertTrue(actualResult.containsAll(expectedResult));
+
+        s = (short) 0x8681;
+        expectedResult = new ArrayList(Arrays.asList(1, 8, 10, 11, 16));
+        actualResult = Utils.getListFromShort(s);
+        assertEquals(expectedResult.size(), actualResult.size());
+        assertTrue(actualResult.containsAll(expectedResult));
+
+        logger.info("TEST END: testGetListFromShort()");
+    }
 
 }

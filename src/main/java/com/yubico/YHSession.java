@@ -1,10 +1,9 @@
 package com.yubico;
 
 import com.yubico.exceptions.*;
-import com.yubico.objects.AuthenticationKey;
-import com.yubico.objects.Command;
-import com.yubico.util.CommandUtils;
-import com.yubico.util.Utils;
+import com.yubico.internal.util.CommandUtils;
+import com.yubico.internal.util.Utils;
+import com.yubico.objects.yhconcepts.Command;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.engines.AESEngine;
@@ -13,10 +12,12 @@ import org.bouncycastle.crypto.params.KeyParameter;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 /**
@@ -42,7 +43,7 @@ public class YHSession {
     private final int HALF_BLOCK_SIZE = 8;
 
     private YubiHsm yubihsm;
-    private AuthenticationKey authenticationKey;
+    private AuthKey authenticationKey;
     private byte sessionID;
     private SessionStatus status;
     private byte[] sessionEncKey;
@@ -52,17 +53,18 @@ public class YHSession {
     private long lowCounter;
     private long highCounter;
 
-    public YHSession(final YubiHsm hsm, final AuthenticationKey authKey) {
+    public YHSession(final YubiHsm hsm, final short authKeyId, final char[] password) throws NoSuchAlgorithmException, InvalidKeySpecException {
         yubihsm = hsm;
-        authenticationKey = authKey;
+        authenticationKey = new AuthKey(authKeyId, password);
         init();
     }
 
-    public YHSession(final YubiHsm hsm, final short authKeyId, final char[] password) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public YHSession(final YubiHsm hsm, final short authKeyId, final byte[] encryptionKey, final byte[] macKey) {
         yubihsm = hsm;
-        authenticationKey = AuthenticationKey.getInstance(authKeyId, password);
+        authenticationKey = new AuthKey(authKeyId, encryptionKey, macKey);
         init();
     }
+
 
     private void init() {
         sessionID = (byte) -1;
@@ -93,14 +95,10 @@ public class YHSession {
         return status;
     }
 
-    /**
-     * Returns the authentication key used when creating this session
-     *
-     * @return The session authentication key
-     */
-    public AuthenticationKey getAuthenticationKey() {
-        return authenticationKey;
+    public short getAuthenticationKeyID() {
+        return authenticationKey.authKeyID;
     }
+
 
     /**
      * Creates and authenticates a session with the device
@@ -129,12 +127,11 @@ public class YHSession {
 
 
         // Assemble 16 byte challenge consisting of the 8 random bytes sent to the device followed by the 8 bytes received from the device
-        challenge = getSessionAuthenticationChallenge(challenge, Utils.getSubArray(responseData, 1, 8));
+        challenge = getSessionAuthenticationChallenge(challenge, Arrays.copyOfRange(responseData, 1, 1 + 8));
         logger.finer("Authenticating session context: " + Utils.getPrintableBytes(challenge));
 
-
         deriveSessionKeys(challenge);
-        verifyCardCryptogram(Utils.getSubArray(responseData, 9, 8), challenge);
+        verifyCardCryptogram(Arrays.copyOfRange(responseData, 9, 9 + 8), challenge);
 
         // Send AuthenticateSession command
         byte[] inputData = getSessionAuthenticateMessageToMac(challenge);
@@ -156,7 +153,7 @@ public class YHSession {
     }
 
     /**
-     * Sends an encrypted message other this authenticated session to the device and returns the device's response.
+     * Sends an encrypted message over this authenticated session to the device and returns the device's response.
      *
      * @param message The message to send
      * @return The message response in plain text (aka decrypted)
@@ -215,7 +212,7 @@ public class YHSession {
         // Decrypt the message response and remove the padding from the plain text response
         resp = getEncryptedMessage(resp, key, iv, Cipher.DECRYPT_MODE);
         logger.finer("Plain text response: " + Utils.getPrintableBytes(resp));
-        resp = Utils.removePadding(resp);
+        resp = Utils.removePadding(resp, BLOCK_SIZE);
         logger.finer("Unpadded plain text response: " + Utils.getPrintableBytes(resp));
 
         incrementCounter();
@@ -247,7 +244,7 @@ public class YHSession {
         }
 
         try {
-            byte[] closeSessionMsg = {Command.CLOSE_SESSION.getCommand(), (byte) 0, (byte) 0};
+            byte[] closeSessionMsg = {Command.CLOSE_SESSION.getCommandId(), (byte) 0, (byte) 0};
             byte[] response = secureTransceive(closeSessionMsg);
             byte[] responseData = CommandUtils.getResponseData(Command.CLOSE_SESSION, response);
             if (responseData.length == 0) {
@@ -265,8 +262,12 @@ public class YHSession {
             } else {
                 throw e;
             }
+        } finally {
+            authenticationKey.destroyKeys();
+            authenticationKey = null;
         }
     }
+
 
     /// Help methods
 
@@ -361,7 +362,7 @@ public class YHSession {
             throws YHAuthenticationException {
         logger.finer("Card cryptogram: " + Utils.getPrintableBytes(cardCryptogram));
         byte[] generatedCryptogram = deriveKey(sessionMacKey, CARD_CRYPTOGRAM, challenge, HALF_BLOCK_SIZE * 8);
-        if (!Utils.isByteArrayEqual(generatedCryptogram, cardCryptogram)) {
+        if (!Arrays.equals(generatedCryptogram, cardCryptogram)) {
             throw new YHAuthenticationException(YHError.AUTHENTICATION_FAILED);
         }
         logger.fine("Card cryptogram successfully verified");
@@ -381,7 +382,7 @@ public class YHSession {
 
         // Get the message MAC
         ByteBuffer msg = ByteBuffer.allocate(12);
-        msg.put(Command.AUTHENTICATE_SESSION.getCommand());
+        msg.put(Command.AUTHENTICATE_SESSION.getCommandId());
         msg.putShort((short) (1 + 8 + 8)); // 1 byte sessionID + 8 byte host cryptogram + 8 bytes MAC
         msg.put(sessionID);
         msg.put(hostCryptogram);
@@ -398,7 +399,7 @@ public class YHSession {
     private byte[] getAuthenticateSessionInputData(final byte[] message, final byte[] fullMac) {
         ByteBuffer data = ByteBuffer.allocate(20);
         data.put(message);
-        data.put(Utils.getSubArray(fullMac, 0, 8));
+        data.put(Arrays.copyOfRange(fullMac, 0, 8));
         return data.array();
     }
 
@@ -450,7 +451,7 @@ public class YHSession {
         input.put((byte) 1);
         input.put(challenge);
         byte[] mac = getMac(key, null, input.array(), length);
-        return Utils.getSubArray(mac, 0, length / 8); //getFirstBytes(mac, length / 8);
+        return Arrays.copyOfRange(mac, 0, length / 8); //getFirstBytes(mac, length / 8);
     }
 
     private byte[] getIv(final SecretKey key)
@@ -489,7 +490,7 @@ public class YHSession {
     private byte[] getMessageToMac(final byte[] encMessage) {
         int lengthToMac = 1 + encMessage.length + 8; // sessionID + length of encrypted message + mac
         ByteBuffer bb = ByteBuffer.allocate(3 + 1 + encMessage.length);
-        bb.put(Command.SESSION_MESSAGE.getCommand()).putShort((short) lengthToMac);
+        bb.put(Command.SESSION_MESSAGE.getCommandId()).putShort((short) lengthToMac);
         bb.put(getSessionID());
         bb.put(encMessage);
         return bb.array();
@@ -503,11 +504,11 @@ public class YHSession {
      * @throws YHAuthenticationException If verification fails
      */
     private void verifyResponseMac(final byte[] rawResponse, final byte[] challenge) throws YHAuthenticationException {
-        byte[] macInResponse = Utils.getSubArray(rawResponse, rawResponse.length - 8, 8);
-        byte[] rmacToCalculate = Utils.getSubArray(rawResponse, 0, rawResponse.length - 8);
+        byte[] macInResponse = Arrays.copyOfRange(rawResponse, rawResponse.length - 8, rawResponse.length);
+        byte[] rmacToCalculate = Arrays.copyOfRange(rawResponse, 0, rawResponse.length - 8);
         byte[] fullResponseMac = getMac(sessionRMacKey, challenge, rmacToCalculate, BLOCK_SIZE);
-        byte[] rmac = Utils.getSubArray(fullResponseMac, 0, 8);
-        if (!Utils.isByteArrayEqual(rmac, macInResponse)) {
+        byte[] rmac = Arrays.copyOfRange(fullResponseMac, 0, 8);
+        if (!Arrays.equals(rmac, macInResponse)) {
             throw new YHAuthenticationException("Incorrect MAC");
         }
     }
@@ -544,4 +545,90 @@ public class YHSession {
         }
     }
 
+
+    /**
+     * Private class defining the Authentication Key used to authenticate this session
+     */
+    private class AuthKey {
+
+        private final String ALGORITHM = "PBKDF2WithHmacSHA256";
+        private final int KEY_SIZE = 16;
+        private final byte[] SALT = "Yubico".getBytes();
+        private final int ITERATIONS = 10000;
+
+        /**
+         * The Authentication Key's ObjectID on the device
+         */
+        private short authKeyID;
+        /**
+         * The long term encryption key of this Authentication Key
+         */
+        private byte[] encryptionKey;
+        /**
+         * The long term MAC key of this Authentication Key
+         */
+        private byte[] macKey;
+
+        public AuthKey(final short id, final byte[] encKey, final byte[] macKey) {
+            this.authKeyID = id;
+            this.encryptionKey = encKey;
+            this.macKey = macKey;
+        }
+
+        public AuthKey(final short keyId, final char[] password) throws NoSuchAlgorithmException, InvalidKeySpecException {
+            authKeyID = keyId;
+            init(password);
+        }
+
+        /**
+         * Return an instance of the Authentication Key whose ID is `keyId`
+         *
+         * @param password The password to derive the long term encryption key and MAC key from
+         * @return An instance of this Authentication Key
+         * @throws NoSuchAlgorithmException When failing to derive the encryption key and the MAC key
+         * @throws InvalidKeySpecException  When failing to derive the encryption key and the MAC key
+         */
+        public void init(char[] password) throws NoSuchAlgorithmException, InvalidKeySpecException {
+            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(ALGORITHM);
+            PBEKeySpec keySpec = new PBEKeySpec(password, SALT, ITERATIONS, KEY_SIZE * 2 * 8);
+            SecretKey key = keyFactory.generateSecret(keySpec);
+            final byte[] keyBytes = key.getEncoded();
+
+            ByteBuffer encKey = ByteBuffer.allocate(KEY_SIZE);
+            encKey.put(keyBytes, 0, KEY_SIZE);
+            encryptionKey = encKey.array();
+
+            ByteBuffer macKey = ByteBuffer.allocate(KEY_SIZE);
+            macKey.put(keyBytes, KEY_SIZE, KEY_SIZE);
+            this.macKey = macKey.array();
+
+            password = new char[password.length];
+        }
+
+        /**
+         * @return The Authentication Key ID
+         */
+        public short getAuthKeyID() {
+            return authKeyID;
+        }
+
+        /**
+         * @return The Authentication Key long term encryption key
+         */
+        public byte[] getEncryptionKey() {
+            return encryptionKey;
+        }
+
+        /**
+         * @return The Authentication Key long term MAC key
+         */
+        public byte[] getMacKey() {
+            return macKey;
+        }
+
+        public void destroyKeys() {
+            encryptionKey = new byte[encryptionKey.length];
+            macKey = new byte[macKey.length];
+        }
+    }
 }

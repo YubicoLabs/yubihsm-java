@@ -1,9 +1,8 @@
-import com.yubico.YubiHsm;
 import com.yubico.YHSession;
+import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
 import com.yubico.exceptions.*;
-import com.yubico.util.Utils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -16,6 +15,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.logging.Logger;
 
@@ -49,7 +49,7 @@ public class YHSessionTest {
 
         YHSession session1 = new YHSession(yubihsm, (short) 1, "password".toCharArray());
         assertNotNull(session1);
-        assertNotNull(session1.getAuthenticationKey());
+        assertEquals((short) 1, session1.getAuthenticationKeyID());
         assertEquals((byte) -1, session1.getSessionID());
         assertEquals(YHSession.SessionStatus.NOT_INITIALIZED, session1.getStatus());
 
@@ -60,6 +60,7 @@ public class YHSessionTest {
 
         YHSession session2 = new YHSession(yubihsm, (short) 1, "password".toCharArray());
         session2.createAuthenticatedSession();
+        assertEquals((short) 1, session2.getAuthenticationKeyID());
         assertEquals((byte) 1, session2.getSessionID());
         assertEquals(YHSession.SessionStatus.AUTHENTICATED, session2.getStatus());
         session2.createAuthenticatedSession();
@@ -67,27 +68,32 @@ public class YHSessionTest {
 
 
         YHSession session3 = new YHSession(yubihsm, (short) 1, "PASSWORD".toCharArray());
-        assertNotNull(session3.getAuthenticationKey());
+        assertEquals((short) 1, session3.getAuthenticationKeyID());
         assertEquals((byte) -1, session3.getSessionID());
         assertEquals(YHSession.SessionStatus.NOT_INITIALIZED, session3.getStatus());
 
         try {
             session3.createAuthenticatedSession();
-        } catch (YHAuthenticationException e) {
-            assertEquals(YHError.AUTHENTICATION_FAILED, e.getErrorCode());
+        } catch (Exception e) {
+            assertTrue("Expected YHAuthenticationException. Instead got " + e.getClass().getName(),
+                       (e instanceof YHAuthenticationException));
+            YHAuthenticationException exp = (YHAuthenticationException) e;
+            assertEquals(YHError.AUTHENTICATION_FAILED, exp.getErrorCode());
         }
 
         session2.closeSession();
         assertEquals(YHSession.SessionStatus.CLOSED, session2.getStatus());
-
-        session2.createAuthenticatedSession();
-        assertEquals(YHSession.SessionStatus.AUTHENTICATED, session2.getStatus());
-        session2.closeSession();
+        try {
+            session2.createAuthenticatedSession();
+        } catch (Exception e) {
+            assertTrue("Expected YHAuthenticationException. Instead got " + e.getClass().getName(),
+                       (e instanceof YHAuthenticationException));
+        }
 
         byte[] data = new byte[32];
         new Random().nextBytes(data);
         byte[] response = yubihsm.secureEcho(session1, data);
-        assertTrue(Utils.isByteArrayEqual(response, data));
+        assertTrue(Arrays.equals(response, data));
 
         session1.closeSession();
         assertEquals(YHSession.SessionStatus.CLOSED, session1.getStatus());

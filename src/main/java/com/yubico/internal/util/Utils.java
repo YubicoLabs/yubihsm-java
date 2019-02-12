@@ -1,6 +1,8 @@
-package com.yubico.util;
+package com.yubico.internal.util;
 
-import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class Utils {
@@ -29,39 +31,6 @@ public class Utils {
     }
 
     /**
-     * Compares 2 bytes arrays byte for byte
-     *
-     * @param a
-     * @param b
-     * @return True if the content of the two byte arrays is equal. False otherwise
-     */
-    public static boolean isByteArrayEqual(final byte[] a, final byte[] b) {
-        if (a.length != b.length) {
-            return false;
-        }
-        for (int i = 0; i < a.length; i++) {
-            if (a[i] != b[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Extracts a part of the input byte array
-     *
-     * @param ba     The full input array
-     * @param offset Start index of the part to extract
-     * @param length The number of bytes to extract
-     * @return `length` bytes starting from index `offset` in a new byte array
-     */
-    public static byte[] getSubArray(final byte[] ba, final int offset, final int length) {
-        ByteBuffer ret = ByteBuffer.allocate(length);
-        ret.put(ba, offset, length);
-        return ret.array();
-    }
-
-    /**
      * Adds the necessary number of bytes so that `ba`'s length will be a multiple of 16. The first of these extra bytes will be 0x80 and the rest
      * are 0x00
      *
@@ -70,9 +39,9 @@ public class Utils {
      */
     public static byte[] addPadding(final byte[] ba, final int blockSize) {
         int padLength = blockSize - (ba.length % blockSize);
-        ByteBuffer res = ByteBuffer.allocate(ba.length + padLength);
-        res.put(ba).put((byte) 0x80).put(new byte[padLength - 1]);
-        return res.array();
+        byte[] ret = Arrays.copyOf(ba, ba.length + padLength);
+        ret[ba.length] = (byte) 0x80;
+        return ret;
     }
 
     /**
@@ -81,8 +50,8 @@ public class Utils {
      * @param ba
      * @return `ba` without the trailing 0x80 0x00 ... 0x00 bytes
      */
-    public static byte[] removePadding(final byte[] ba) {
-        if (ba.length % 16 != 0) {
+    public static byte[] removePadding(final byte[] ba, final int blockSize) {
+        if (ba.length % blockSize != 0) {
             logger.fine("Byte array was not padded. Doing nothing");
             return ba;
         }
@@ -95,8 +64,38 @@ public class Utils {
             return ba;
         }
 
-        ByteBuffer unpadded = ByteBuffer.allocate(index);
-        unpadded.put(ba, 0, index);
-        return unpadded.array();
+        return Arrays.copyOf(ba, index);
+    }
+
+    /**
+     * Converts a list of integers into a short value. Mostly used to represent an object's domains
+     *
+     * @param values A list of integers
+     * @return A short value representing the list of integers
+     */
+    public static short getShortFromList(final List<Integer> values) {
+        int ret = 0;
+        for (int i : values) {
+            int v = 1 << (i - 1);
+            ret = ret | v;
+        }
+        return (short) ret;
+    }
+
+    /**
+     * Converts a short value into a list of integers. Mostly used to represent an object's domains
+     *
+     * @param value A short value
+     * @return The short value as a list of integers
+     */
+    public static List<Integer> getListFromShort(final short value) {
+        List<Integer> ret = new ArrayList();
+        for (int i = 0; i < 16; i++) {
+            int v = 1 << i;
+            if ((value & v) == v) {
+                ret.add(i + 1);
+            }
+        }
+        return ret;
     }
 }

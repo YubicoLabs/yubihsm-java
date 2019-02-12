@@ -1,10 +1,9 @@
-import com.yubico.YubiHsm;
 import com.yubico.YHSession;
+import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
 import com.yubico.exceptions.*;
 import com.yubico.objects.DeviceInfo;
-import com.yubico.util.Utils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -17,6 +16,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.logging.Logger;
 
@@ -51,7 +51,7 @@ public class YubiHsmTest {
             new Random().nextBytes(data);
 
             byte[] response = yubihsm.echo(data);
-            assertTrue(Utils.isByteArrayEqual(response, data));
+            assertTrue(Arrays.equals(response, data));
         }
         logger.info("TEST END: testPlainEcho()");
     }
@@ -67,7 +67,7 @@ public class YubiHsmTest {
             byte[] data = new byte[32];
             new Random().nextBytes(data);
             byte[] response = yubihsm.secureEcho(session, data);
-            assertTrue(Utils.isByteArrayEqual(response, data));
+            assertTrue(Arrays.equals(response, data));
         }
         session.closeSession();
         logger.info("TEST END: testAuthenticatedEcho()");

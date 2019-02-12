@@ -1,7 +1,7 @@
 package com.yubico.backend;
 
 import com.yubico.exceptions.YHConnectionException;
-import com.yubico.util.Utils;
+import com.yubico.internal.util.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,11 +26,21 @@ public class HttpBackend implements Backend {
     private int timeout;
     private HttpURLConnection connection = null;
 
+    /**
+     * Default constructor. Connects to the YubiHSM using `http://localhost:12345/connector/api` and timeout `0`
+     *
+     * @throws MalformedURLException
+     */
     public HttpBackend() throws MalformedURLException {
         this.url = new URL(DEFAULT_URL);
         this.timeout = DEFAULT_TIMEOUT;
     }
 
+    /**
+     * @param urlStr  URL used to connect to the YubiHSM over HTTP
+     * @param timeout Connection timeout
+     * @throws MalformedURLException
+     */
     public HttpBackend(final String urlStr, final int timeout) throws MalformedURLException {
         if (urlStr != null && !urlStr.equals("")) {
             this.url = new URL(urlStr);
@@ -76,6 +86,7 @@ public class HttpBackend implements Backend {
      * @return the device response
      * @throws YHConnectionException if connection to, writing to or reading from the device fail
      */
+    @Override
     public byte[] transceive(byte[] message) throws YHConnectionException {
 
         logger.finest("SEND >> " + Utils.getPrintableBytes(message));
@@ -127,6 +138,7 @@ public class HttpBackend implements Backend {
     /**
      * Closes the connection to the device if it is open
      */
+    @Override
     public void close() {
         if (connection != null) {
             connection.disconnect();

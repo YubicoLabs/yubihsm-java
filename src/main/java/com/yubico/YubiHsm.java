@@ -2,10 +2,10 @@ package com.yubico;
 
 import com.yubico.backend.Backend;
 import com.yubico.exceptions.*;
-import com.yubico.objects.Command;
+import com.yubico.internal.util.CommandUtils;
+import com.yubico.internal.util.Utils;
 import com.yubico.objects.DeviceInfo;
-import com.yubico.util.CommandUtils;
-import com.yubico.util.Utils;
+import com.yubico.objects.yhconcepts.Command;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -23,9 +23,6 @@ public class YubiHsm {
 
     private Logger logger = Logger.getLogger(YubiHsm.class.getName());
 
-    /**
-     * The backend used to connect to the device
-     */
     private Backend backend;
 
     public YubiHsm(Backend backend) {
@@ -97,7 +94,7 @@ public class YubiHsm {
                                                                                                 InvalidAlgorithmParameterException,
                                                                                                 BadPaddingException, IllegalBlockSizeException {
         if (session == null) {
-            throw new InvalidSession("Secure messages have to be send to the device over an authenticated session");
+            throw new InvalidSession("Secure messages have to be sent to the device over an authenticated session");
         }
 
         if (session.getStatus() != YHSession.SessionStatus.AUTHENTICATED) {

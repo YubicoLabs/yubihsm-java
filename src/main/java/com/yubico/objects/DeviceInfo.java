@@ -1,65 +1,23 @@
 package com.yubico.objects;
 
+import com.yubico.objects.yhconcepts.Algorithm;
+
 import java.nio.ByteBuffer;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Class holding various information about the YubiHSM
+ * Class representing various information about the YubiHSM
  */
 public class DeviceInfo {
 
-    /**
-     * The device version number in the form of major.minor.build
-     */
-    private String version;
-    /**
-     * The device serial number
-     */
-    private int serialnumber;
-    /**
-     * The device log store size expressed in number of log entries
-     */
-    private int logSize;
-    /**
-     * The number of log lines used
-     */
-    private int logUsed;
-    /**
-     * The list of algorithms supported by the device
-     */
-    private Set<Algorithm> supportedAlgorithms;
+    private final String version;
+    private final int serialnumber;
+    private final int logSize;
+    private final int logUsed;
+    private final List<Algorithm> supportedAlgorithms;
 
     public DeviceInfo() {
-        init();
-    }
-
-    public DeviceInfo(final String version, final int serialnumber, final int logSize, final int logUsed, final Set<Algorithm> algorithms) {
-        this.version = version;
-        this.serialnumber = serialnumber;
-        this.logSize = logSize;
-        this.logUsed = logUsed;
-        this.supportedAlgorithms = algorithms;
-    }
-
-    public DeviceInfo(final byte[] info) {
-        if (info != null && info.length > 0) {
-            ByteBuffer bb = ByteBuffer.wrap(info);
-            version = bb.get() + "." + bb.get() + "." + bb.get();
-            serialnumber = bb.getInt();
-            logSize = bb.get();
-            logUsed = bb.get();
-
-            supportedAlgorithms = new HashSet<Algorithm>();
-            while (bb.hasRemaining()) {
-                supportedAlgorithms.add(Algorithm.getAlgorithm(bb.get()));
-            }
-        } else {
-            init();
-        }
-    }
-
-    private void init() {
         version = null;
         serialnumber = 0;
         logSize = 0;
@@ -67,46 +25,77 @@ public class DeviceInfo {
         supportedAlgorithms = null;
     }
 
+    /**
+     * @param version      The device version
+     * @param serialnumber The device serialnumber
+     * @param logSize      The number of log entries that can be stored on the device
+     * @param logUsed      The number of log entries that are on the device
+     * @param algorithms   A list of algorithms supported by the device
+     */
+    public DeviceInfo(final String version, final int serialnumber, final int logSize, final int logUsed, final List<Algorithm> algorithms) {
+        this.version = version;
+        this.serialnumber = serialnumber;
+        this.logSize = logSize;
+        this.logUsed = logUsed;
+        this.supportedAlgorithms = algorithms;
+    }
+
+    /**
+     * Creates a DeviceInfo object by parsing a byte array
+     *
+     * @param info
+     */
+    public DeviceInfo(final byte[] info) {
+        ByteBuffer bb = ByteBuffer.wrap(info);
+        version = bb.get() + "." + bb.get() + "." + bb.get();
+        serialnumber = bb.getInt();
+        logSize = bb.get();
+        logUsed = bb.get();
+
+        supportedAlgorithms = new ArrayList<Algorithm>();
+        while (bb.hasRemaining()) {
+            supportedAlgorithms.add(Algorithm.getAlgorithm(bb.get()));
+        }
+    }
+
+    /**
+     * @return The device version number in the form of major.minor.build
+     */
     public String getVersion() {
         return version;
     }
 
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
+    /**
+     * @return The device serial number
+     */
     public int getSerialnumber() {
         return serialnumber;
     }
 
-    public void setSerialnumber(int serialnumber) {
-        this.serialnumber = serialnumber;
-    }
-
+    /**
+     * @return The number of log entries that can be stored on the device
+     */
     public int getLogSize() {
         return logSize;
     }
 
-    public void setLogSize(int logSize) {
-        this.logSize = logSize;
-    }
-
+    /**
+     * @return The number of log entries that are on the device
+     */
     public int getLogUsed() {
         return logUsed;
     }
 
-    public void setLogUsed(int logUsed) {
-        this.logUsed = logUsed;
-    }
-
-    public Set<Algorithm> getSupportedAlgorithms() {
+    /**
+     * @return A list of algorithms supported by the device
+     */
+    public List<Algorithm> getSupportedAlgorithms() {
         return supportedAlgorithms;
     }
 
-    public void setSupportedAlgorithms(Set<Algorithm> supportedAlgorithms) {
-        this.supportedAlgorithms = supportedAlgorithms;
-    }
-
+    /**
+     * @return A String representation of the device information
+     */
     public String toString() {
         if (version == null && serialnumber == 0) {
             return "";

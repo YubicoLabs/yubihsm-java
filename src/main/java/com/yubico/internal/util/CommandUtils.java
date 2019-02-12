@@ -1,9 +1,9 @@
-package com.yubico.util;
+package com.yubico.internal.util;
 
 import com.yubico.exceptions.YHDeviceException;
 import com.yubico.exceptions.YHError;
 import com.yubico.exceptions.YHInvalidResponseException;
-import com.yubico.objects.Command;
+import com.yubico.objects.yhconcepts.Command;
 
 import java.nio.ByteBuffer;
 import java.util.logging.Logger;
@@ -22,7 +22,7 @@ public class CommandUtils {
      */
     public static byte[] getTransceiveMessage(final Command cmd, final byte[] data) {
         ByteBuffer ret = ByteBuffer.allocate(data.length + 3);
-        ret.put(cmd.getCommand());
+        ret.put(cmd.getCommandId());
         ret.putShort((short) data.length);
         if (data != null && data.length > 0) {
             ret.put(data);
@@ -45,7 +45,7 @@ public class CommandUtils {
         if (respCode == cmd.getCommandResponse()) {
             logger.fine("Received response from device for " + cmd.getName());
         } else if (isErrorResponse(response)) {
-            final YHError error = YHError.getYubiHSMError(response[3]);
+            final YHError error = YHError.getError(response[3]);
             logger.severe("Device returned error code: " + error.toString());
             throw new YHDeviceException(error);
         } else {
@@ -81,7 +81,7 @@ public class CommandUtils {
             return false;
         }
 
-        byte[] errResp = {Command.ERROR.getCommand(), (byte) 0, (byte) 1};
+        byte[] errResp = {Command.ERROR.getCommandId(), (byte) 0, (byte) 1};
         for (int i = 0; i < errResp.length; i++) {
             if (data[i] != errResp[i]) {
                 return false;
