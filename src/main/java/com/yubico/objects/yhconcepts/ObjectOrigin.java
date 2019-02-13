@@ -37,14 +37,10 @@ public class ObjectOrigin extends YHConcept {
      */
     public static ObjectOrigin getObjectOrigin(final byte id) {
         switch (id) {
-            case 0x01:
-                return YH_ORIGIN_GENERATED;
-            case 0x02:
-                return YH_ORIGIN_IMPORTED;
-            case 0x10:
-                return YH_ORIGIN_IMPORTED_WRAPPED;
-            default:
-                return null;
+            case 0x01: return YH_ORIGIN_GENERATED;
+            case 0x02: return YH_ORIGIN_IMPORTED;
+            case 0x10: return YH_ORIGIN_IMPORTED_WRAPPED;
+            default: return null;
         }
     }
 

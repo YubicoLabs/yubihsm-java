@@ -1,5 +1,6 @@
 package com.yubico.objects.yhconcepts;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -84,18 +85,14 @@ public class Capability extends YHConcept {
     public static List<Capability> getCapabilities(final long capabilities) {
         List<Capability> ret = new ArrayList();
         long c = 1L;
-        if ((capabilities & c) == c) {
-            ret.add(getCapability(c));
-        }
-        int i = 0;
-        while (i < 63) {
-            c = c << 1;
+        while (c < capabilities) {
             if ((capabilities & c) == c) {
                 ret.add(getCapability(c));
             }
-            i++;
+            c = c << 1;
         }
         return ret;
+
     }
 
     /**

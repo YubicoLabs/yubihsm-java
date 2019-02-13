@@ -66,112 +66,59 @@ public class Command extends YHConcept {
      */
     public static Command getCommand(final byte id) {
         switch (id) {
-            case 0x01:
-                return ECHO;
-            case 0x03:
-                return CREATE_SESSION;
-            case 0x04:
-                return AUTHENTICATE_SESSION;
-            case 0x05:
-                return SESSION_MESSAGE;
-            case 0x06:
-                return DEVICE_INFO;
-            case 0x08:
-                return RESET_DEVICE;
-            case 0x40:
-                return CLOSE_SESSION;
-            case 0x41:
-                return GET_STORAGE_INFO;
-            case 0x42:
-                return PUT_OPAQUE;
-            case 0x43:
-                return GET_OPAQUE;
-            case 0x44:
-                return PUT_AUTHENTICATION_KEY;
-            case 0x45:
-                return PUT_ASYMMETRIC_KEY;
-            case 0x46:
-                return GENERATE_ASYMMETRIC_KEY;
-            case 0x47:
-                return SIGN_PKCS1;
-            case 0x48:
-                return LIST_OBJECTS;
-            case 0x49:
-                return DECRYPT_PKCS1;
-            case 0x4a:
-                return EXPORT_WRAPPED;
-            case 0x4b:
-                return IMPORT_WRAPPED;
-            case 0x4c:
-                return PUT_WRAP_KEY;
-            case 0x4d:
-                return GET_LOG_ENTRIES;
-            case 0x4e:
-                return GET_OBJECT_INFO;
-            case 0x4f:
-                return SET_OPTION;
-            case 0x50:
-                return GET_OPTION;
-            case 0x51:
-                return GET_PSEUDO_RANDOM;
-            case 0x52:
-                return PUT_HMAC_KEY;
-            case 0x53:
-                return SIGN_HMAC;
-            case 0x54:
-                return GET_PUBLIC_KEY;
-            case 0x55:
-                return SIGN_PSS;
-            case 0x56:
-                return SIGN_ECDSA;
-            case 0x57:
-                return DERIVE_ECDH;
-            case 0x58:
-                return DELETE_OBJECT;
-            case 0x59:
-                return DECRYPT_OAEP;
-            case 0x5a:
-                return GENERATE_HMAC_KEY;
-            case 0x5b:
-                return GENERATE_WRAP_KEY;
-            case 0x5c:
-                return VERIFY_HMAC;
-            case 0x5d:
-                return SIGN_SSH_CERTIFICATE;
-            case 0x5e:
-                return PUT_TEMPLATE;
-            case 0x5f:
-                return GET_TEMPLATE;
-            case 0x60:
-                return DECRYPT_OTP;
-            case 0x61:
-                return CREATE_OTP_AEAD;
-            case 0x62:
-                return RANDOMIZE_OTP_AEAD;
-            case 0x63:
-                return REWRAP_OTP_AEAD;
-            case 0x64:
-                return SIGN_ATTESTATION_CERTIFICATE;
-            case 0x65:
-                return PUT_OTP_AEAD_KEY;
-            case 0x66:
-                return GENERATE_OTP_AEAD_KEY;
-            case 0x67:
-                return SET_LOG_INDEX;
-            case 0x68:
-                return WRAP_DATA;
-            case 0x69:
-                return UNWRAP_DATA;
-            case 0x6a:
-                return SIGN_EDDSA;
-            case 0x6b:
-                return BLINK_DEVICE;
-            case 0x6c:
-                return CHANGE_AUTHENTICATION_KEY;
-            case 0x7f:
-                return ERROR;
-            default:
-                return null;
+            case 0x01: return ECHO;
+            case 0x03: return CREATE_SESSION;
+            case 0x04: return AUTHENTICATE_SESSION;
+            case 0x05: return SESSION_MESSAGE;
+            case 0x06: return DEVICE_INFO;
+            case 0x08: return RESET_DEVICE;
+            case 0x40: return CLOSE_SESSION;
+            case 0x41: return GET_STORAGE_INFO;
+            case 0x42: return PUT_OPAQUE;
+            case 0x43: return GET_OPAQUE;
+            case 0x44: return PUT_AUTHENTICATION_KEY;
+            case 0x45: return PUT_ASYMMETRIC_KEY;
+            case 0x46: return GENERATE_ASYMMETRIC_KEY;
+            case 0x47: return SIGN_PKCS1;
+            case 0x48: return LIST_OBJECTS;
+            case 0x49: return DECRYPT_PKCS1;
+            case 0x4a: return EXPORT_WRAPPED;
+            case 0x4b: return IMPORT_WRAPPED;
+            case 0x4c: return PUT_WRAP_KEY;
+            case 0x4d: return GET_LOG_ENTRIES;
+            case 0x4e: return GET_OBJECT_INFO;
+            case 0x4f: return SET_OPTION;
+            case 0x50: return GET_OPTION;
+            case 0x51: return GET_PSEUDO_RANDOM;
+            case 0x52: return PUT_HMAC_KEY;
+            case 0x53: return SIGN_HMAC;
+            case 0x54: return GET_PUBLIC_KEY;
+            case 0x55: return SIGN_PSS;
+            case 0x56: return SIGN_ECDSA;
+            case 0x57: return DERIVE_ECDH;
+            case 0x58: return DELETE_OBJECT;
+            case 0x59: return DECRYPT_OAEP;
+            case 0x5a: return GENERATE_HMAC_KEY;
+            case 0x5b: return GENERATE_WRAP_KEY;
+            case 0x5c: return VERIFY_HMAC;
+            case 0x5d: return SIGN_SSH_CERTIFICATE;
+            case 0x5e: return PUT_TEMPLATE;
+            case 0x5f: return GET_TEMPLATE;
+            case 0x60: return DECRYPT_OTP;
+            case 0x61: return CREATE_OTP_AEAD;
+            case 0x62: return RANDOMIZE_OTP_AEAD;
+            case 0x63: return REWRAP_OTP_AEAD;
+            case 0x64: return SIGN_ATTESTATION_CERTIFICATE;
+            case 0x65: return PUT_OTP_AEAD_KEY;
+            case 0x66: return GENERATE_OTP_AEAD_KEY;
+            case 0x67: return SET_LOG_INDEX;
+            case 0x68: return WRAP_DATA;
+            case 0x69: return UNWRAP_DATA;
+            case 0x6a: return SIGN_EDDSA;
+            case 0x6b: return BLINK_DEVICE;
+            case 0x6c: return CHANGE_AUTHENTICATION_KEY;
+            case 0x7f: return ERROR;
+            default: return null;
         }
 
     }

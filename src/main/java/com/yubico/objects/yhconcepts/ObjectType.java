@@ -37,22 +37,14 @@ public class ObjectType extends YHConcept {
      */
     public static ObjectType getObjectType(final byte id) {
         switch (id) {
-            case 1:
-                return TYPE_OPAQUE;
-            case 2:
-                return TYPE_AUTHENTICATION_KEY;
-            case 3:
-                return TYPE_ASYMMETRIC_KEY;
-            case 4:
-                return TYPE_WRAP_KEY;
-            case 5:
-                return TYPE_HMAC_KEY;
-            case 6:
-                return TYPE_TEMPLATE;
-            case 7:
-                return TYPE_OTP_AEAD_KEY;
-            default:
-                return null;
+            case 1: return TYPE_OPAQUE;
+            case 2: return TYPE_AUTHENTICATION_KEY;
+            case 3: return TYPE_ASYMMETRIC_KEY;
+            case 4: return TYPE_WRAP_KEY;
+            case 5: return TYPE_HMAC_KEY;
+            case 6: return TYPE_TEMPLATE;
+            case 7: return TYPE_OTP_AEAD_KEY;
+            default: return null;
         }
     }
 
