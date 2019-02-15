@@ -539,12 +539,11 @@ public class YHSession {
      * Adds 1 to the session counter
      */
     private void incrementCounter() {
-        lowCounter++;
-        if (lowCounter == 0) {
+        if(lowCounter == 0xFFFFFFFFFFFFFFFFL) {
             highCounter++;
         }
+        lowCounter++;
     }
-
 
     /**
      * Private class defining the Authentication Key used to authenticate this session

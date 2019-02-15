@@ -4,6 +4,8 @@ import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
 import com.yubico.exceptions.*;
 import com.yubico.objects.DeviceInfo;
+import com.yubico.objects.yhconcepts.ObjectType;
+import com.yubico.objects.yhobjects.YHObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -11,12 +13,15 @@ import org.junit.Test;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 
@@ -113,6 +118,26 @@ public class YubiHsmTest {
         }
         session.closeSession();
         logger.info("TEST END: testGetPseudoRandom()");
+    }
+
+    @Test
+    public void testObjectOperations()
+            throws YHConnectionException, InvalidSession, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+                   NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
+                   YHInvalidResponseException, InvalidKeySpecException, IllegalBlockSizeException, IOException {
+        logger.info("TEST START: testObjectOperations()");
+        YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
+
+        HashMap filters = new HashMap();
+        filters.put(YubiHsm.LIST_FILTERS.TYPE, ObjectType.TYPE_AUTHENTICATION_KEY);
+        List<YHObject> yhObjects = yubihsm.getObjectList(session, null);
+        assertTrue("No objects were returned", yhObjects.size() > 0);
+        for(YHObject o : yhObjects) {
+            System.out.println(o.toString());
+            System.out.println();
+        }
+        session.closeSession();
+        logger.info("TEST END: testObjectOperations()");
     }
 
 }

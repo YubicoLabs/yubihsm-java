@@ -19,7 +19,7 @@ public class YHConceptsTest {
         assertTrue(YHConcept.equals(Algorithm.EC_ECDSA_SHA1, Algorithm.EC_ECDSA_SHA1));
         assertTrue(YHConcept.equals(Capability.DELETE_AUTHENTICATION_KEY, Capability.DELETE_AUTHENTICATION_KEY));
         assertFalse(YHConcept.equals(Algorithm.EC_ECDSA_SHA1, Capability.DELETE_AUTHENTICATION_KEY));
-        assertFalse(YHConcept.equals(Algorithm.RSA_PKCS1_SHA512, Command.AUTHENTICATE_SESSION));
+        assertFalse(YHConcept.equals(Algorithm.RSA_PKCS1_SHA512, Command.AUTHENTICATE_SESSION)); // Both concepts have ID 0x04
         logger.info("TEST END: testConceptsEquality()");
     }
 

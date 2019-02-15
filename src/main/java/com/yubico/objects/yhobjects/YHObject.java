@@ -28,29 +28,23 @@ public class YHObject {
     private List<Capability> delegatedCapabilities;
 
     /**
-     * @param objectId              The object ID uniquely identifying the object together with the object type
-     * @param type                  The object type uniquely identifying the object together with the object ID
-     * @param capabilities          What the object can be used to do
-     * @param size                  The object size in bytes
-     * @param domains               The domains that the object can operate within
-     * @param algorithm             The algorithm used to create this object when applicable
-     * @param sequence              The number if previews objects that had had the same ID and type
-     * @param origin                Where the object has been created originally
-     * @param label                 The object label
-     * @param delegatedCapabilities What capability can the object bestow on other objects when applicable
+     *
+     * @param id The object ID uniquely identifying the object together with the object type
+     * @param type The object type uniquely identifying the object together with the object ID
+     * @param sequence The number if previews objects that had had the same ID and type
      */
-    public YHObject(final short objectId, final byte type, final long capabilities, final short size, final short domains, final byte algorithm,
-                    final byte sequence, final byte origin, final String label, final long delegatedCapabilities) {
-        this.capabilities = Capability.getCapabilities(capabilities);
-        this.id = objectId;
-        this.objectSize = size;
-        this.domains = Utils.getListFromShort(domains);
-        this.type = ObjectType.getObjectType(type);
-        this.algorithm = Algorithm.getAlgorithm(algorithm);
+    public YHObject(final short id, final ObjectType type, final byte sequence) {
+        this.id = id;
+        this.type = type;
         this.sequence = sequence;
-        this.origin = ObjectOrigin.getObjectOrigin(origin);
-        this.label = label;
-        this.delegatedCapabilities = Capability.getCapabilities(delegatedCapabilities);
+
+        this.capabilities = null;
+        this.objectSize = -1;
+        this.domains = null;
+        this.algorithm = null;
+        this.origin = null;
+        this.label = "";
+        this.delegatedCapabilities = null;
     }
 
     /**
@@ -60,10 +54,10 @@ public class YHObject {
      * @param size                  The object size in bytes
      * @param domains               The domains that the object can operate within
      * @param algorithm             The algorithm used to create this object when applicable
-     * @param sequence              The number if previews objects that had had the same ID and type
+     * @param sequence              The number of previous objects that had had the same ID and type
      * @param origin                Where the object has been created originally
      * @param label                 The object label
-     * @param delegatedCapabilities What capability can the object bestow on other objects when applicable
+     * @param delegatedCapabilities What capabilities can the object bestow on other objects when applicable
      */
     public YHObject(final short objectId, final ObjectType type, final List<Capability> capabilities, final short size, final List<Integer> domains,
                     final Algorithm algorithm, final byte sequence, final ObjectOrigin origin, final String label,
@@ -245,31 +239,43 @@ public class YHObject {
      * @return A String representation of the object
      */
     public String toString() {
-        StringBuilder builder = new StringBuilder("");
+        StringBuilder builder = new StringBuilder();
         builder.append("Object ID: " + id).append("\n");
         builder.append("Object Type: " + type.getName()).append("\n");
         builder.append("Sequence: " + sequence).append("\n");
-        builder.append("Origin: ").append(origin.getName());
-        builder.append("Label: ").append(label);
-
-        builder.append("Domains: ");
-        for (int d : domains) {
-            builder.append(d).append(" ");
+        if(objectSize > 0) {
+            builder.append("Size: " + objectSize + " bytes").append("\n");
         }
-        builder.append("\n");
-
-        builder.append("Capabilities: ");
-        for (Capability c : capabilities) {
-            builder.append(c.getName()).append(" ");
+        if(domains != null && domains.size()<0) {
+            builder.append("Domains: ");
+            for (int d : domains) {
+                builder.append(d).append(" ");
+            }
+            builder.append("\n");
         }
-        builder.append("\n");
-
-        builder.append("Delegated capabilities: ");
-        for (Capability c : delegatedCapabilities) {
-            builder.append(c.getName()).append(" ");
+        if(algorithm != null) {
+            builder.append("Algorithm: " + algorithm.getName()).append("\n");
         }
-        builder.append("\n");
-
+        if(origin != null) {
+            builder.append("Origin: ").append(origin.getName());
+        }
+        if(label != null && !label.isEmpty()) {
+            builder.append("Label: ").append(label);
+        }
+        if(capabilities != null && capabilities.size()>0) {
+            builder.append("Capabilities: ");
+            for (Capability c : capabilities) {
+                builder.append(c.getName()).append(" ");
+            }
+            builder.append("\n");
+        }
+        if(delegatedCapabilities != null && delegatedCapabilities.size()>0) {
+            builder.append("Delegated capabilities: ");
+            for (Capability c : delegatedCapabilities) {
+                builder.append(c.getName()).append(" ");
+            }
+            builder.append("\n");
+        }
         return builder.toString();
     }
 
@@ -278,7 +284,7 @@ public class YHObject {
      *
      * @param a
      * @param b
-     * @return True if the objects' IDs and the objects' types are equals. False otherwise
+     * @return True if the objects' IDs and the objects' types are equal. False otherwise
      */
     public static boolean equals(final YHObject a, final YHObject b) {
         return (a.getId() == b.getId()) && YHConcept.equals(a.getType(), b.getType());
