@@ -1,5 +1,6 @@
 package com.yubico.internal.util;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -8,7 +9,6 @@ import java.util.logging.Logger;
 public class Utils {
 
     static Logger logger = Logger.getLogger(Utils.class.getName());
-
 
     /**
      * Returns a String representation of a byte array. Each individual byte is represented in hexadecimal format and every 8 bytes are grouped
@@ -75,9 +75,11 @@ public class Utils {
      */
     public static short getShortFromList(final List<Integer> values) {
         int ret = 0;
-        for (int i : values) {
-            int v = 1 << (i - 1);
-            ret = ret | v;
+        if (values != null) {
+            for (int i : values) {
+                int v = 1 << (i - 1);
+                ret = ret | v;
+            }
         }
         return (short) ret;
     }
@@ -97,5 +99,17 @@ public class Utils {
             }
         }
         return ret;
+    }
+
+    /**
+     * Throws an InvalidParameterException with the specified error message if `value` is null
+     *
+     * @param value        The value to check whether it is null
+     * @param errorMessage The error message to include in the InvalidParameterException
+     */
+    public static void checkNullValue(final Object value, final String errorMessage) {
+        if (value == null) {
+            throw new InvalidParameterException(errorMessage);
+        }
     }
 }

@@ -4,7 +4,9 @@ import com.yubico.objects.yhconcepts.Command;
 import com.yubico.objects.yhconcepts.YHConcept;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
@@ -42,6 +44,10 @@ public class YHConceptsTest {
         expectedResult = 0x0000414100000000L;
         assertEquals(expectedResult, Capability.getCapabilities(capabilities));
 
+        assertEquals(0, Capability.getCapabilities(new ArrayList<>()));
+
+        assertEquals(0, Capability.getCapabilities(null));
+
         logger.info("TEST END: testGetCapabilitiesFromList()");
     }
 
@@ -64,10 +70,16 @@ public class YHConceptsTest {
 
         capabilities = 0x0000414100000000L;
         expectedResult = new ArrayList(Arrays.asList(Capability.REWRAP_FROM_OTP_AEAD_KEY, Capability.UNWRAP_DATA,
-                                                   Capability.DELETE_AUTHENTICATION_KEY, Capability.CHANGE_AUTHENTICATION_KEY));
+                                                     Capability.DELETE_AUTHENTICATION_KEY, Capability.CHANGE_AUTHENTICATION_KEY));
         actualResult = Capability.getCapabilities(capabilities);
         assertEquals(expectedResult.size(), actualResult.size());
         assertTrue(actualResult.containsAll(expectedResult));
+
+        capabilities = 0;
+        actualResult = Capability.getCapabilities(capabilities);
+        assertNotNull(actualResult);
+        assertEquals(0, actualResult.size());
+
 
         logger.info("TEST END: testGetCapabilitiesFromList()");
     }

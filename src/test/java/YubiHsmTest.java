@@ -4,7 +4,9 @@ import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
 import com.yubico.exceptions.*;
 import com.yubico.objects.DeviceInfo;
+import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.ObjectType;
+import com.yubico.objects.yhobjects.AuthenticationKey;
 import com.yubico.objects.yhobjects.YHObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -19,10 +21,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
@@ -63,7 +62,7 @@ public class YubiHsmTest {
 
     @Test
     public void testSecureEcho()
-            throws YHConnectionException, InvalidSession, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+            throws YHConnectionException, InvalidSessionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
                    NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
                    YHInvalidResponseException, InvalidKeySpecException, IllegalBlockSizeException {
         logger.info("TEST START: testAuthenticatedEcho()");
@@ -91,7 +90,7 @@ public class YubiHsmTest {
 
     //@Test
     public void testResetDevice()
-            throws InvalidKeySpecException, NoSuchAlgorithmException, YHConnectionException, InvalidSession, InvalidKeyException,
+            throws InvalidKeySpecException, NoSuchAlgorithmException, YHConnectionException, InvalidSessionException, InvalidKeyException,
                    YHDeviceException, NoSuchPaddingException, BadPaddingException, YHAuthenticationException,
                    InvalidAlgorithmParameterException, YHInvalidResponseException, IllegalBlockSizeException, MalformedURLException {
         logger.info("TEST START: testResetDevice()");
@@ -107,7 +106,7 @@ public class YubiHsmTest {
 
     @Test
     public void testGetPseudoRandom()
-            throws YHConnectionException, InvalidSession, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+            throws YHConnectionException, InvalidSessionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
                    NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
                    YHInvalidResponseException, InvalidKeySpecException, IllegalBlockSizeException {
         logger.info("TEST START: testGetPseudoRandom()");
@@ -121,23 +120,66 @@ public class YubiHsmTest {
     }
 
     @Test
-    public void testObjectOperations()
-            throws YHConnectionException, InvalidSession, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+    public void testAuthenticationKeyObject()
+            throws YHConnectionException, InvalidSessionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
                    NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
                    YHInvalidResponseException, InvalidKeySpecException, IllegalBlockSizeException, IOException {
-        logger.info("TEST START: testObjectOperations()");
+        logger.info("TEST START: testAuthenticationKeyObject()");
         YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
 
+        // List the authentication keys that already exited in the YubiHSM
         HashMap filters = new HashMap();
         filters.put(YubiHsm.LIST_FILTERS.TYPE, ObjectType.TYPE_AUTHENTICATION_KEY);
-        List<YHObject> yhObjects = yubihsm.getObjectList(session, null);
-        assertTrue("No objects were returned", yhObjects.size() > 0);
-        for(YHObject o : yhObjects) {
-            System.out.println(o.toString());
-            System.out.println();
+        List<YHObject> yhObjects = yubihsm.getObjectList(session, filters);
+        int numberOfAuthenticationKeys = yhObjects.size();
+
+        // Create a new authentication key on the YubiHSM
+        short id = AuthenticationKey.importAuthenticationKey(session, (short) 0x1234, "imported authentication key", new ArrayList(Arrays.asList(1, 2
+                , 3, 4)),
+                                                             new ArrayList<Capability>(Arrays.asList(Capability.SIGN_SSH_CERTIFICATE)),
+                                                             new ArrayList<Capability>(), "foo123".toCharArray());
+        assertEquals(0x1234, id);
+
+        // List the authentication Keys on the HSM again and make sure that the new key is included
+        yhObjects = yubihsm.getObjectList(session, filters);
+        assertEquals(numberOfAuthenticationKeys + 1, yhObjects.size());
+        YHObject importedKey = null;
+        for (YHObject o : yhObjects) {
+            if (o.getId() == id && o.getType().equals(ObjectType.TYPE_AUTHENTICATION_KEY)) {
+                importedKey = o;
+                break;
+            }
         }
+        assertNotNull("The new Authentication Key was not listed among the device objects", importedKey);
+
+        // Communicate over a session authenticated with the new authentication key
+        YHSession session2 = new YHSession(yubihsm, id, "foo123".toCharArray());
+        session2.createAuthenticatedSession();
+        assertEquals(id, session2.getAuthenticationKeyID());
+        assertEquals(YHSession.SessionStatus.AUTHENTICATED, session2.getStatus());
+        byte[] data = new byte[32];
+        new Random().nextBytes(data);
+        byte[] response = yubihsm.secureEcho(session2, data);
+        assertTrue(Arrays.equals(response, data));
+        session2.closeSession();
+
+        // Delete the new Authentication key
+        yubihsm.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
+
+        // List the authentication Keys on the HSM again and make sure that the new key is no longer there
+        yhObjects = yubihsm.getObjectList(session, filters);
+        assertEquals(numberOfAuthenticationKeys, yhObjects.size());
+        importedKey = null;
+        for (YHObject o : yhObjects) {
+            if (o.getId() == id && o.getType().equals(ObjectType.TYPE_AUTHENTICATION_KEY)) {
+                importedKey = o;
+                break;
+            }
+        }
+        assertNull("The new Authentication Key should have been deleted", importedKey);
+
         session.closeSession();
-        logger.info("TEST END: testObjectOperations()");
+        logger.info("TEST END: testAuthenticationKeyObject()");
     }
 
 }

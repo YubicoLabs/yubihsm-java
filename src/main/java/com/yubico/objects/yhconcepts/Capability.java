@@ -1,6 +1,5 @@
 package com.yubico.objects.yhconcepts;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -70,8 +69,10 @@ public class Capability extends YHConcept {
      */
     public static long getCapabilities(final List<Capability> capabilities) {
         long ret = 0L;
-        for (Capability c : capabilities) {
-            ret = ret | c.getCapabilityId();
+        if(capabilities != null) {
+            for (Capability c : capabilities) {
+                ret = ret | c.getCapabilityId();
+            }
         }
         return ret;
     }
@@ -438,5 +439,20 @@ public class Capability extends YHConcept {
             new Capability(0x0000400000000000L, "change-authentication-key", "Replace Authentication Key Objects",
                            new ArrayList<>(Arrays.asList(ObjectType.TYPE_AUTHENTICATION_KEY)));
 
-
+    public static final List<Capability> ALL_CAPABILITIES = new ArrayList(Arrays.asList(GET_OPAQUE, PUT_OPAQUE, PUT_AUTHENTICATION_KEY,
+                                                                                        PUT_ASYMMETRIC, GENERATE_ASYMMETRIC_KEY, SIGN_PKCS,
+                                                                                        SIGN_PSS, SIGN_ECDSA, SIGN_EDDSA, DECRYPT_PKCS,
+                                                                                        DECRYPT_OAEP, DERIVE_ECDH, EXPORT_WRAPPED, IMPORT_WRAPPED,
+                                                                                        PUT_WRAP_KEY, GENERATE_WRAP_KEY, EXPORTABLE_UNDER_WRAP,
+                                                                                        SET_OPTION, GET_OPTION, GET_PSEUDO_RANDOM, PUT_HMAC_KEY,
+                                                                                        GENERATE_HMAC_KEY, SIGN_HMAC, VERIFY_HMAC, GET_LOG_ENTRIES,
+                                                                                        SIGN_SSH_CERTIFICATE, GET_TEMPLATE, PUT_TEMPLATE,
+                                                                                        RESET_DEVICE, DECRYPT_OTP, CREATE_OTP_AEAD,
+                                                                                        RANDOMIZE_OTP_AEAD, REWRAP_FROM_OTP_AEAD_KEY,
+                                                                                        REWRAP_TO_OTP_AEAD_KEY, SIGN_ATTESTATION_CERTIFICATE,
+                                                                                        PUT_OTP_AEAD_KEY, GENERATE_OTP_AEAD_KEY, WRAP_DATA,
+                                                                                        UNWRAP_DATA, DELETE_OPAQUE, DELETE_AUTHENTICATION_KEY,
+                                                                                        DELETE_ASYMMETRIC_KEY, DELETE_WRAP_KEY, DELETE_HMAC_KEY,
+                                                                                        DELETE_TEMPLATE, DELETE_OTP_AEAD_KEY,
+                                                                                        CHANGE_AUTHENTICATION_KEY));
 }

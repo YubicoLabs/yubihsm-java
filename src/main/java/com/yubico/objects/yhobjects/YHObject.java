@@ -27,10 +27,13 @@ public class YHObject {
     private List<Capability> capabilities;
     private List<Capability> delegatedCapabilities;
 
+    protected YHObject(final short id) {
+        this.id = id;
+    }
+
     /**
-     *
-     * @param id The object ID uniquely identifying the object together with the object type
-     * @param type The object type uniquely identifying the object together with the object ID
+     * @param id       The object ID uniquely identifying the object together with the object type
+     * @param type     The object type uniquely identifying the object together with the object ID
      * @param sequence The number if previews objects that had had the same ID and type
      */
     public YHObject(final short id, final ObjectType type, final byte sequence) {
@@ -77,7 +80,8 @@ public class YHObject {
     /**
      * Constructor to create an YHObject object by parsing a byte array
      *
-     * @param data The object data as a byte array
+     * @param data The object data as a byte array in the form of {8 bytes capabilities + 2 bytes object ID + 2 bytes object size + 2 bytes domains
+     *             + 1 byte type + 1 byte algorithm + 1 byte sequence + 1 byte object origin + 40 bytes label + 8 bytes delegated capabilities}
      */
     public YHObject(final byte[] data) {
         ByteBuffer bb = ByteBuffer.wrap(data);
@@ -243,33 +247,33 @@ public class YHObject {
         builder.append("Object ID: " + id).append("\n");
         builder.append("Object Type: " + type.getName()).append("\n");
         builder.append("Sequence: " + sequence).append("\n");
-        if(objectSize > 0) {
+        if (objectSize > 0) {
             builder.append("Size: " + objectSize + " bytes").append("\n");
         }
-        if(domains != null && domains.size()<0) {
+        if (domains != null && domains.size() < 0) {
             builder.append("Domains: ");
             for (int d : domains) {
                 builder.append(d).append(" ");
             }
             builder.append("\n");
         }
-        if(algorithm != null) {
+        if (algorithm != null) {
             builder.append("Algorithm: " + algorithm.getName()).append("\n");
         }
-        if(origin != null) {
+        if (origin != null) {
             builder.append("Origin: ").append(origin.getName());
         }
-        if(label != null && !label.isEmpty()) {
+        if (label != null && !label.isEmpty()) {
             builder.append("Label: ").append(label);
         }
-        if(capabilities != null && capabilities.size()>0) {
+        if (capabilities != null && capabilities.size() > 0) {
             builder.append("Capabilities: ");
             for (Capability c : capabilities) {
                 builder.append(c.getName()).append(" ");
             }
             builder.append("\n");
         }
-        if(delegatedCapabilities != null && delegatedCapabilities.size()>0) {
+        if (delegatedCapabilities != null && delegatedCapabilities.size() > 0) {
             builder.append("Delegated capabilities: ");
             for (Capability c : delegatedCapabilities) {
                 builder.append(c.getName()).append(" ");

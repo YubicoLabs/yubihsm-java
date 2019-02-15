@@ -57,6 +57,11 @@ public class UtilTest {
         expectedResult = (short) 0x8681;
         assertEquals(expectedResult, Utils.getShortFromList(values));
 
+        assertEquals(0, Utils.getShortFromList(new ArrayList<>()));
+
+        assertEquals(0, Utils.getShortFromList(null));
+
+
         logger.info("TEST END: testGetShortFromList()");
     }
 
@@ -81,6 +86,12 @@ public class UtilTest {
         actualResult = Utils.getListFromShort(s);
         assertEquals(expectedResult.size(), actualResult.size());
         assertTrue(actualResult.containsAll(expectedResult));
+
+        s = 0;
+        actualResult = Utils.getListFromShort(s);
+        assertNotNull(actualResult);
+        assertEquals(0, actualResult.size());
+
 
         logger.info("TEST END: testGetListFromShort()");
     }

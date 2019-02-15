@@ -81,47 +81,6 @@ public class YubiHsm {
         return CommandUtils.getResponseData(cmd, response);
     }
 
-
-    /**
-     * Sends a command to the device and gets a response over an authenticated session
-     *
-     * @param session The session to send the command over
-     * @param cmd     The command to send
-     * @param data    The input to the command
-     * @return The output of the command
-     * @throws InvalidSession                     If no `session` is null
-     * @throws NoSuchAlgorithmException           If message encryption or decryption fails
-     * @throws YHDeviceException                  If the device return an error
-     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
-     * @throws YHConnectionException              If the connections to the device fails
-     * @throws InvalidKeyException                If message encryption or decryption fails
-     * @throws YHAuthenticationException          If the session or message authentication fails
-     * @throws NoSuchPaddingException             If message encryption or decryption fails
-     * @throws InvalidAlgorithmParameterException If message encryption or decryption fails
-     * @throws BadPaddingException                If message encryption or decryption fails
-     * @throws IllegalBlockSizeException          If message encryption or decryption fails
-     */
-    public byte[] sendSecureCmd(YHSession session, final Command cmd, final byte[] data) throws InvalidSession, NoSuchAlgorithmException,
-                                                                                                YHDeviceException,
-                                                                                                YHInvalidResponseException,
-                                                                                                YHConnectionException,
-                                                                                                InvalidKeyException,
-                                                                                                YHAuthenticationException,
-                                                                                                NoSuchPaddingException,
-                                                                                                InvalidAlgorithmParameterException,
-                                                                                                BadPaddingException, IllegalBlockSizeException {
-        if (session == null) {
-            throw new InvalidSession("Secure messages have to be sent to the device over an authenticated session");
-        }
-
-        if (session.getStatus() != YHSession.SessionStatus.AUTHENTICATED) {
-            session.createAuthenticatedSession();
-        }
-
-        byte[] resp = session.secureTransceive(CommandUtils.getTransceiveMessage(cmd, data));
-        return CommandUtils.getResponseData(cmd, resp);
-    }
-
     /**
      * Sends the Echo command with `data` as the input
      *
@@ -142,7 +101,7 @@ public class YubiHsm {
      * @param data    The input to the Echo command
      * @return The device response to the Echo command
      * @throws YHConnectionException              If the connection to the device fails
-     * @throws InvalidSession                     If `session` is null
+     * @throws InvalidSessionException            If `session` is null
      * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
      * @throws InvalidKeyException                If the message encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
@@ -154,10 +113,13 @@ public class YubiHsm {
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      */
     public byte[] secureEcho(final YHSession session, final byte[] data)
-            throws YHConnectionException, InvalidSession, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+            throws YHConnectionException, InvalidSessionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
                    NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
                    YHInvalidResponseException, IllegalBlockSizeException {
-        return sendSecureCmd(session, Command.ECHO, data);
+        if (session == null) {
+            throw new InvalidSessionException();
+        }
+        return session.sendSecureCmd(Command.ECHO, data);
     }
 
     /**
@@ -181,7 +143,7 @@ public class YubiHsm {
      *
      * @param session The session to send the command over
      * @throws YHConnectionException              If the connection to the device fails
-     * @throws InvalidSession                     If `session` is null
+     * @throws InvalidSessionException            If `session` is null
      * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
      * @throws InvalidKeyException                If the message encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
@@ -193,10 +155,13 @@ public class YubiHsm {
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      */
     public void resetDevice(final YHSession session)
-            throws YHConnectionException, InvalidSession, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+            throws YHConnectionException, InvalidSessionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
                    NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
                    YHInvalidResponseException, IllegalBlockSizeException {
-        byte[] resp = sendSecureCmd(session, Command.RESET_DEVICE, new byte[0]);
+        if (session == null) {
+            throw new InvalidSessionException();
+        }
+        byte[] resp = session.sendSecureCmd(Command.RESET_DEVICE, new byte[0]);
         if (resp.length != 0) {
             throw new YHInvalidResponseException("Expecting empty response. Found: " + Utils.getPrintableBytes(resp));
         }
@@ -209,7 +174,7 @@ public class YubiHsm {
      * @param length  The number of pseudo random bytes to return
      * @return `length` pseudo random bytes
      * @throws YHConnectionException              If the connection to the device fails
-     * @throws InvalidSession                     If `session` is null
+     * @throws InvalidSessionException            If `session` is null
      * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
      * @throws InvalidKeyException                If the message encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
@@ -221,18 +186,25 @@ public class YubiHsm {
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      */
     public byte[] getRandom(final YHSession session, final int length)
-            throws YHConnectionException, InvalidSession, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+            throws YHConnectionException, InvalidSessionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
                    NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
                    YHInvalidResponseException, IllegalBlockSizeException {
+        if (session == null) {
+            throw new InvalidSessionException();
+        }
         ByteBuffer data = ByteBuffer.allocate(2);
         data.putShort((short) length);
-        return sendSecureCmd(session, Command.GET_PSEUDO_RANDOM, data.array());
+        return session.sendSecureCmd(Command.GET_PSEUDO_RANDOM, data.array());
     }
 
     public List<YHObject> getObjectList(final YHSession session, final Map<LIST_FILTERS, Object> filters)
-            throws IOException, InvalidSession, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+            throws IOException, InvalidSessionException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    NoSuchPaddingException, IllegalBlockSizeException {
+        if (session == null) {
+            throw new InvalidSessionException();
+        }
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         if (filters != null) {
             try {
@@ -301,7 +273,7 @@ public class YubiHsm {
         }
 
         byte[] cmdMessage = baos.toByteArray();
-        byte[] response = sendSecureCmd(session, Command.LIST_OBJECTS, cmdMessage);
+        byte[] response = session.sendSecureCmd(Command.LIST_OBJECTS, cmdMessage);
         if (response.length % 4 != 0) {
             logger.finer(Command.LIST_OBJECTS.getName() + " response: " + Utils.getPrintableBytes(response));
             throw new YHInvalidResponseException("Expecting length of response to " + Command.LIST_OBJECTS.getName() + " command to be a multiple " +
@@ -314,6 +286,28 @@ public class YubiHsm {
         }
         logger.fine("Response to " + Command.LIST_OBJECTS.getName() + " command contained " + ret.size() + " objects");
         return ret;
+    }
+
+    public void deleteObject(final YHSession session, final short objectID, final ObjectType objectType) throws InvalidSessionException,
+                                                                                                                NoSuchAlgorithmException,
+                                                                                                                YHDeviceException,
+                                                                                                                YHInvalidResponseException,
+                                                                                                                YHConnectionException,
+                                                                                                                InvalidKeyException,
+                                                                                                                YHAuthenticationException,
+                                                                                                                NoSuchPaddingException,
+                                                                                                                InvalidAlgorithmParameterException,
+                                                                                                                BadPaddingException,
+                                                                                                                IllegalBlockSizeException {
+        if (session == null) {
+            throw new InvalidSessionException();
+        }
+        Utils.checkNullValue(objectType, "Object type is necessary to identify the object to delete");
+
+        ByteBuffer bb = ByteBuffer.allocate(3);
+        bb.putShort(objectID);
+        bb.put(objectType.getTypeId());
+        session.sendSecureCmd(Command.DELETE_OBJECT, bb.array());
     }
 
 }
