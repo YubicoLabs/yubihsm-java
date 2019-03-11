@@ -304,10 +304,42 @@ public class YubiHsm {
         }
         Utils.checkNullValue(objectType, "Object type is necessary to identify the object to delete");
 
+        logger.finer("Deleting " + objectType.getName() + " " + String.format("0x%02X", objectID));
+
         ByteBuffer bb = ByteBuffer.allocate(3);
         bb.putShort(objectID);
         bb.put(objectType.getTypeId());
         session.sendSecureCmd(Command.DELETE_OBJECT, bb.array());
+    }
+
+    public YHObject getObjectInfo(final YHSession session, final short objectID, final ObjectType objectType) throws InvalidSessionException,
+                                                                                                                     NoSuchAlgorithmException,
+                                                                                                                     YHDeviceException,
+                                                                                                                     YHInvalidResponseException,
+                                                                                                                     YHConnectionException,
+                                                                                                                     InvalidKeyException,
+                                                                                                                     YHAuthenticationException,
+                                                                                                                     NoSuchPaddingException,
+                                                                                                                     InvalidAlgorithmParameterException,
+                                                                                                                     BadPaddingException,
+                                                                                                                     IllegalBlockSizeException {
+        if (session == null) {
+            throw new InvalidSessionException();
+        }
+        Utils.checkNullValue(objectType, "Object type is necessary to identify the object to delete");
+
+        logger.finer("Getting object info for " + objectType.getName() + " " + String.format("0x%02X", objectID));
+
+        ByteBuffer bb = ByteBuffer.allocate(3);
+        bb.putShort(objectID);
+        bb.put(objectType.getTypeId());
+        byte[] response = session.sendSecureCmd(Command.GET_OBJECT_INFO, bb.array());
+        YHObject info = new YHObject(response);
+
+        logger.finer("Response to " + Command.GET_OBJECT_INFO.getName() + " returned:");
+        logger.finer(info.toString());
+
+        return info;
     }
 
 }

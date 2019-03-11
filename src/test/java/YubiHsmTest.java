@@ -4,7 +4,9 @@ import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
 import com.yubico.exceptions.*;
 import com.yubico.objects.DeviceInfo;
+import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
+import com.yubico.objects.yhconcepts.ObjectOrigin;
 import com.yubico.objects.yhconcepts.ObjectType;
 import com.yubico.objects.yhobjects.AuthenticationKey;
 import com.yubico.objects.yhobjects.YHObject;
@@ -127,30 +129,23 @@ public class YubiHsmTest {
         logger.info("TEST START: testAuthenticationKeyObject()");
         YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
 
-        // List the authentication keys that already exited in the YubiHSM
-        HashMap filters = new HashMap();
-        filters.put(YubiHsm.LIST_FILTERS.TYPE, ObjectType.TYPE_AUTHENTICATION_KEY);
-        List<YHObject> yhObjects = yubihsm.getObjectList(session, filters);
-        int numberOfAuthenticationKeys = yhObjects.size();
+        // New authentication key details
+        final short id = 0x1234;
+        final String label = "imported authentication key";
+        final List domains = Arrays.asList(1, 2, 3, 4);
+        final List capabilities = Arrays.asList(Capability.SIGN_SSH_CERTIFICATE);
+        final List delegatedCapabilities = new ArrayList<Capability>();
 
-        // Create a new authentication key on the YubiHSM
-        short id = AuthenticationKey.importAuthenticationKey(session, (short) 0x1234, "imported authentication key", new ArrayList(Arrays.asList(1, 2
-                , 3, 4)),
-                                                             new ArrayList<Capability>(Arrays.asList(Capability.SIGN_SSH_CERTIFICATE)),
-                                                             new ArrayList<Capability>(), "foo123".toCharArray());
-        assertEquals(0x1234, id);
+        // Import a new authentication key into the HSM and verify import
+        listObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY, false);
+        AuthenticationKey
+                .importAuthenticationKey(session, id, label, domains, capabilities, delegatedCapabilities, "foo123".toCharArray());
+        listObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY, true);
 
-        // List the authentication Keys on the HSM again and make sure that the new key is included
-        yhObjects = yubihsm.getObjectList(session, filters);
-        assertEquals(numberOfAuthenticationKeys + 1, yhObjects.size());
-        YHObject importedKey = null;
-        for (YHObject o : yhObjects) {
-            if (o.getId() == id && o.getType().equals(ObjectType.TYPE_AUTHENTICATION_KEY)) {
-                importedKey = o;
-                break;
-            }
-        }
-        assertNotNull("The new Authentication Key was not listed among the device objects", importedKey);
+        // Verify authentication key details
+        verifyObjectInfo(session, id, ObjectType.TYPE_AUTHENTICATION_KEY, capabilities, domains, Algorithm.AES128_YUBICO_AUTHENTICATION,
+                         ObjectOrigin.YH_ORIGIN_IMPORTED, label, delegatedCapabilities);
+
 
         // Communicate over a session authenticated with the new authentication key
         YHSession session2 = new YHSession(yubihsm, id, "foo123".toCharArray());
@@ -163,23 +158,60 @@ public class YubiHsmTest {
         assertTrue(Arrays.equals(response, data));
         session2.closeSession();
 
-        // Delete the new Authentication key
+        // Delete the new Authentication key and verify deletion
         yubihsm.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
-
-        // List the authentication Keys on the HSM again and make sure that the new key is no longer there
-        yhObjects = yubihsm.getObjectList(session, filters);
-        assertEquals(numberOfAuthenticationKeys, yhObjects.size());
-        importedKey = null;
-        for (YHObject o : yhObjects) {
-            if (o.getId() == id && o.getType().equals(ObjectType.TYPE_AUTHENTICATION_KEY)) {
-                importedKey = o;
-                break;
-            }
-        }
-        assertNull("The new Authentication Key should have been deleted", importedKey);
+        listObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY, false);
 
         session.closeSession();
         logger.info("TEST END: testAuthenticationKeyObject()");
     }
+
+    private void listObject(final YHSession session, final short id, final ObjectType type, final boolean exists) throws IOException,
+                                                                                                                         InvalidSessionException,
+                                                                                                                         NoSuchAlgorithmException,
+                                                                                                                         YHConnectionException,
+                                                                                                                         InvalidKeyException,
+                                                                                                                         YHDeviceException,
+                                                                                                                         InvalidAlgorithmParameterException,
+                                                                                                                         YHAuthenticationException,
+                                                                                                                         YHInvalidResponseException,
+                                                                                                                         BadPaddingException,
+                                                                                                                         NoSuchPaddingException,
+                                                                                                                         IllegalBlockSizeException {
+
+        HashMap filters = new HashMap();
+        filters.put(YubiHsm.LIST_FILTERS.ID, id);
+        filters.put(YubiHsm.LIST_FILTERS.TYPE, type);
+        List<YHObject> objects = yubihsm.getObjectList(session, filters);
+        if (exists) {
+            assertEquals(1, objects.size());
+            YHObject object = objects.get(0);
+            assertEquals(id, object.getId());
+            assertEquals(type, object.getType());
+        } else {
+            assertEquals(0, objects.size());
+        }
+    }
+
+    private void verifyObjectInfo(final YHSession session, final short id, final ObjectType type, final List<Capability> capabilities,
+                                  final List domains, final Algorithm algorithm, final ObjectOrigin origin, final String label,
+                                  final List<Capability> delegatedCapabilities) throws InvalidSessionException, NoSuchAlgorithmException,
+                                                                                       YHConnectionException, InvalidKeyException,
+                                                                                       YHDeviceException, InvalidAlgorithmParameterException,
+                                                                                       YHAuthenticationException, YHInvalidResponseException,
+                                                                                       BadPaddingException, NoSuchPaddingException,
+                                                                                       IllegalBlockSizeException {
+        YHObject object = yubihsm.getObjectInfo(session, id, type);
+        assertNotNull(object);
+        assertEquals(capabilities, object.getCapabilities());
+        assertEquals(id, object.getId());
+        assertEquals(domains, object.getDomains());
+        assertEquals(type, object.getType());
+        assertEquals(algorithm, object.getAlgorithm());
+        assertEquals(origin, object.getOrigin());
+        assertEquals(label, object.getLabel());
+        assertEquals(delegatedCapabilities, object.getDelegatedCapabilities());
+    }
+
 
 }

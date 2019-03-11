@@ -86,7 +86,7 @@ public class Capability extends YHConcept {
     public static List<Capability> getCapabilities(final long capabilities) {
         List<Capability> ret = new ArrayList();
         long c = 1L;
-        while (c < capabilities) {
+        while (c <= capabilities) {
             if ((capabilities & c) == c) {
                 ret.add(getCapability(c));
             }

@@ -94,8 +94,9 @@ public class YHObject {
         sequence = bb.get();
         origin = ObjectOrigin.getObjectOrigin(bb.get());
         byte[] l = new byte[LABEL_LENGTH];
-        bb.get(l, 18, LABEL_LENGTH);
+        bb.get(l, 0, LABEL_LENGTH);
         label = new String(l);
+        label = label.trim();
         delegatedCapabilities = Capability.getCapabilities(bb.getLong());
     }
 
@@ -261,10 +262,10 @@ public class YHObject {
             builder.append("Algorithm: " + algorithm.getName()).append("\n");
         }
         if (origin != null) {
-            builder.append("Origin: ").append(origin.getName());
+            builder.append("Origin: ").append(origin.getName()).append("\n");
         }
         if (label != null && !label.isEmpty()) {
-            builder.append("Label: ").append(label);
+            builder.append("Label: ").append(label).append("\n");
         }
         if (capabilities != null && capabilities.size() > 0) {
             builder.append("Capabilities: ");

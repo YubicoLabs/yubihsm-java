@@ -75,6 +75,13 @@ public class YHConceptsTest {
         assertEquals(expectedResult.size(), actualResult.size());
         assertTrue(actualResult.containsAll(expectedResult));
 
+        capabilities = 0x0000000002000000L;
+        expectedResult = new ArrayList(Arrays.asList(Capability.SIGN_SSH_CERTIFICATE));
+        actualResult = Capability.getCapabilities(capabilities);
+        assertEquals(expectedResult.size(), actualResult.size());
+        assertTrue(actualResult.containsAll(expectedResult));
+
+
         capabilities = 0;
         actualResult = Capability.getCapabilities(capabilities);
         assertNotNull(actualResult);
