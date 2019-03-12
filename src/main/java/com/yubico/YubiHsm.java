@@ -288,6 +288,24 @@ public class YubiHsm {
         return ret;
     }
 
+    /**
+     * Deletes a specific object from the device
+     *
+     * @param session    The session to send the command over
+     * @param objectID   The ID of the subject to delete
+     * @param objectType The type of the object to delete
+     * @throws InvalidSessionException            If `session` is null
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     */
     public void deleteObject(final YHSession session, final short objectID, final ObjectType objectType) throws InvalidSessionException,
                                                                                                                 NoSuchAlgorithmException,
                                                                                                                 YHDeviceException,
@@ -312,6 +330,25 @@ public class YubiHsm {
         session.sendSecureCmd(Command.DELETE_OBJECT, bb.array());
     }
 
+    /**
+     * Retrieves details of a specific object in the device
+     *
+     * @param session    The session to send the command over
+     * @param objectID   The ID of the subject to delete
+     * @param objectType The type of the object to delete
+     * @throws InvalidSessionException            If `session` is null
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     * @throws IllegalBlockSizeException
+     */
     public YHObject getObjectInfo(final YHSession session, final short objectID, final ObjectType objectType) throws InvalidSessionException,
                                                                                                                      NoSuchAlgorithmException,
                                                                                                                      YHDeviceException,
