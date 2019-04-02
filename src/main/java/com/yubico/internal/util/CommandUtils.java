@@ -21,10 +21,14 @@ public class CommandUtils {
      * @return A byte array in the form: [command code (1 byte), length of data (2 bytes), data]
      */
     public static byte[] getTransceiveMessage(final Command cmd, final byte[] data) {
-        ByteBuffer ret = ByteBuffer.allocate(data.length + 3);
+        int dl = 0;
+        if(data != null) {
+            dl = data.length;
+        }
+        ByteBuffer ret = ByteBuffer.allocate(dl + 3);
         ret.put(cmd.getCommandId());
-        ret.putShort((short) data.length);
-        if (data != null && data.length > 0) {
+        ret.putShort((short) dl);
+        if (dl > 0) {
             ret.put(data);
         }
         return ret.array();
@@ -46,7 +50,7 @@ public class CommandUtils {
             logger.fine("Received response from device for " + cmd.getName());
         } else if (isErrorResponse(response)) {
             final YHError error = YHError.getError(response[3]);
-            logger.severe("Device returned error code: " + error.toString());
+            logger.severe("Device returned error code: " + (error==null? "Unknown" : error.toString()));
             throw new YHDeviceException(error);
         } else {
             final String err = "Unrecognized response: " + Utils.getPrintableBytes(response);

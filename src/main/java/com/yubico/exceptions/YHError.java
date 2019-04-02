@@ -48,6 +48,10 @@ public class YHError {
         return this.getCode() == other.getCode();
     }
 
+    public int hashCode() {
+        return super.hashCode();
+    }
+
     /**
      * Returns the error whose code is specified
      *

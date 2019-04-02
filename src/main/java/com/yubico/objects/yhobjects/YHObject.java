@@ -251,7 +251,7 @@ public class YHObject {
         if (objectSize > 0) {
             builder.append("Size: " + objectSize + " bytes").append("\n");
         }
-        if (domains != null && domains.size() < 0) {
+        if (domains != null && !domains.isEmpty()) {
             builder.append("Domains: ");
             for (int d : domains) {
                 builder.append(d).append(" ");
@@ -267,14 +267,14 @@ public class YHObject {
         if (label != null && !label.isEmpty()) {
             builder.append("Label: ").append(label).append("\n");
         }
-        if (capabilities != null && capabilities.size() > 0) {
+        if (capabilities != null && !capabilities.isEmpty()) {
             builder.append("Capabilities: ");
             for (Capability c : capabilities) {
                 builder.append(c.getName()).append(" ");
             }
             builder.append("\n");
         }
-        if (delegatedCapabilities != null && delegatedCapabilities.size() > 0) {
+        if (delegatedCapabilities != null && !delegatedCapabilities.isEmpty()) {
             builder.append("Delegated capabilities: ");
             for (Capability c : delegatedCapabilities) {
                 builder.append(c.getName()).append(" ");
