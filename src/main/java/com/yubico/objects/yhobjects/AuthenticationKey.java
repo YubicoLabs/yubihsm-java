@@ -236,4 +236,88 @@ public class AuthenticationKey extends YHObject {
 
         return id;
     }
+
+    /**
+     * @param session       An authenticated session to communicate with the device over
+     * @param id            The ID of the Authentication Key to change
+     * @param encryptionKey Long term encryption key
+     * @param macKey        Long term MAC key
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     */
+    public static void changeAuthenticationKey(final YHSession session, short id, byte[] encryptionKey, byte[] macKey)
+            throws NoSuchAlgorithmException,
+                   YHDeviceException,
+                   YHInvalidResponseException,
+                   YHConnectionException,
+                   InvalidKeyException,
+                   YHAuthenticationException,
+                   NoSuchPaddingException,
+                   InvalidAlgorithmParameterException,
+                   BadPaddingException,
+                   IllegalBlockSizeException {
+        Utils.checkNullValue(session, "Session is null. Creating a new authentication key must be done over an authenticated session");
+        Utils.checkNullValue(encryptionKey, "Missing encryption key. To create a new authentication key, a 16 byte encryption key is needed");
+        Utils.checkNullValue(macKey, "Missing MAC key. To create a new authentication key, a 16 byte MAC key is needed");
+        if (encryptionKey.length != KEY_SIZE || macKey.length != KEY_SIZE) {
+            throw new InvalidParameterException("Long term encryption key and MAC key have to be of size " + KEY_SIZE);
+        }
+
+        ByteBuffer bb = ByteBuffer.allocate(35);
+        bb.putShort(id);
+        bb.put(Algorithm.AES128_YUBICO_AUTHENTICATION.getAlgorithmId());
+        bb.put(encryptionKey);
+        bb.put(macKey);
+
+        byte[] resp = session.sendSecureCmd(Command.CHANGE_AUTHENTICATION_KEY, bb.array());
+        bb = ByteBuffer.wrap(resp);
+        id = bb.getShort();
+
+        encryptionKey = new byte[encryptionKey.length];
+        macKey = new byte[macKey.length];
+    }
+
+    /**
+     * @param session  An authenticated session to communicate with the device over
+     * @param id       The ID of the Authentication Key to change
+     * @param password The password to derive the long term encryption key and MAC key from
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     * @throws InvalidKeySpecException            If the derivation of the long term keys from the password fails
+     */
+    public static void changeAuthenticationKey(final YHSession session, short id, char[] password) throws NoSuchAlgorithmException,
+                                                                                                          YHDeviceException,
+                                                                                                          YHInvalidResponseException,
+                                                                                                          YHConnectionException,
+                                                                                                          InvalidKeyException,
+                                                                                                          YHAuthenticationException,
+                                                                                                          NoSuchPaddingException,
+                                                                                                          InvalidAlgorithmParameterException,
+                                                                                                          BadPaddingException,
+                                                                                                          IllegalBlockSizeException,
+                                                                                                          InvalidKeySpecException {
+        byte[] secretKey = deriveSecretKey(password);
+        byte[] encKey = Arrays.copyOfRange(secretKey, 0, KEY_SIZE);
+        byte[] macKey = Arrays.copyOfRange(secretKey, KEY_SIZE, secretKey.length);
+        changeAuthenticationKey(session, id, encKey, macKey);
+
+        password = new char[password.length];
+    }
+
 }
