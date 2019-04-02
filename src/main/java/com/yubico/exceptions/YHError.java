@@ -12,7 +12,7 @@ public class YHError {
      * @param code        Error code
      * @param description Error description
      */
-    public YHError(final byte code, final String description) {
+    private YHError(final byte code, final String description) {
         this.code = code;
         this.description = description;
     }
@@ -95,7 +95,7 @@ public class YHError {
             case 0x11:
                 return OBJECT_EXISTS;
             default:
-                return null;
+                return new YHError(code, "Error unknown");
         }
     }
 

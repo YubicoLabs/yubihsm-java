@@ -10,9 +10,9 @@ public class YHDeviceException extends Exception {
     }
 
 
-    public YHDeviceException(final YHError erroCode, final Throwable cause) {
-        super("The YubiHsm returned error code " + erroCode.toString(), cause);
-        this.errorCode = erroCode;
+    public YHDeviceException(final YHError errorCode, final Throwable cause) {
+        super("The YubiHsm returned error code " + errorCode.toString(), cause);
+        this.errorCode = errorCode;
     }
 
     public YHError getErrorCode() {

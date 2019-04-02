@@ -50,7 +50,7 @@ public class CommandUtils {
             logger.fine("Received response from device for " + cmd.getName());
         } else if (isErrorResponse(response)) {
             final YHError error = YHError.getError(response[3]);
-            logger.severe("Device returned error code: " + (error==null? "Unknown" : error.toString()));
+            logger.severe("Device returned error code: " + error.toString());
             throw new YHDeviceException(error);
         } else {
             final String err = "Unrecognized response: " + Utils.getPrintableBytes(response);
