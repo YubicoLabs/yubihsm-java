@@ -9,7 +9,7 @@ public class Algorithm extends YHConcept {
      * @param id   Algorithm ID
      * @param name Algorithm name
      */
-    public Algorithm(final byte id, final String name) {
+    private Algorithm(final byte id, final String name) {
         super(id, name);
     }
 

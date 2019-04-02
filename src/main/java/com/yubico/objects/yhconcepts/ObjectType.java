@@ -9,7 +9,7 @@ public class ObjectType extends YHConcept {
      * @param id   Type ID
      * @param name Type name
      */
-    public ObjectType(final byte id, final String name) {
+    private ObjectType(final byte id, final String name) {
         super(id, name);
     }
 

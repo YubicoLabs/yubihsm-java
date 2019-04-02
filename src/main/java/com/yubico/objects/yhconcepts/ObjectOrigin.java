@@ -9,7 +9,7 @@ public class ObjectOrigin extends YHConcept {
      * @param id   Origin ID
      * @param name Origin name
      */
-    public ObjectOrigin(final byte id, final String name) {
+    private ObjectOrigin(final byte id, final String name) {
         super(id, name);
     }
 

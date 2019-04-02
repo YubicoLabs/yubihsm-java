@@ -12,7 +12,7 @@ public class YHConcept {
      * @param id   The concept ID
      * @param name The concept name
      */
-    public YHConcept(final Object id, final String name) {
+    protected YHConcept(final Object id, final String name) {
         this.id = id;
         this.name = name;
     }

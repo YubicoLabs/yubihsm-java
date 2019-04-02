@@ -9,7 +9,7 @@ public class Command extends YHConcept {
      * @param id   Command code
      * @param name Command name
      */
-    public Command(final byte id, final String name) {
+    private Command(final byte id, final String name) {
         super(id, name);
     }
 

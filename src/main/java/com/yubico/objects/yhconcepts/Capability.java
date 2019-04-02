@@ -18,7 +18,7 @@ public class Capability extends YHConcept {
      * @param description       Capability description
      * @param applicableObjects A list of types of objects that can have this capability
      */
-    public Capability(final long id, final String name, final String description, final List<ObjectType> applicableObjects) {
+    private Capability(final long id, final String name, final String description, final List<ObjectType> applicableObjects) {
         super(id, name);
         this.description = description;
         this.applicableObjects = applicableObjects;
