@@ -62,7 +62,7 @@ public class Capability extends YHConcept {
     }
 
     /**
-     * Converts a long object into a list of capabilities
+     * Converts a list of capabilities into a long object
      *
      * @param capabilities A list of capabilities
      * @return `capabilities` as a long object

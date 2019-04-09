@@ -27,8 +27,9 @@ public class YHObject {
     private List<Capability> capabilities;
     private List<Capability> delegatedCapabilities;
 
-    protected YHObject(final short id) {
+    protected YHObject(final short id, final ObjectType type) {
         this.id = id;
+        this.type = type;
     }
 
     /**

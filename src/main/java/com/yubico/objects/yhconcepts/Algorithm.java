@@ -29,6 +29,50 @@ public class Algorithm extends YHConcept {
         return String.format("0x%02X: " + getName(), getAlgorithmId());
     }
 
+    public boolean isRsaAlgorithm() {
+        return isRsaAlgorithm(getAlgorithmId());
+    }
+
+    public static boolean isRsaAlgorithm(final byte algorithmId) {
+        switch (algorithmId) {
+            case 9:
+            case 10:
+            case 11:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public boolean isEcAlgorithm() {
+        return isEcAlgorithm(getAlgorithmId());
+    }
+
+    public static boolean isEcAlgorithm(final byte algorithmId) {
+        switch (algorithmId) {
+            case 12:
+            case 13:
+            case 14:
+            case 15:
+            case 16:
+            case 17:
+            case 18:
+            case 47:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public boolean isEdAlgorithm() {
+        return isEdAlgorithm(getAlgorithmId());
+    }
+
+    public static boolean isEdAlgorithm(final byte algorithmId) {
+        return algorithmId == EC_ED25519.getAlgorithmId();
+    }
+
+
     /**
      * Return the Algorithm object with the specified ID
      *

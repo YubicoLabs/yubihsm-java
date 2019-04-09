@@ -30,8 +30,8 @@ import java.util.logging.Logger;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class YHObjectsTest {
-    Logger logger = Logger.getLogger(YHObjectsTest.class.getName());
+public class AuthenticationKeyTest {
+    Logger logger = Logger.getLogger(AuthenticationKeyTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;
@@ -90,7 +90,6 @@ public class YHObjectsTest {
         logger.info("TEST END: testGetAuthenticationKey()");
     }
 
-
     @Test
     public void testChangeAuthenticationKey()
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
@@ -100,7 +99,7 @@ public class YHObjectsTest {
         logger.info("TEST START: testChangeAuthenticationKey()");
 
         ArrayList domains = new ArrayList(Arrays.asList(2, 5, 8));
-        ArrayList capabilities = new ArrayList(Arrays.asList(Capability.SIGN_ECDSA, Capability.GET_OPAQUE));
+        ArrayList capabilities = new ArrayList(Arrays.asList(Capability.SIGN_ECDSA, Capability.GET_OPAQUE, Capability.CHANGE_AUTHENTICATION_KEY));
 
         // Create a new authentication key
         final short id = AuthenticationKey.importAuthenticationKey(session, (short) 0, "test_auth_key", domains, capabilities, capabilities,
@@ -114,11 +113,11 @@ public class YHObjectsTest {
         new Random().nextBytes(data);
         byte[] response = yubihsm.secureEcho(session1, data);
         assertTrue(Arrays.equals(response, data));
-        session1.closeSession();
-        assertEquals(YHSession.SessionStatus.CLOSED, session1.getStatus());
 
         // Change the session key password
-        AuthenticationKey.changeAuthenticationKey(session, id, "bar123".toCharArray());
+        AuthenticationKey.changeAuthenticationKey(session1, id, "bar123".toCharArray());
+        session1.closeSession();
+        assertEquals(YHSession.SessionStatus.CLOSED, session1.getStatus());
 
         // Open a new authenticated session with the old password. Expect failure
         session1 = new YHSession(yubihsm, id, "foo123".toCharArray());
@@ -148,5 +147,4 @@ public class YHObjectsTest {
         logger.info("TEST END: testChangeAuthenticationKey()");
 
     }
-
 }

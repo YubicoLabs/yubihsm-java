@@ -126,7 +126,7 @@ public class YHError {
     public static final YHError OBJECT_NOT_FOUND =
             new YHError((byte) 0x0b, "No object found matching given ID and Type");
     /** Specified ID is reserved */
-    public static final YHError INVALID_ID = new YHError((byte) 0x0c, "Specified ID is reserved");
+    public static final YHError INVALID_ID = new YHError((byte) 0x0c, "Invalid ID");
     /** Constraints in SSH Template not met */
     public static final YHError SSH_CA_CONSTRAINT_VIOLATION =
             new YHError((byte) 0x0e, "Constraints in SSH Template not met");

@@ -68,7 +68,7 @@ public class AuthenticationKey extends YHObject {
 
 
     public AuthenticationKey(final short id, final byte[] encKey, final byte[] macKey) {
-        super(id);
+        super(id, TYPE);
         this.encryptionKey = encKey;
         this.macKey = macKey;
     }
@@ -151,7 +151,7 @@ public class AuthenticationKey extends YHObject {
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      */
-    public static short importAuthenticationKey(final YHSession session, short id, final String label, final List<Integer> domains,
+    public static short importAuthenticationKey(final YHSession session, short id, String label, final List<Integer> domains,
                                                 final List<Capability> capabilities,
                                                 final List<Capability> delegatedCapabilities, byte[] encryptionKey, byte[] macKey)
             throws NoSuchAlgorithmException,
@@ -172,10 +172,15 @@ public class AuthenticationKey extends YHObject {
         if (encryptionKey.length != KEY_SIZE || macKey.length != KEY_SIZE) {
             throw new InvalidParameterException("Long term encryption key and MAC key have to be of size " + KEY_SIZE);
         }
+        if(label == null) {
+            label = "";
+        } else if(label.length() > LABEL_LENGTH) {
+            throw new InvalidParameterException("Invalid parameter: label");
+        }
 
         ByteBuffer bb = ByteBuffer.allocate(93);
         bb.putShort(id);
-        bb.put(label == null ? new byte[LABEL_LENGTH] : Arrays.copyOf(label.getBytes(), LABEL_LENGTH));
+        bb.put(Arrays.copyOf(label.getBytes(), LABEL_LENGTH));
         bb.putShort(Utils.getShortFromList(domains));
         bb.putLong(Capability.getCapabilities(capabilities));
         bb.put(Algorithm.AES128_YUBICO_AUTHENTICATION.getAlgorithmId());
@@ -214,7 +219,7 @@ public class AuthenticationKey extends YHObject {
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      * @throws InvalidKeySpecException            If the derivation of the long term keys from the password fails
      */
-    public static short importAuthenticationKey(final YHSession session, short id, final String label, final List<Integer> domains,
+    public static short importAuthenticationKey(final YHSession session, short id, String label, final List<Integer> domains,
                                                 final List<Capability> capabilities,
                                                 final List<Capability> delegatedCapabilities, char[] password) throws NoSuchAlgorithmException,
                                                                                                                       YHDeviceException,
@@ -276,10 +281,7 @@ public class AuthenticationKey extends YHObject {
         bb.put(Algorithm.AES128_YUBICO_AUTHENTICATION.getAlgorithmId());
         bb.put(encryptionKey);
         bb.put(macKey);
-
-        byte[] resp = session.sendSecureCmd(Command.CHANGE_AUTHENTICATION_KEY, bb.array());
-        bb = ByteBuffer.wrap(resp);
-        id = bb.getShort();
+        session.sendSecureCmd(Command.CHANGE_AUTHENTICATION_KEY, bb.array());
 
         encryptionKey = new byte[encryptionKey.length];
         macKey = new byte[macKey.length];
