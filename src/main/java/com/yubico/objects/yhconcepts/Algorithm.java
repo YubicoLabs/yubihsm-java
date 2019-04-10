@@ -35,9 +35,9 @@ public class Algorithm extends YHConcept {
 
     public static boolean isRsaAlgorithm(final byte algorithmId) {
         switch (algorithmId) {
-            case 9:
-            case 10:
-            case 11:
+            case 9: // RSA_2048
+            case 10: // RSA_3072
+            case 11: // RSA_4096
                 return true;
             default:
                 return false;
@@ -50,14 +50,14 @@ public class Algorithm extends YHConcept {
 
     public static boolean isEcAlgorithm(final byte algorithmId) {
         switch (algorithmId) {
-            case 12:
-            case 13:
-            case 14:
-            case 15:
-            case 16:
-            case 17:
-            case 18:
-            case 47:
+            case 12: // EC_P256
+            case 13: // EC_P384
+            case 14: // EC_P521
+            case 15: // EC_K256
+            case 16: // EC_BP256
+            case 17: // EC_BP384
+            case 18: // EC_BP512
+            case 47: // EC_P224
                 return true;
             default:
                 return false;
