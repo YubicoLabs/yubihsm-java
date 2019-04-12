@@ -275,7 +275,7 @@ public class AsymmetricKeyEdTest {
             final YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             final AsymmetricKeyEd key = AsymmetricKeyEd.getInstance(keyinfo);
             byte[] returnedPubKeyBytes = (byte[]) key.getPublicKey(session);
-            assertTrue("Returned EDDSA public key is not correct", Arrays.equals(pubKey.getEncoded(), returnedPubKeyBytes));
+            assertArrayEquals(pubKey.getEncoded(), returnedPubKeyBytes);
 
         } finally {
             yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);

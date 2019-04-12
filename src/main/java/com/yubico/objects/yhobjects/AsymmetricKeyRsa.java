@@ -76,7 +76,7 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
             throw new UnsupportedAlgorithmException("Specified algorithm is not a supported RSA algorithm");
         }
 
-        final int componentLength = getRsaComponentLength(algorithm);
+        final int componentLength = getBlockSize(algorithm) / 2;
         if (primeP.length != componentLength || primeQ.length != componentLength) {
             throw new InvalidParameterException("Invalid parameter: primeP, primeQ");
         }
@@ -154,13 +154,18 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
      * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     * @throws UnsupportedAlgorithmException      If the hash Algorithm is not one of {{@link Algorithm.RSA_PKCS1_SHA1}}, {
+     *                                            {@link Algorithm.RSA_PKCS1_SHA256}}, {{@link Algorithm.RSA_PKCS1_SHA384}}, {{@link Algorithm.RSA_PKCS1_SHA512}}
      */
     public byte[] signPkcs1(final YHSession session, final byte[] data, final Algorithm hashAlgorithm)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException {
+                   IllegalBlockSizeException, UnsupportedAlgorithmException {
         if (!getAlgorithm().isRsaAlgorithm()) {
             throw new UnsupportedOperationException("This operation is only available for RSA keys");
+        }
+        if (!isPkcs1HashAlgorithm(hashAlgorithm)) {
+            throw new UnsupportedAlgorithmException(hashAlgorithm.toString());
         }
 
         final byte[] hashedData = getHashedData(data, hashAlgorithm);
@@ -197,7 +202,7 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
         bb.put(dataDigest);
 
         byte[] signature = session.sendSecureCmd(Command.SIGN_PKCS1, bb.array());
-        logger.info("Signed data with key 0x" + Integer.toHexString(getId()));
+        logger.info("Signed data with key 0x" + Integer.toHexString(getId()) + " and returned " + signature.length + " bytes signature");
         return signature;
     }
 
@@ -220,23 +225,24 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
      * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     * @throws UnsupportedAlgorithmException      If the hash Algorithm is not one of {{@link Algorithm.RSA_MGF1_SHA1}}, {
+     *                                            * {@link Algorithm.RSA_MGF1_SHA256}}, {{@link Algorithm.RSA_MGF1_SHA384}}, {{@link Algorithm.RSA_MGF1_SHA512}}
      */
     public byte[] signPss(final YHSession session, final Algorithm mgf1Algorithm, final short saltLength, byte[] data)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException {
+                   IllegalBlockSizeException, UnsupportedAlgorithmException {
         if (!getAlgorithm().isRsaAlgorithm()) {
             throw new UnsupportedOperationException("This operation is only available for RSA keys");
         }
 
-        if (!mgf1Algorithm.equals(Algorithm.RSA_MGF1_SHA1) && !mgf1Algorithm.equals(Algorithm.RSA_MGF1_SHA256) &&
-            !mgf1Algorithm.equals(Algorithm.RSA_MGF1_SHA384) && !mgf1Algorithm.equals(Algorithm.RSA_MGF1_SHA512)) {
-            throw new InvalidParameterException("Unsupported hash algorithm to use for MGF1");
+        if (!isMgf1Algorithm(mgf1Algorithm)) {
+            throw new UnsupportedAlgorithmException("Unsupported hash algorithm to use for MGF1");
         }
 
         final byte[] hashedData = getHashedData(data, mgf1Algorithm);
 
-        if (hashedData.length != getPssHashLength(mgf1Algorithm)) {
+        if (hashedData.length != getHashLength(mgf1Algorithm)) {
             throw new InvalidParameterException("Length of hashed data must be 20, 32, 48 or 64");
         }
 
@@ -247,23 +253,130 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
         bb.put(hashedData);
 
         byte[] signature = session.sendSecureCmd(Command.SIGN_PSS, bb.array());
-        logger.info("Signed data with key 0x" + Integer.toHexString(getId()));
+        logger.info("Signed data with key 0x" + Integer.toHexString(getId()) + " and returned " + signature.length + " bytes signature");
         return signature;
     }
 
+    /**
+     * Decrypt data that was encrypted using RSA-PKCS#1v1.5. Length of the data has to be 256, 384 or 512 bytes
+     * <p>
+     * The data is padded using the PKCS#1v1.5 scheme with Block Type 2. The data is decrypted and conformance to the padding scheme is checked
+     * then removed before returning the contained message
+     *
+     * @param session An authenticated session to communicate with the device over
+     * @param enc     Data encrypted using RSA-PKCS#1v1.5
+     * @return The decrypted data
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     */
+    public byte[] decryptPkcs1(final YHSession session, byte[] enc)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException {
+        if (!getAlgorithm().isRsaAlgorithm()) {
+            throw new UnsupportedOperationException("This operation is only available for RSA keys");
+        }
+        if (enc == null) {
+            return new byte[0];
+        }
+        if (enc.length != getBlockSize(getAlgorithm())) {
+            throw new InvalidParameterException("Length of encrypted data must be 256, 384 or 512");
+        }
+
+        ByteBuffer bb = ByteBuffer.allocate(2 + enc.length);
+        bb.putShort(getId());
+        bb.put(enc);
+
+        byte[] dec = session.sendSecureCmd(Command.DECRYPT_PKCS1, bb.array());
+        logger.info("Decrypted data with key 0x" + Integer.toHexString(getId()) + " and returned " + dec.length + " bytes");
+        return dec;
+    }
+
+    /**
+     * Decrypt data using RSA-OAEP. Length of the data has to be 256, 384 or 512 bytes
+     *
+     * @param session       An authenticated session to communicate with the device over
+     * @param enc           Encrypted data. 256, 384 or 512 bytes long
+     * @param label         Optional label to be associated with the message
+     * @param mgf1Algorithm The hash algorithm to use for MGF1. Can be one of {{@link Algorithm.RSA_MGF1_SHA1}}, {{@link Algorithm.RSA_MGF1_SHA256}},
+     *                      {{@link Algorithm.RSA_MGF1_SHA384}},{{@link Algorithm.RSA_MGF1_SHA512}}
+     * @param hashAlgorithm The hash algorithm to use for hashing the label. Can be one of {{@link Algorithm.RSA_OAEP_SHA1}}, {
+     *                      {@link Algorithm.RSA_OAEP_SHA256}},
+     *                      {{@link Algorithm.RSA_OAEP_SHA384}},{{@link Algorithm.RSA_OAEP_SHA512}}
+     * @return The decrypted data
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     * @throws UnsupportedAlgorithmException      If the MGF1 algorithm is not one of {{@link Algorithm.RSA_MGF1_SHA1}}, {{@link Algorithm.RSA_MGF1_SHA256}},
+     *                                            {{@link Algorithm.RSA_MGF1_SHA384}},{{@link Algorithm.RSA_MGF1_SHA512}} or if the hash algorithm is not
+     *                                            one of {{@link Algorithm.RSA_OAEP_SHA1}}, {
+     *                                            {@link Algorithm.RSA_OAEP_SHA256}},
+     *                                            {{@link Algorithm.RSA_OAEP_SHA384}},{{@link Algorithm.RSA_OAEP_SHA512}}
+     */
+    public byte[] decryptOaep(final YHSession session, final byte[] enc, final String label, final Algorithm mgf1Algorithm,
+                              final Algorithm hashAlgorithm)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, UnsupportedAlgorithmException {
+        if (!getAlgorithm().isRsaAlgorithm()) {
+            throw new UnsupportedOperationException("This operation is only available for RSA keys");
+        }
+        if (enc == null) {
+            return new byte[0];
+        }
+        if (!isOaepHashAlgorithm(hashAlgorithm)) {
+            throw new UnsupportedAlgorithmException(hashAlgorithm.toString());
+        }
+        if (!isMgf1Algorithm(mgf1Algorithm)) {
+            throw new UnsupportedAlgorithmException(mgf1Algorithm.toString());
+        }
+
+        if (enc.length != getBlockSize(getAlgorithm())) {
+            throw new InvalidParameterException("Length of encrypted data must be 256, 384 or 512");
+        }
+
+        byte[] hashedLabel = getHashedData(getLabel(label).getBytes(), hashAlgorithm);
+
+
+        ByteBuffer bb = ByteBuffer.allocate(3 + enc.length + hashedLabel.length); // 2 + 1 + enc.length + hashedLabel.length
+        bb.putShort(getId());
+        bb.put(mgf1Algorithm.getAlgorithmId());
+        bb.put(enc);
+        bb.put(hashedLabel);
+
+        byte[] dec = session.sendSecureCmd(Command.DECRYPT_OAEP, bb.array());
+        logger.info("Decrypted data with key 0x" + Integer.toHexString(getId()) + " and returned " + dec.length + " bytes");
+        return dec;
+
+    }
 
     // ------------- Help methods ---------------------------------------
 
     /**
-     * @return The length of the p and q primes are expected to be given the algorithm
+     * @return The data block size
      */
-    private static int getRsaComponentLength(final Algorithm algorithm) {
+    private static int getBlockSize(final Algorithm algorithm) {
         if (algorithm.equals(Algorithm.RSA_2048)) {
-            return 128;
-        } else if (algorithm.equals(Algorithm.RSA_3072)) {
-            return 192;
-        } else if (algorithm.equals(Algorithm.RSA_4096)) {
             return 256;
+        } else if (algorithm.equals(Algorithm.RSA_3072)) {
+            return 384;
+        } else if (algorithm.equals(Algorithm.RSA_4096)) {
+            return 512;
         } else {
             throw new InvalidParameterException("Unsupported RSA Algorithm: " + algorithm.toString());
         }
@@ -272,19 +385,44 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
     /**
      * @return The length of the hash data should be when signing using PSS RSA
      */
-    private int getPssHashLength(final Algorithm algorithm) {
-        if (algorithm.equals(Algorithm.RSA_MGF1_SHA1)) {
+    private int getHashLength(final Algorithm algorithm) {
+        if (algorithm.equals(Algorithm.RSA_MGF1_SHA1) || algorithm.equals(Algorithm.RSA_OAEP_SHA1)) {
             return 20;
         }
-        if (algorithm.equals(Algorithm.RSA_MGF1_SHA256)) {
+        if (algorithm.equals(Algorithm.RSA_MGF1_SHA256) || algorithm.equals(Algorithm.RSA_OAEP_SHA256)) {
             return 32;
         }
-        if (algorithm.equals(Algorithm.RSA_MGF1_SHA384)) {
+        if (algorithm.equals(Algorithm.RSA_MGF1_SHA384) || algorithm.equals(Algorithm.RSA_OAEP_SHA384)) {
             return 48;
         }
-        if (algorithm.equals(Algorithm.RSA_MGF1_SHA512)) {
+        if (algorithm.equals(Algorithm.RSA_MGF1_SHA512) || algorithm.equals(Algorithm.RSA_OAEP_SHA512)) {
             return 64;
         }
         throw new InvalidParameterException("Unsupported hash algorithm to use for MGF1");
     }
+
+    private boolean isOaepHashAlgorithm(final Algorithm algorithm) {
+        if (algorithm.equals(Algorithm.RSA_OAEP_SHA1) || algorithm.equals(Algorithm.RSA_OAEP_SHA256) || algorithm.equals(Algorithm.RSA_OAEP_SHA384) ||
+            algorithm.equals(Algorithm.RSA_OAEP_SHA512)) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isPkcs1HashAlgorithm(final Algorithm algorithm) {
+        if (algorithm.equals(Algorithm.RSA_PKCS1_SHA1) || algorithm.equals(Algorithm.RSA_PKCS1_SHA256) ||
+            algorithm.equals(Algorithm.RSA_PKCS1_SHA384) || algorithm.equals(Algorithm.RSA_PKCS1_SHA512)) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isMgf1Algorithm(final Algorithm algorithm) {
+        if (algorithm.equals(Algorithm.RSA_MGF1_SHA1) || algorithm.equals(Algorithm.RSA_MGF1_SHA256) || algorithm.equals(Algorithm.RSA_MGF1_SHA384) ||
+            algorithm.equals(Algorithm.RSA_MGF1_SHA512)) {
+            return true;
+        }
+        return false;
+    }
+
 }

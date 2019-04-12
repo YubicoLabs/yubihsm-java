@@ -48,7 +48,7 @@ public class AsymmetricKey extends YHObject {
                              Algorithm.EC_ECDSA_SHA384, Algorithm.EC_ECDSA_SHA512);
 
     }
-    
+
     /**
      * Generates an asymmetric key on the YubiHSM
      *
@@ -196,16 +196,16 @@ public class AsymmetricKey extends YHObject {
         if (algorithm == null) {
             return data;
         } else if (algorithm.equals(Algorithm.RSA_PKCS1_SHA1) || algorithm.equals(Algorithm.RSA_MGF1_SHA1) ||
-                   algorithm.equals(Algorithm.EC_ECDSA_SHA1)) {
+                   algorithm.equals(Algorithm.EC_ECDSA_SHA1) || algorithm.equals(Algorithm.RSA_OAEP_SHA1)) {
             digest = MessageDigest.getInstance("SHA-1");
         } else if (algorithm.equals(Algorithm.RSA_PKCS1_SHA256) || algorithm.equals(Algorithm.RSA_MGF1_SHA256) ||
-                   algorithm.equals(Algorithm.EC_ECDSA_SHA256)) {
+                   algorithm.equals(Algorithm.EC_ECDSA_SHA256) || algorithm.equals(Algorithm.RSA_OAEP_SHA256)) {
             digest = MessageDigest.getInstance("SHA-256");
         } else if (algorithm.equals(Algorithm.RSA_PKCS1_SHA384) || algorithm.equals(Algorithm.RSA_MGF1_SHA384) ||
-                   algorithm.equals(Algorithm.EC_ECDSA_SHA384)) {
+                   algorithm.equals(Algorithm.EC_ECDSA_SHA384) || algorithm.equals(Algorithm.RSA_OAEP_SHA384)) {
             digest = MessageDigest.getInstance("SHA-384");
         } else if (algorithm.equals(Algorithm.RSA_PKCS1_SHA512) || algorithm.equals(Algorithm.RSA_MGF1_SHA512) ||
-                   algorithm.equals(Algorithm.EC_ECDSA_SHA512)) {
+                   algorithm.equals(Algorithm.EC_ECDSA_SHA512) || algorithm.equals(Algorithm.RSA_OAEP_SHA512)) {
             digest = MessageDigest.getInstance("SHA-512");
         } else {
             throw new InvalidParameterException("Unsupported hash algorithm " + algorithm.toString());

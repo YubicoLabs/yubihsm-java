@@ -10,11 +10,13 @@ import com.yubico.objects.yhconcepts.ObjectType;
 import com.yubico.objects.yhobjects.AsymmetricKey;
 import com.yubico.objects.yhobjects.AsymmetricKeyRsa;
 import com.yubico.objects.yhobjects.YHObject;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.net.MalformedURLException;
@@ -280,21 +282,21 @@ public class AsymmetricKeyRsaTest {
                    IllegalBlockSizeException, InvalidKeySpecException, UnsupportedAlgorithmException {
         byte[] p;
         byte[] q;
-        PublicKey pubKey;
+        PublicKey publicKey;
 
         // Sometimes, the prime numbers byte array is not exactly the expected length. When it is longer, it starts with 0 bytes
         // TODO Find out why and how to avoid it (it seems to be a java.security thing)
         do {
             KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
             kpg.initialize(keysize);
-            KeyPair kp = kpg.generateKeyPair();
+            KeyPair keypair = kpg.generateKeyPair();
+            publicKey = keypair.getPublic();
 
             KeyFactory kf = KeyFactory.getInstance("RSA");
-            RSAPrivateCrtKeySpec ks = kf.getKeySpec(kp.getPrivate(), RSAPrivateCrtKeySpec.class);
+            RSAPrivateCrtKeySpec ks = kf.getKeySpec(keypair.getPrivate(), RSAPrivateCrtKeySpec.class);
 
             p = ks.getPrimeP().toByteArray();
             q = ks.getPrimeQ().toByteArray();
-            pubKey = kp.getPublic();
 
         } while (p.length < componentLength);
 
@@ -305,7 +307,7 @@ public class AsymmetricKeyRsaTest {
 
         AsymmetricKeyRsa.importKey(session, id, label, domains, capabilities, algorithm, p, q);
 
-        return pubKey;
+        return publicKey;
     }
 
     // ----------------------------------------------------------------------------
@@ -420,7 +422,7 @@ public class AsymmetricKeyRsaTest {
     private void signPkcs1(PublicKey pubKey, AsymmetricKeyRsa key, Algorithm hashAlgorithm, String signatureAlgorithm)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, SignatureException {
+                   IllegalBlockSizeException, SignatureException, UnsupportedAlgorithmException {
 
         final byte[] data = "This is a signing test data".getBytes();
         final byte[] signature = key.signPkcs1(session, data, hashAlgorithm);
@@ -454,15 +456,16 @@ public class AsymmetricKeyRsaTest {
         }
     }
 
-    private void signPss(PublicKey pubKey, AsymmetricKeyRsa key, Algorithm signAlgorithm, String signAlgorithmStr, String hashAlgorithm, short saltLength)
+    private void signPss(PublicKey pubKey, AsymmetricKeyRsa key, Algorithm signAlgorithm, String signAlgorithmStr, String hashAlgorithm,
+                         short saltLength)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, SignatureException, NoSuchProviderException {
+                   IllegalBlockSizeException, SignatureException, NoSuchProviderException, UnsupportedAlgorithmException {
 
         final byte[] data = "This is a signing test data".getBytes();
         final byte[] signature = key.signPss(session, signAlgorithm, saltLength, data);
 
-        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+        Security.addProvider(new BouncyCastleProvider());
         Signature sig = Signature.getInstance(signAlgorithmStr, "BC");
         MGF1ParameterSpec mgf1Param = new MGF1ParameterSpec(hashAlgorithm);
         PSSParameterSpec pssParam = new PSSParameterSpec(hashAlgorithm, "MGF1", mgf1Param, saltLength, 1);
@@ -470,6 +473,177 @@ public class AsymmetricKeyRsaTest {
         sig.initVerify(pubKey);
         sig.update(data);
         assertTrue(sig.verify(signature));
+    }
+
+    // ----------------------------------------------------------------------------------------------------
+    //                                         Decrypt
+    // ----------------------------------------------------------------------------------------------------
+
+    @Test
+    public void testDecryptDataWithInsufficientPermissions()
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, InvalidSessionException, InvalidKeySpecException, SignatureException, NoSuchProviderException,
+                   UnsupportedAlgorithmException {
+        final short id = 0x1234;
+        PublicKey pubKey = importRsaKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_PKCS, Capability.SIGN_PSS), Algorithm.RSA_2048,
+                                        2048, 128);
+        try {
+            final YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final AsymmetricKeyRsa key = AsymmetricKeyRsa.getInstance(keyinfo);
+
+
+            byte[] data = "This is test data for decryption".getBytes();
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, pubKey);
+            byte[] enc = cipher.doFinal(data);
+            boolean exceptionThrown = false;
+            try {
+                key.decryptPkcs1(session, enc);
+            } catch (YHDeviceException e) {
+                exceptionThrown = true;
+                assertEquals("Device returned incorrect error", YHError.INSUFFICIENT_PERMISSIONS, e.getErrorCode());
+            }
+            assertTrue("Succeeded to sign in spite of insufficient permissions", exceptionThrown);
+
+            exceptionThrown = false;
+            try {
+                decryptOaep(key, pubKey, Algorithm.RSA_MGF1_SHA1, Algorithm.RSA_OAEP_SHA1, "RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+            } catch (YHDeviceException e) {
+                exceptionThrown = true;
+                assertEquals("Device returned incorrect error", YHError.INSUFFICIENT_PERMISSIONS, e.getErrorCode());
+            }
+            assertTrue("Succeeded to sign in spite of insufficient permissions", exceptionThrown);
+        } finally {
+            yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+        }
+    }
+
+    @Test
+    public void testDecryptPkcs1()
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, InvalidSessionException, InvalidKeySpecException, SignatureException, UnsupportedAlgorithmException,
+                   NoSuchProviderException {
+        logger.info("TEST START: testDecryptPkcs1()");
+
+        decryptPkcs1Test(Algorithm.RSA_2048, 2048, 128);
+        decryptPkcs1Test(Algorithm.RSA_3072, 3072, 192);
+        decryptPkcs1Test(Algorithm.RSA_4096, 4096, 256);
+
+        logger.info("TEST END: testDecryptPkcs1()");
+    }
+
+    private void decryptPkcs1Test(Algorithm keyAlgorithm, int keysize, int componentLength)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, InvalidSessionException, InvalidKeySpecException, SignatureException, UnsupportedAlgorithmException,
+                   NoSuchProviderException {
+
+        final short id = 0x1234;
+        PublicKey publicKey =
+                importRsaKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.DECRYPT_PKCS), keyAlgorithm, keysize, componentLength);
+
+        try {
+            byte[] data = "This is test data for decryption".getBytes();
+
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            byte[] enc = cipher.doFinal(data);
+
+            YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            AsymmetricKeyRsa key = AsymmetricKeyRsa.getInstance(keyinfo);
+
+            byte[] dec = key.decryptPkcs1(session, enc);
+
+
+            assertArrayEquals(data, dec);
+        } finally {
+            yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+        }
+    }
+
+    @Test
+    public void testDecryptOaep()
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, InvalidSessionException, InvalidKeySpecException, SignatureException, UnsupportedAlgorithmException,
+                   NoSuchProviderException {
+        logger.info("TEST START: testDecryptOaep()");
+
+        decryptOaepTest(Algorithm.RSA_2048, 2048, 128);
+        decryptOaepTest(Algorithm.RSA_3072, 3072, 192);
+        decryptOaepTest(Algorithm.RSA_4096, 4096, 256);
+
+        logger.info("TEST END: testDecryptOaep()");
+    }
+
+    private void decryptOaepTest(Algorithm keyAlgorithm, int keysize, int componentLength)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, InvalidSessionException, InvalidKeySpecException, SignatureException, UnsupportedAlgorithmException,
+                   NoSuchProviderException {
+
+        final short id = 0x1234;
+        PublicKey publicKey =
+                importRsaKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.DECRYPT_OAEP), keyAlgorithm, keysize, componentLength);
+
+        try {
+
+            YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            AsymmetricKeyRsa key = AsymmetricKeyRsa.getInstance(keyinfo);
+
+            decryptOaep(key, publicKey, Algorithm.RSA_MGF1_SHA1, Algorithm.RSA_OAEP_SHA1, "RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+            decryptOaep(key, publicKey, Algorithm.RSA_MGF1_SHA1, Algorithm.RSA_OAEP_SHA256, "RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+            decryptOaep(key, publicKey, Algorithm.RSA_MGF1_SHA1, Algorithm.RSA_OAEP_SHA384, "RSA/ECB/OAEPWithSHA-384AndMGF1Padding");
+            decryptOaep(key, publicKey, Algorithm.RSA_MGF1_SHA1, Algorithm.RSA_OAEP_SHA512, "RSA/ECB/OAEPWithSHA-512AndMGF1Padding");
+
+            decryptOaepBc(key, publicKey, Algorithm.RSA_MGF1_SHA1, Algorithm.RSA_OAEP_SHA1, "RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+            decryptOaepBc(key, publicKey, Algorithm.RSA_MGF1_SHA256, Algorithm.RSA_OAEP_SHA256, "RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+            decryptOaepBc(key, publicKey, Algorithm.RSA_MGF1_SHA384, Algorithm.RSA_OAEP_SHA384, "RSA/ECB/OAEPWithSHA-384AndMGF1Padding");
+            decryptOaepBc(key, publicKey, Algorithm.RSA_MGF1_SHA512, Algorithm.RSA_OAEP_SHA512, "RSA/ECB/OAEPWithSHA-512AndMGF1Padding");
+
+
+        } finally {
+            yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+        }
+    }
+
+    private void decryptOaep(AsymmetricKeyRsa key, PublicKey pubKey, Algorithm mgf1Algorithm, Algorithm hashAlgorithm, String cipherAlgorithm)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, UnsupportedAlgorithmException {
+
+
+        byte[] data = "This is test data for decryption".getBytes();
+
+        Cipher cipher = Cipher.getInstance(cipherAlgorithm);
+        cipher.init(Cipher.ENCRYPT_MODE, pubKey);
+        byte[] enc = cipher.doFinal(data);
+
+        byte[] dec = key.decryptOaep(session, enc, "", mgf1Algorithm, hashAlgorithm);
+
+        assertArrayEquals(data, dec);
+
+    }
+
+    private void decryptOaepBc(AsymmetricKeyRsa key, PublicKey pubKey, Algorithm mgf1Algorithm, Algorithm hashAlgorithm, String cipherAlgorithm)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, UnsupportedAlgorithmException, NoSuchProviderException {
+
+
+        byte[] data = "This is test data for decryption".getBytes();
+
+        Security.addProvider(new BouncyCastleProvider());
+        Cipher cipher = Cipher.getInstance(cipherAlgorithm, "BC");
+        cipher.init(Cipher.ENCRYPT_MODE, pubKey, new SecureRandom());
+        byte[] enc = cipher.doFinal(data);
+
+        byte[] dec = key.decryptOaep(session, enc, "", mgf1Algorithm, hashAlgorithm);
+
+        assertArrayEquals(data, dec);
+
     }
 
 }
