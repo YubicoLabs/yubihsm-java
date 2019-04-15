@@ -81,6 +81,7 @@ public class AsymmetricKeyEc extends AsymmetricKey {
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, UnsupportedAlgorithmException {
+        checkNullParameters(session, domains, capabilities, algorithm);
         Utils.checkNullValue(d, "Missing parameter d");
         if (!algorithm.isEcAlgorithm()) {
             throw new UnsupportedAlgorithmException("Specified algorithm is not a supported EC algorithm");
@@ -128,7 +129,7 @@ public class AsymmetricKeyEc extends AsymmetricKey {
         byte[] resp = session.sendSecureCmd(Command.GET_PUBLIC_KEY, bb.array());
         bb = ByteBuffer.wrap(resp);
         final Algorithm algorithm = Algorithm.getAlgorithm(bb.get());
-        if (!algorithm.equals(getAlgorithm())) {
+        if (algorithm == null || !algorithm.equals(getAlgorithm())) {
             throw new YHInvalidResponseException("The public key algorithm returned by the device does not match the private key algorithm");
         }
 
@@ -212,6 +213,40 @@ public class AsymmetricKeyEc extends AsymmetricKey {
         return signature;
     }
 
+    /**
+     * Perform an ECDH operation on this private key and the public component of another EC key
+     *
+     * @param session   An authenticated session to communicate with the device over
+     * @param publicKey The public component of another EC key
+     * @return The shared secret
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     */
+    public byte[] deriveEcdh(final YHSession session, final byte[] publicKey)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException {
+        if (!getAlgorithm().isEcAlgorithm()) {
+            throw new UnsupportedOperationException("This operation is only available for EC keys");
+        }
+
+        ByteBuffer bb = ByteBuffer.allocate(2 + publicKey.length);
+        bb.putShort(getId());
+        bb.put(publicKey);
+
+        byte[] ecdh = session.sendSecureCmd(Command.DERIVE_ECDH, bb.array());
+        logger.info("Derived ECDH key from private key 0x" + Integer.toHexString(getId()) + " and public key " + Utils.getPrintableBytes(publicKey));
+        return ecdh;
+    }
+
 
     // -------------------- help methods -------------------------------------
 
@@ -219,11 +254,11 @@ public class AsymmetricKeyEc extends AsymmetricKey {
      * Converts the ECPoint into a PublicKey object using the java native libraries. Used for the following algorithms:
      *
      * <ul>
-     *     <li>{{@link Algorithm.EC_P224}}</li>
-     *     <li>{{@link Algorithm.EC_P256}}</li>
-     *     <li>{{@link Algorithm.EC_P384}}</li>
-     *     <li>{{@link Algorithm.EC_P521}}</li>
-     *     <li>{{@link Algorithm.EC_K256}}</li>
+     * <li>{{@link Algorithm.EC_P224}}</li>
+     * <li>{{@link Algorithm.EC_P256}}</li>
+     * <li>{{@link Algorithm.EC_P384}}</li>
+     * <li>{{@link Algorithm.EC_P521}}</li>
+     * <li>{{@link Algorithm.EC_K256}}</li>
      * </ul>
      *
      * @param point The EC public component
@@ -247,9 +282,9 @@ public class AsymmetricKeyEc extends AsymmetricKey {
      * Converts the ECPoint into a PublicKey object using the BouncyCastle provider. Used for the following algorithms:
      *
      * <ul>
-     *     <li>{{@link Algorithm.EC_BP256}}</li>
-     *     <li>{{@link Algorithm.EC_BP384}}</li>
-     *     <li>{{@link Algorithm.EC_BP512}}</li>
+     * <li>{{@link Algorithm.EC_BP256}}</li>
+     * <li>{{@link Algorithm.EC_BP384}}</li>
+     * <li>{{@link Algorithm.EC_BP512}}</li>
      * </ul>
      *
      * @param point The EC public component
