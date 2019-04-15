@@ -14,7 +14,7 @@ plugins {
 dependencies {
 
     compile (
-        'org.bouncycastle:bcpkix-jdk15on:1.54'
+        'org.bouncycastle:bcpkix-jdk15on:1.61'
     )
 
 
