@@ -70,8 +70,8 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, UnsupportedAlgorithmException {
         checkNullParameters(session, domains, capabilities, algorithm);
-        Utils.checkNullValue(primeP, "Missing prime P");
-        Utils.checkNullValue(primeQ, "Missing prime Q");
+        Utils.checkEmptyByteArray(primeP, "Missing prime P");
+        Utils.checkEmptyByteArray(primeQ, "Missing prime Q");
         if (!algorithm.isRsaAlgorithm()) {
             throw new UnsupportedAlgorithmException("Specified algorithm is not a supported RSA algorithm");
         }

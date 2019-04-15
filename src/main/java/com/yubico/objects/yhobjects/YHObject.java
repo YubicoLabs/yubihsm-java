@@ -4,6 +4,7 @@ import com.yubico.internal.util.Utils;
 import com.yubico.objects.yhconcepts.*;
 
 import java.nio.ByteBuffer;
+import java.security.InvalidParameterException;
 import java.util.List;
 
 /**
@@ -294,5 +295,22 @@ public class YHObject {
      */
     public static boolean equals(final YHObject a, final YHObject b) {
         return (a.getId() == b.getId()) && YHConcept.equals(a.getType(), b.getType());
+    }
+
+    /**
+     * Returns a usable non-null label value and verify the label's length.
+     *
+     * @param label The input label
+     * @return The label. An empty string if the input label is null
+     * @throws InvalidParameterException If the label is more than the maximum length allowed
+     */
+    protected static String getLabel(String label) {
+        if (label == null) {
+            return "";
+        }
+        if (label.length() > LABEL_LENGTH) {
+            throw new InvalidParameterException("Invalid parameter: label");
+        }
+        return label;
     }
 }

@@ -135,7 +135,8 @@ public class AsymmetricKeyEcTest {
         // Test importing the key with a non Asymmetric key algorithm
         boolean exceptionThrown = false;
         try {
-            AsymmetricKeyEc.importKey(session, (short) 0, "", Arrays.asList(2, 5), Arrays.asList(Capability.SIGN_ECDSA), Algorithm.AES128_CCM_WRAP, d);
+            AsymmetricKeyEc
+                    .importKey(session, (short) 0, "", Arrays.asList(2, 5), Arrays.asList(Capability.SIGN_ECDSA), Algorithm.AES128_CCM_WRAP, d);
         } catch (UnsupportedAlgorithmException e) {
             exceptionThrown = true;
             assertEquals("Specified algorithm is not a supported EC algorithm", e.getMessage());
@@ -280,39 +281,38 @@ public class AsymmetricKeyEcTest {
         }
     }
 
-    private PublicKey importEcKey(short id, String label, List<Integer> domains, List<Capability> capabilities, Algorithm algorithm, String curve,
-                                  int componentLength)
+    private KeyPair importEcKey(short id, String label, List<Integer> domains, List<Capability> capabilities, Algorithm algorithm, String curve,
+                                int componentLength)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException, UnsupportedAlgorithmException {
         byte[] d;
-        PublicKey pubKey;
+        KeyPair keypair;
 
         // Sometimes, the prime numbers byte array is not exactly the expected length. When it is longer, it starts with 0 bytes
         // TODO Find out why and how to avoid it (it seems to be a java.security thing)
         do {
             KeyPairGenerator generator = KeyPairGenerator.getInstance("EC");
             generator.initialize(new ECGenParameterSpec(curve));
-            KeyPair keyPair = generator.generateKeyPair();
-            ECPrivateKey privateKey = (ECPrivateKey) keyPair.getPrivate();
+            keypair = generator.generateKeyPair();
+            ECPrivateKey privateKey = (ECPrivateKey) keypair.getPrivate();
             d = privateKey.getS().toByteArray();
-            pubKey = keyPair.getPublic();
         } while (d.length < componentLength);
         if (d.length > componentLength) {
             d = Arrays.copyOfRange(d, d.length - componentLength, d.length);
         }
 
         AsymmetricKeyEc.importKey(session, id, label, domains, capabilities, algorithm, d);
-        return pubKey;
+        return keypair;
     }
 
-    private PublicKey importEcBrainpoolKey(short id, String label, List<Integer> domains, List<Capability> capabilities, Algorithm algorithm,
-                                           String curve, int componentLength)
+    private KeyPair importEcBrainpoolKey(short id, String label, List<Integer> domains, List<Capability> capabilities, Algorithm algorithm,
+                                         String curve, int componentLength)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException, NoSuchProviderException, UnsupportedAlgorithmException {
         byte[] d;
-        PublicKey pubKey;
+        KeyPair keypair;
 
         // Sometimes, the prime numbers byte array is not exactly the expected length. When it is longer, it starts with 0 bytes
         // TODO Find out why and how to avoid it (it seems to be a java.security thing)
@@ -320,17 +320,16 @@ public class AsymmetricKeyEcTest {
             Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
             KeyPairGenerator generator = KeyPairGenerator.getInstance("EC", "BC");
             generator.initialize(new ECGenParameterSpec(curve));
-            KeyPair keyPair = generator.generateKeyPair();
-            ECPrivateKey privateKey = (ECPrivateKey) keyPair.getPrivate();
+            keypair = generator.generateKeyPair();
+            ECPrivateKey privateKey = (ECPrivateKey) keypair.getPrivate();
             d = privateKey.getS().toByteArray();
-            pubKey = keyPair.getPublic();
         } while (d.length < componentLength);
         if (d.length > componentLength) {
             d = Arrays.copyOfRange(d, d.length - componentLength, d.length);
         }
 
         AsymmetricKeyEc.importKey(session, id, label, domains, capabilities, algorithm, d);
-        return pubKey;
+        return keypair;
     }
 
     // ----------------------------------------------------------------------------
@@ -366,18 +365,18 @@ public class AsymmetricKeyEcTest {
                    IllegalBlockSizeException, InvalidSessionException, InvalidKeySpecException, UnsupportedAlgorithmException,
                    InvalidParameterSpecException, NoSuchProviderException {
         final short id = 0x1234;
-        PublicKey pubKey;
+        KeyPair keypair;
         if (brainpool) {
-            pubKey = importEcBrainpoolKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_ECDSA), algorithm, curve, componentLength);
+            keypair = importEcBrainpoolKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_ECDSA), algorithm, curve, componentLength);
         } else {
-            pubKey = importEcKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_ECDSA), algorithm, curve, componentLength);
+            keypair = importEcKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_ECDSA), algorithm, curve, componentLength);
         }
 
         try {
             final YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             final AsymmetricKeyEc key = AsymmetricKeyEc.getInstance(keyinfo);
             PublicKey returnedPubKey = (PublicKey) key.getPublicKey(session);
-            assertEquals(pubKey, returnedPubKey);
+            assertEquals(keypair.getPublic(), returnedPubKey);
         } finally {
             yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
@@ -393,7 +392,7 @@ public class AsymmetricKeyEcTest {
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException, InvalidSessionException, SignatureException, UnsupportedAlgorithmException {
         final short id = 0x1234;
-        PublicKey pubKey = importEcKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.DERIVE_ECDH), Algorithm.EC_P224, "secp224r1", 28);
+        KeyPair keypair = importEcKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.DERIVE_ECDH), Algorithm.EC_P224, "secp224r1", 28);
         ;
         try {
             final YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
@@ -401,7 +400,7 @@ public class AsymmetricKeyEcTest {
 
             boolean exceptionThrown = false;
             try {
-                signEcdsa(pubKey, key, Algorithm.EC_ECDSA_SHA256, "SHA256withECDSA");
+                signEcdsa(keypair.getPublic(), key, Algorithm.EC_ECDSA_SHA256, "SHA256withECDSA", new byte[0]);
             } catch (YHDeviceException e) {
                 exceptionThrown = true;
                 assertEquals("Device returned incorrect error", YHError.INSUFFICIENT_PERMISSIONS, e.getErrorCode());
@@ -439,28 +438,35 @@ public class AsymmetricKeyEcTest {
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException, InvalidSessionException, SignatureException, UnsupportedAlgorithmException {
         final short id = 0x1234;
-        PublicKey pubKey = importEcKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_ECDSA), keyAlgorithm, curve, componentLength);
-
+        KeyPair keypair = importEcKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_ECDSA), keyAlgorithm, curve, componentLength);
+        PublicKey publicKey = keypair.getPublic();
         try {
             final YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             final AsymmetricKeyEc key = AsymmetricKeyEc.getInstance(keyinfo);
 
-            signEcdsa(pubKey, key, Algorithm.EC_ECDSA_SHA1, "SHA1withECDSA");
-            signEcdsa(pubKey, key, Algorithm.EC_ECDSA_SHA256, "SHA256withECDSA");
-            signEcdsa(pubKey, key, Algorithm.EC_ECDSA_SHA384, "SHA384withECDSA");
-            signEcdsa(pubKey, key, Algorithm.EC_ECDSA_SHA512, "SHA512withECDSA");
+            byte[] data = new byte[0];
+            signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA1, "SHA1withECDSA", data);
+            signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA256, "SHA256withECDSA", data);
+            signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA384, "SHA384withECDSA", data);
+            signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA512, "SHA512withECDSA", data);
+
+            data = "This is a signing test data".getBytes();
+            signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA1, "SHA1withECDSA", data);
+            signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA256, "SHA256withECDSA", data);
+            signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA384, "SHA384withECDSA", data);
+            signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA512, "SHA512withECDSA", data);
 
         } finally {
             yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 
-    private void signEcdsa(PublicKey pubKey, AsymmetricKeyEc key, Algorithm signAlgorithm, String signAlgorithmStr)
+    private void signEcdsa(PublicKey pubKey, AsymmetricKeyEc key, Algorithm signAlgorithm, String signAlgorithmStr, byte[] data)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException, SignatureException {
-        final byte[] data = "This is a signing test data".getBytes();
-        final byte[] signature = key.signEcdsa(session, data, signAlgorithm);
+
+        byte[] signature = key.signEcdsa(session, data, signAlgorithm);
 
         Signature sig = Signature.getInstance(signAlgorithmStr);
         sig.initVerify(pubKey);
@@ -473,17 +479,17 @@ public class AsymmetricKeyEcTest {
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException, InvalidSessionException, SignatureException, NoSuchProviderException, UnsupportedAlgorithmException {
         final short id = 0x1234;
-        PublicKey pubKey =
+        KeyPair keyPair =
                 importEcBrainpoolKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_ECDSA), keyAlgorithm, curve, componentLength);
-
+        PublicKey publicKey = keyPair.getPublic();
         try {
             final YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             final AsymmetricKeyEc key = AsymmetricKeyEc.getInstance(keyinfo);
 
-            signEcdsaBrainpool(pubKey, key, Algorithm.EC_ECDSA_SHA1, "SHA1withECDSA");
-            signEcdsaBrainpool(pubKey, key, Algorithm.EC_ECDSA_SHA256, "SHA256withECDSA");
-            signEcdsaBrainpool(pubKey, key, Algorithm.EC_ECDSA_SHA384, "SHA384withECDSA");
-            signEcdsaBrainpool(pubKey, key, Algorithm.EC_ECDSA_SHA512, "SHA512withECDSA");
+            signEcdsaBrainpool(publicKey, key, Algorithm.EC_ECDSA_SHA1, "SHA1withECDSA");
+            signEcdsaBrainpool(publicKey, key, Algorithm.EC_ECDSA_SHA256, "SHA256withECDSA");
+            signEcdsaBrainpool(publicKey, key, Algorithm.EC_ECDSA_SHA384, "SHA384withECDSA");
+            signEcdsaBrainpool(publicKey, key, Algorithm.EC_ECDSA_SHA512, "SHA512withECDSA");
 
         } finally {
             yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);

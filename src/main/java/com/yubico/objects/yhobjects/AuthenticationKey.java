@@ -96,7 +96,6 @@ public class AuthenticationKey extends YHObject {
      * @throws InvalidKeySpecException  When failing to derive the encryption key and the MAC key
      */
     public void deriveAuthenticationKey(char[] password) throws NoSuchAlgorithmException, InvalidKeySpecException {
-
         byte[] secretKey = deriveSecretKey(password);
         encryptionKey = Arrays.copyOfRange(secretKey, 0, KEY_SIZE);
         macKey = Arrays.copyOfRange(secretKey, KEY_SIZE, secretKey.length);
@@ -105,6 +104,10 @@ public class AuthenticationKey extends YHObject {
     }
 
     private static byte[] deriveSecretKey(char[] password) throws InvalidKeySpecException, NoSuchAlgorithmException {
+        if(password==null || password.length==0) {
+            throw new InvalidParameterException("Missing password for derivation of authentication key");
+        }
+
         SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(ALGORITHM);
         PBEKeySpec keySpec = new PBEKeySpec(password, SALT, ITERATIONS, KEY_SIZE * 2 * 8); // keyLength in bits
         SecretKey key = keyFactory.generateSecret(keySpec);
@@ -151,7 +154,7 @@ public class AuthenticationKey extends YHObject {
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      */
-    public static short importAuthenticationKey(final YHSession session, short id, String label, final List<Integer> domains,
+    public static short importAuthenticationKey(final YHSession session, short id, final String label, final List<Integer> domains,
                                                 final List<Capability> capabilities,
                                                 final List<Capability> delegatedCapabilities, byte[] encryptionKey, byte[] macKey)
             throws NoSuchAlgorithmException,
@@ -165,22 +168,17 @@ public class AuthenticationKey extends YHObject {
                    BadPaddingException,
                    IllegalBlockSizeException {
         Utils.checkNullValue(session, "Session is null. Creating a new authentication key must be done over an authenticated session");
-        Utils.checkNullValue(domains, "Missing domains parameter. Authentication Key must be able to operate within at least one domain");
-        Utils.checkNullValue(capabilities, "Missing capabilities");
-        Utils.checkNullValue(encryptionKey, "Missing encryption key. To create a new authentication key, a 16 byte encryption key is needed");
-        Utils.checkNullValue(macKey, "Missing MAC key. To create a new authentication key, a 16 byte MAC key is needed");
+        Utils.checkEmptyList(domains, "Missing domains parameter. Authentication Key must be able to operate within at least one domain");
+        Utils.checkEmptyList(capabilities, "Missing capabilities");
+        Utils.checkEmptyByteArray(encryptionKey, "Missing encryption key. To create a new authentication key, a 16 byte encryption key is needed");
+        Utils.checkEmptyByteArray(macKey, "Missing MAC key. To create a new authentication key, a 16 byte MAC key is needed");
         if (encryptionKey.length != KEY_SIZE || macKey.length != KEY_SIZE) {
             throw new InvalidParameterException("Long term encryption key and MAC key have to be of size " + KEY_SIZE);
-        }
-        if(label == null) {
-            label = "";
-        } else if(label.length() > LABEL_LENGTH) {
-            throw new InvalidParameterException("Invalid parameter: label");
         }
 
         ByteBuffer bb = ByteBuffer.allocate(93);
         bb.putShort(id);
-        bb.put(Arrays.copyOf(label.getBytes(), LABEL_LENGTH));
+        bb.put(Arrays.copyOf(getLabel(label).getBytes(), LABEL_LENGTH));
         bb.putShort(Utils.getShortFromList(domains));
         bb.putLong(Capability.getCapabilities(capabilities));
         bb.put(Algorithm.AES128_YUBICO_AUTHENTICATION.getAlgorithmId());
@@ -219,7 +217,7 @@ public class AuthenticationKey extends YHObject {
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      * @throws InvalidKeySpecException            If the derivation of the long term keys from the password fails
      */
-    public static short importAuthenticationKey(final YHSession session, short id, String label, final List<Integer> domains,
+    public static short importAuthenticationKey(final YHSession session, short id, final String label, final List<Integer> domains,
                                                 final List<Capability> capabilities,
                                                 final List<Capability> delegatedCapabilities, char[] password) throws NoSuchAlgorithmException,
                                                                                                                       YHDeviceException,
@@ -270,8 +268,8 @@ public class AuthenticationKey extends YHObject {
                    BadPaddingException,
                    IllegalBlockSizeException {
         Utils.checkNullValue(session, "Session is null. Creating a new authentication key must be done over an authenticated session");
-        Utils.checkNullValue(encryptionKey, "Missing encryption key. To create a new authentication key, a 16 byte encryption key is needed");
-        Utils.checkNullValue(macKey, "Missing MAC key. To create a new authentication key, a 16 byte MAC key is needed");
+        Utils.checkEmptyByteArray(encryptionKey, "Missing encryption key. To create a new authentication key, a 16 byte encryption key is needed");
+        Utils.checkEmptyByteArray(macKey, "Missing MAC key. To create a new authentication key, a 16 byte MAC key is needed");
         if (encryptionKey.length != KEY_SIZE || macKey.length != KEY_SIZE) {
             throw new InvalidParameterException("Long term encryption key and MAC key have to be of size " + KEY_SIZE);
         }

@@ -358,6 +358,8 @@ public class AsymmetricKeyRsaTest {
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException, InvalidSessionException, InvalidKeySpecException, SignatureException, NoSuchProviderException,
                    UnsupportedAlgorithmException {
+        logger.info("TEST START: testSignDataWithInsufficientPermissions()");
+
         final short id = 0x1234;
         PublicKey pubKey = importRsaKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_PKCS), Algorithm.RSA_2048, 2048,
                                         128);
@@ -367,7 +369,7 @@ public class AsymmetricKeyRsaTest {
 
             boolean exceptionThrown = false;
             try {
-                signPss(pubKey, key, Algorithm.RSA_MGF1_SHA256, "SHA256withRSA/PSS", "SHA-256", (short) 32);
+                signPss(pubKey, key, Algorithm.RSA_MGF1_SHA256, "SHA256withRSA/PSS", "SHA-256", (short) 32, new byte[0]);
             } catch (YHDeviceException e) {
                 exceptionThrown = true;
                 assertEquals("Device returned incorrect error", YHError.INSUFFICIENT_PERMISSIONS, e.getErrorCode());
@@ -377,6 +379,8 @@ public class AsymmetricKeyRsaTest {
         } finally {
             yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
+
+        logger.info("TEST END: testSignDataWithInsufficientPermissions()");
     }
 
     @Test
@@ -410,22 +414,28 @@ public class AsymmetricKeyRsaTest {
             final YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             final AsymmetricKeyRsa key = AsymmetricKeyRsa.getInstance(keyinfo);
 
-            signPkcs1(pubKey, key, Algorithm.RSA_PKCS1_SHA1, "SHA1withRSA");
-            signPkcs1(pubKey, key, Algorithm.RSA_PKCS1_SHA256, "SHA256withRSA");
-            signPkcs1(pubKey, key, Algorithm.RSA_PKCS1_SHA384, "SHA384withRSA");
-            signPkcs1(pubKey, key, Algorithm.RSA_PKCS1_SHA512, "SHA512withRSA");
+            byte[] data = new byte[0];
+            signPkcs1(pubKey, key, Algorithm.RSA_PKCS1_SHA1, "SHA1withRSA", data);
+            signPkcs1(pubKey, key, Algorithm.RSA_PKCS1_SHA256, "SHA256withRSA", data);
+            signPkcs1(pubKey, key, Algorithm.RSA_PKCS1_SHA384, "SHA384withRSA", data);
+            signPkcs1(pubKey, key, Algorithm.RSA_PKCS1_SHA512, "SHA512withRSA", data);
+
+            data = "This is a signing test data".getBytes();
+            signPkcs1(pubKey, key, Algorithm.RSA_PKCS1_SHA1, "SHA1withRSA", data);
+            signPkcs1(pubKey, key, Algorithm.RSA_PKCS1_SHA256, "SHA256withRSA", data);
+            signPkcs1(pubKey, key, Algorithm.RSA_PKCS1_SHA384, "SHA384withRSA", data);
+            signPkcs1(pubKey, key, Algorithm.RSA_PKCS1_SHA512, "SHA512withRSA", data);
         } finally {
             yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 
-    private void signPkcs1(PublicKey pubKey, AsymmetricKeyRsa key, Algorithm hashAlgorithm, String signatureAlgorithm)
+    private void signPkcs1(PublicKey pubKey, AsymmetricKeyRsa key, Algorithm hashAlgorithm, String signatureAlgorithm, byte[] data)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException, SignatureException, UnsupportedAlgorithmException {
 
-        final byte[] data = "This is a signing test data".getBytes();
-        final byte[] signature = key.signPkcs1(session, data, hashAlgorithm);
+        byte[] signature = key.signPkcs1(session, data, hashAlgorithm);
 
         Signature sig = Signature.getInstance(signatureAlgorithm);
         sig.initVerify(pubKey);
@@ -446,10 +456,17 @@ public class AsymmetricKeyRsaTest {
             final YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             final AsymmetricKeyRsa key = AsymmetricKeyRsa.getInstance(keyinfo);
 
-            signPss(pubKey, key, Algorithm.RSA_MGF1_SHA1, "SHA1withRSA/PSS", "SHA-1", (short) 32);
-            signPss(pubKey, key, Algorithm.RSA_MGF1_SHA256, "SHA256withRSA/PSS", "SHA-256", (short) 32);
-            signPss(pubKey, key, Algorithm.RSA_MGF1_SHA384, "SHA384withRSA/PSS", "SHA-384", (short) 32);
-            signPss(pubKey, key, Algorithm.RSA_MGF1_SHA512, "SHA512withRSA/PSS", "SHA-512", (short) 32);
+            byte[] data = new byte[0];
+            signPss(pubKey, key, Algorithm.RSA_MGF1_SHA1, "SHA1withRSA/PSS", "SHA-1", (short) 32, data);
+            signPss(pubKey, key, Algorithm.RSA_MGF1_SHA256, "SHA256withRSA/PSS", "SHA-256", (short) 32, data);
+            signPss(pubKey, key, Algorithm.RSA_MGF1_SHA384, "SHA384withRSA/PSS", "SHA-384", (short) 32, data);
+            signPss(pubKey, key, Algorithm.RSA_MGF1_SHA512, "SHA512withRSA/PSS", "SHA-512", (short) 32, data);
+
+            data = "This is a signing test data".getBytes();
+            signPss(pubKey, key, Algorithm.RSA_MGF1_SHA1, "SHA1withRSA/PSS", "SHA-1", (short) 32, data);
+            signPss(pubKey, key, Algorithm.RSA_MGF1_SHA256, "SHA256withRSA/PSS", "SHA-256", (short) 32, data);
+            signPss(pubKey, key, Algorithm.RSA_MGF1_SHA384, "SHA384withRSA/PSS", "SHA-384", (short) 32, data);
+            signPss(pubKey, key, Algorithm.RSA_MGF1_SHA512, "SHA512withRSA/PSS", "SHA-512", (short) 32, data);
 
         } finally {
             yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
@@ -457,13 +474,13 @@ public class AsymmetricKeyRsaTest {
     }
 
     private void signPss(PublicKey pubKey, AsymmetricKeyRsa key, Algorithm signAlgorithm, String signAlgorithmStr, String hashAlgorithm,
-                         short saltLength)
+                         short saltLength, byte[] data)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException, SignatureException, NoSuchProviderException, UnsupportedAlgorithmException {
 
-        final byte[] data = "This is a signing test data".getBytes();
-        final byte[] signature = key.signPss(session, signAlgorithm, saltLength, data);
+
+        byte[] signature = key.signPss(session, signAlgorithm, saltLength, data);
 
         Security.addProvider(new BouncyCastleProvider());
         Signature sig = Signature.getInstance(signAlgorithmStr, "BC");
@@ -527,14 +544,20 @@ public class AsymmetricKeyRsaTest {
                    NoSuchProviderException {
         logger.info("TEST START: testDecryptPkcs1()");
 
-        decryptPkcs1Test(Algorithm.RSA_2048, 2048, 128);
-        decryptPkcs1Test(Algorithm.RSA_3072, 3072, 192);
-        decryptPkcs1Test(Algorithm.RSA_4096, 4096, 256);
+        byte[] data = new byte[0];
+        decryptPkcs1Test(Algorithm.RSA_2048, 2048, 128, data);
+        decryptPkcs1Test(Algorithm.RSA_3072, 3072, 192, data);
+        decryptPkcs1Test(Algorithm.RSA_4096, 4096, 256, data);
+
+        data = "This is test data for decryption".getBytes();
+        decryptPkcs1Test(Algorithm.RSA_2048, 2048, 128, data);
+        decryptPkcs1Test(Algorithm.RSA_3072, 3072, 192, data);
+        decryptPkcs1Test(Algorithm.RSA_4096, 4096, 256, data);
 
         logger.info("TEST END: testDecryptPkcs1()");
     }
 
-    private void decryptPkcs1Test(Algorithm keyAlgorithm, int keysize, int componentLength)
+    private void decryptPkcs1Test(Algorithm keyAlgorithm, int keysize, int componentLength, byte[] data)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException, InvalidSessionException, InvalidKeySpecException, SignatureException, UnsupportedAlgorithmException,
@@ -545,8 +568,6 @@ public class AsymmetricKeyRsaTest {
                 importRsaKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.DECRYPT_PKCS), keyAlgorithm, keysize, componentLength);
 
         try {
-            byte[] data = "This is test data for decryption".getBytes();
-
             Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);
             byte[] enc = cipher.doFinal(data);

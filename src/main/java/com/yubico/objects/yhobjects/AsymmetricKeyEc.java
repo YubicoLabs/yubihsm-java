@@ -82,7 +82,7 @@ public class AsymmetricKeyEc extends AsymmetricKey {
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, UnsupportedAlgorithmException {
         checkNullParameters(session, domains, capabilities, algorithm);
-        Utils.checkNullValue(d, "Missing parameter d");
+        Utils.checkEmptyByteArray(d, "Missing parameter d");
         if (!algorithm.isEcAlgorithm()) {
             throw new UnsupportedAlgorithmException("Specified algorithm is not a supported EC algorithm");
         }

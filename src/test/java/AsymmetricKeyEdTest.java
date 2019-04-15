@@ -329,22 +329,30 @@ public class AsymmetricKeyEdTest {
             final YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             final AsymmetricKeyEd key = AsymmetricKeyEd.getInstance(keyinfo);
 
-            final byte[] data = "This is a signing test data".getBytes();
-            final byte[] signature = key.signEddsa(session, data);
-            assertEquals(64, signature.length);
-
-            Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-
-            Signer signer = new Ed25519Signer();
-            signer.init(false, pubKey);
-            signer.update(data, 0, data.length);
-            assertTrue(signer.verifySignature(signature));
+            signDataTest(key, pubKey, new byte[0]);
+            signDataTest(key, pubKey, "This is a signing test data".getBytes());
 
         } finally {
             yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
 
         logger.info("TEST END: testSignData()");
+    }
+
+    private void signDataTest(AsymmetricKeyEd key, Ed25519PublicKeyParameters pubKey, byte[] data)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, InvalidSessionException, UnsupportedAlgorithmException {
+
+        byte[] signature = key.signEddsa(session, data);
+        assertEquals(64, signature.length);
+
+        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+
+        Signer signer = new Ed25519Signer();
+        signer.init(false, pubKey);
+        signer.update(data, 0, data.length);
+        assertTrue(signer.verifySignature(signature));
     }
 
 }

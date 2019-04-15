@@ -24,6 +24,10 @@ public class AsymmetricKey extends YHObject {
 
     public static final ObjectType TYPE = ObjectType.TYPE_ASYMMETRIC_KEY;
 
+    /**
+     * Creates an AsymmetricKey object
+     * @param key The key
+     */
     public AsymmetricKey(YHObject key) {
         super(key.getId(), key.getType(), key.getCapabilities(), key.getObjectSize(), key.getDomains(), key.getAlgorithm(),
               key.getSequence(), key.getOrigin(), key.getLabel(), key.getDelegatedCapabilities());
@@ -137,22 +141,9 @@ public class AsymmetricKey extends YHObject {
     protected static void checkNullParameters(final YHSession session, final List<Integer> domains, final List<Capability> capabilities,
                                               final Algorithm algorithm) {
         Utils.checkNullValue(session, "Session is null. Creating a new authentication key must be done over an authenticated session");
-        Utils.checkNullValue(domains, "Missing domains parameter. Authentication Key must be able to operate within at least one domain");
+        Utils.checkEmptyList(domains, "For a key to be useful, it must be accessible in at least one domain");
         Utils.checkNullValue(capabilities, "Missing capabilities");
         Utils.checkNullValue(algorithm, "Missing key algorithm");
-    }
-
-    /**
-     * @return An empty string of the label is null and throws an InvalidParameter exception if the label is more than the maximum length allowed
-     */
-    protected static String getLabel(String label) {
-        if (label == null) {
-            return "";
-        }
-        if (label.length() > LABEL_LENGTH) {
-            throw new InvalidParameterException("Invalid parameter: label");
-        }
-        return label;
     }
 
     /**

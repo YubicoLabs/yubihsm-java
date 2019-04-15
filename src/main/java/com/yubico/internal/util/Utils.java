@@ -112,4 +112,28 @@ public class Utils {
             throw new InvalidParameterException(errorMessage);
         }
     }
+
+    /**
+     * Throws an InvalidParameterException with the specified array is null or empty
+     *
+     * @param ba           The array to check
+     * @param errorMessage The error message to include in the InvalidParameterException
+     */
+    public static void checkEmptyByteArray(final byte[] ba, final String errorMessage) {
+        if (ba == null || ba.length == 0) {
+            throw new InvalidParameterException(errorMessage);
+        }
+    }
+
+    /**
+     * Throws an InvalidParameterException with the specified error message if the list is null or empty
+     *
+     * @param l            The list to check
+     * @param errorMessage The error message to include in the InvalidParameterException
+     */
+    public static void checkEmptyList(final List l, final String errorMessage) {
+        if (l == null || l.isEmpty()) {
+            throw new InvalidParameterException(errorMessage);
+        }
+    }
 }

@@ -70,7 +70,7 @@ public class AsymmetricKeyEd extends AsymmetricKey {
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, UnsupportedAlgorithmException {
         checkNullParameters(session, domains, capabilities, algorithm);
-        Utils.checkNullValue(k, "Missing parameter: k");
+        Utils.checkEmptyByteArray(k, "Missing parameter: k");
         if (!algorithm.isEdAlgorithm()) {
             throw new UnsupportedAlgorithmException("Specified algorithm is not a supported ED algorithm");
         }
@@ -78,7 +78,7 @@ public class AsymmetricKeyEd extends AsymmetricKey {
         if (k.length != 32) {
             throw new InvalidParameterException("Invalid parameter: k");
         }
-        return putKey(session, id, label, domains, capabilities, algorithm, k, null);
+        return putKey(session, id, getLabel(label), domains, capabilities, algorithm, k, null);
     }
 
     /**

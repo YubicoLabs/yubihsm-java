@@ -1,0 +1,263 @@
+import com.yubico.YHSession;
+import com.yubico.YubiHsm;
+import com.yubico.backend.Backend;
+import com.yubico.backend.HttpBackend;
+import com.yubico.exceptions.*;
+import com.yubico.objects.yhconcepts.Algorithm;
+import com.yubico.objects.yhconcepts.Capability;
+import com.yubico.objects.yhconcepts.ObjectOrigin;
+import com.yubico.objects.yhconcepts.ObjectType;
+import com.yubico.objects.yhobjects.Opaque;
+import com.yubico.objects.yhobjects.YHObject;
+import org.bouncycastle.util.encoders.Base64;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import java.io.ByteArrayInputStream;
+import java.net.MalformedURLException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.InvalidParameterException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.logging.Logger;
+
+import static org.junit.Assert.*;
+
+public class OpaqueTest {
+    Logger logger = Logger.getLogger(OpaqueTest.class.getName());
+
+    private final String testCertificate = "-----BEGIN CERTIFICATE-----\n" +
+                                           "MIIDMzCCAhugAwIBAgIIV9+4OgOubr4wDQYJKoZIhvcNAQELBQAwGzEZMBcGA1UE\n" +
+                                           "AwwQTmV3TWFuYWdlbWVudEtleTAeFw0xODEyMTMwOTQ1MjVaFw0xODEyMjIxMDEw\n" +
+                                           "MTlaMBcxFTATBgNVBAMMDHl1Ymljb19hZG1pbjCCASIwDQYJKoZIhvcNAQEBBQAD\n" +
+                                           "ggEPADCCAQoCggEBAL2WcfkFWwrBO5ylKVdGMGmGBmiP6neQk8OHhZsTicxry6hw\n" +
+                                           "GJoivGrI6KuBj919+MWcXbgs5lYW1gV+YduUOGPj0JoGMHsZWDzkRo1iF1I0B9Nf\n" +
+                                           "tRhgkd0eSuhzoi1ainZ5MKvR0Tj5J6nnzs/Oy9W9EguUdNjh+LLGuvbJCuDhXYCU\n" +
+                                           "bgGWhNg+bpKtn4bFpOJatJVseXXQdRdJtzdKSFou2xtQPSJqE1+WurxJ1/Qx0ZaA\n" +
+                                           "wPywaAEkUbMRaPFsO2171ZflT01J+S4IO1BpHad6J47LAOWgKODcxdI231WymelB\n" +
+                                           "Qp719v/Bbry5L4/KBj6SWKlKvt7SfOnfxkC4r1ECAwEAAaN/MH0wDAYDVR0TAQH/\n" +
+                                           "BAIwADAfBgNVHSMEGDAWgBRn/G1+IF6vtGM40OvlGxTHnRCUWDAdBgNVHSUEFjAU\n" +
+                                           "BggrBgEFBQcDAgYIKwYBBQUHAwQwHQYDVR0OBBYEFHrLsuB8yPWS4LeMQs0UjYCT\n" +
+                                           "O1v+MA4GA1UdDwEB/wQEAwIF4DANBgkqhkiG9w0BAQsFAAOCAQEAs3c3gPCCC33E\n" +
+                                           "I7lQEp/hrA0bu9K6VCa9NrzSXP8DFXn4hgM487678yhh7PlQ9T60VVnxVpuJgs8M\n" +
+                                           "3PRiVvzY11ABjdnjjDMss5jNC3dOi7MLIT6xxDh5U/1XulEmUoqP7RkXCcmDKg+8\n" +
+                                           "Vd7TnsmlutTmwKRiLOa8zl/o3aJoeCqg+FdNC3hRZuR3w5mG5IlaZ+VLwY7tjdov\n" +
+                                           "12mcMSxsC1JG0aUXv+RdBUtNG1JXFBYA43FBwMNjZPsiYXYgN0T24zGW6OQnTbB3\n" +
+                                           "kw4LNCS2l7cuEDiHwFmxVyCSInUSzcbfryltKCzzqWOCSPuKxwZzhHuRQ1tyy+MB\n" +
+                                           "SKlmUkdizg==\n" +
+                                           "-----END CERTIFICATE-----";
+
+    private static YubiHsm yubihsm;
+    private static YHSession session;
+
+    @BeforeClass
+    public static void init()
+            throws MalformedURLException, InvalidKeySpecException, NoSuchAlgorithmException, YHConnectionException, YHDeviceException,
+                   YHAuthenticationException, YHInvalidResponseException {
+        if (session == null) {
+            Backend backend = new HttpBackend();
+            yubihsm = new YubiHsm(backend);
+            session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
+            session.createAuthenticatedSession();
+        }
+    }
+
+    @AfterClass
+    public static void destroy()
+            throws YHDeviceException, YHAuthenticationException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
+                   NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, BadPaddingException,
+                   IllegalBlockSizeException {
+        session.closeSession();
+        yubihsm.close();
+    }
+
+    @Test
+    public void testImportOpaque()
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, InvalidSessionException, UnsupportedAlgorithmException, CertificateException {
+        logger.info("TEST START: testImportOpaque()");
+
+        final List domains = Arrays.asList(2, 5, 8);
+        final List capabilities = Arrays.asList(Capability.GENERATE_HMAC_KEY, Capability.SIGN_PKCS);
+        final String label = "imported_opaque";
+
+        byte[] opaqueData = new byte[1024];
+        new Random().nextBytes(opaqueData);
+        final short id = Opaque.importOpaque(session, (short) 0, label, domains, capabilities, Algorithm.OPAQUE_DATA, opaqueData);
+
+        try {
+            // Verify object properties
+            final YHObject opaqueObj = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+            assertNotEquals(0, opaqueObj.getId());
+            assertEquals(id, opaqueObj.getId());
+            assertEquals(ObjectType.TYPE_OPAQUE, opaqueObj.getType());
+            assertEquals(domains, opaqueObj.getDomains());
+            assertEquals(Algorithm.OPAQUE_DATA, opaqueObj.getAlgorithm());
+            assertEquals(ObjectOrigin.YH_ORIGIN_IMPORTED, opaqueObj.getOrigin());
+            assertEquals(label, opaqueObj.getLabel());
+            assertEquals(capabilities.size(), opaqueObj.getCapabilities().size());
+            assertTrue(opaqueObj.getCapabilities().containsAll(capabilities));
+            assertEquals(0, opaqueObj.getDelegatedCapabilities().size());
+
+            Opaque opaque = new Opaque(opaqueObj);
+            byte[] returnedOpaqueData = opaque.getOpaque(session);
+            assertArrayEquals(opaqueData, returnedOpaqueData);
+        } finally {
+            // Delete opaque object
+            yubihsm.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+            try {
+                yubihsm.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+            } catch (YHDeviceException e1) {
+                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
+            }
+        }
+
+        logger.info("TEST END: testImportOpaque()");
+    }
+
+    @Test
+    public void testImportCertificate()
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, InvalidSessionException, CertificateException {
+        logger.info("TEST START: testImportCertificate()");
+
+        final List domains = Arrays.asList(2, 5, 8);
+        final String label = "imported_cert";
+        X509Certificate cert = getTestCertificate();
+
+        final short id = Opaque.importCertificate(session, (short) 0, label, domains, cert);
+
+        try {
+            // Verify object properties
+            final YHObject opaqueObj = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+            assertNotEquals(0, opaqueObj.getId());
+            assertEquals(id, opaqueObj.getId());
+            assertEquals(ObjectType.TYPE_OPAQUE, opaqueObj.getType());
+            assertEquals(domains, opaqueObj.getDomains());
+            assertEquals(Algorithm.OPAQUE_X509_CERTIFICATE, opaqueObj.getAlgorithm());
+            assertEquals(ObjectOrigin.YH_ORIGIN_IMPORTED, opaqueObj.getOrigin());
+            assertEquals(label, opaqueObj.getLabel());
+            assertEquals(0, opaqueObj.getCapabilities().size());
+            assertEquals(0, opaqueObj.getDelegatedCapabilities().size());
+
+            Opaque opaque = new Opaque(opaqueObj);
+            X509Certificate returnedCert = opaque.getCertificate(session);
+            assertEquals(cert, returnedCert);
+        } finally {
+            // Delete opaque object
+            yubihsm.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+            try {
+                yubihsm.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+            } catch (YHDeviceException e1) {
+                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
+            }
+        }
+
+        logger.info("TEST END: testImportCertificate()");
+    }
+
+    @Test
+    public void testImportOpaqueCertificate()
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, InvalidSessionException, UnsupportedAlgorithmException, CertificateException {
+        logger.info("TEST START: testImportOpaqueCertificate()");
+
+        X509Certificate testCert = getTestCertificate();
+        short id =
+                Opaque.importOpaque(session, (short) 0, "", Arrays.asList(2, 5, 8), null, Algorithm.OPAQUE_X509_CERTIFICATE, testCert.getEncoded());
+        try {
+            final YHObject opaqueObj = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+            Opaque opaque = new Opaque(opaqueObj);
+            X509Certificate returnedCert = opaque.getCertificate(session);
+            assertEquals(testCert, returnedCert);
+        } finally {
+            // Delete opaque object
+            yubihsm.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+        }
+
+        logger.info("TEST END: testImportOpaqueCertificate()");
+
+    }
+
+    @Test
+    public void testImportOpaqueCertificateWithWrongAlgorithm()
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, InvalidSessionException, UnsupportedAlgorithmException, CertificateException {
+        logger.info("TEST START: testImportOpaqueCertificate()");
+
+
+        X509Certificate testCert = getTestCertificate();
+        short id = Opaque.importOpaque(session, (short) 0, "", Arrays.asList(2, 5, 8), null, Algorithm.OPAQUE_DATA, testCert.getEncoded());
+        try {
+            final YHObject opaqueObj = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+            Opaque opaque = new Opaque(opaqueObj);
+            boolean exceptionThrown = false;
+            try {
+                opaque.getCertificate(session);
+            } catch (UnsupportedOperationException e) {
+                exceptionThrown = true;
+            }
+            assertTrue("Succeeded in returning the opaque ", exceptionThrown);
+        } finally {
+            // Delete opaque object
+            yubihsm.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+        }
+
+        logger.info("TEST END: testImportOpaqueCertificate()");
+
+    }
+
+    @Test
+    public void testImportInvalidOpaque()
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, UnsupportedAlgorithmException, CertificateException {
+        logger.info("TEST START: testImportInvalidOpaque()");
+
+        boolean exceptionThrown = false;
+        try {
+            Opaque.importOpaque(session, (short) 0, "", Arrays.asList(2, 5, 8), null, Algorithm.OPAQUE_DATA, new byte[0]);
+        } catch (InvalidParameterException e) {
+            exceptionThrown = true;
+        }
+        assertTrue("Succeeded in importing an empty byte array as an opaque object", exceptionThrown);
+
+        byte[] opaqueData = new byte[1970];
+        new Random().nextBytes(opaqueData);
+        exceptionThrown = false;
+        try {
+            Opaque.importOpaque(session, (short) 0, "", Arrays.asList(2, 5, 8), null, Algorithm.OPAQUE_DATA, opaqueData);
+        } catch (InvalidParameterException e) {
+            exceptionThrown = true;
+        }
+        assertTrue("Succeeded in importing an opaque object that is too large", exceptionThrown);
+
+
+        logger.info("TEST START: testImportInvalidOpaque()");
+    }
+
+    private X509Certificate getTestCertificate() throws CertificateException {
+        String certStr = testCertificate.replace("-----BEGIN CERTIFICATE-----\n", "");
+        certStr = certStr.replace("-----END CERTIFICATE-----", "");
+        byte[] encoded = Base64.decode(certStr);
+        ByteArrayInputStream in = new ByteArrayInputStream(encoded);
+
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        return (X509Certificate) cf.generateCertificate(in);
+    }
+}
