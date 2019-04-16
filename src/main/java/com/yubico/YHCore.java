@@ -26,12 +26,28 @@ public class YHCore {
     private static Logger logger = Logger.getLogger(YHCore.class.getName());
 
     public enum ListFilter {
-        ID,
-        TYPE,
-        DOMAINS,
-        CAPABILITIES,
-        ALGORITHM,
-        LABEL
+        ID          ((byte) 0x01, 3), // 1 identifier byte + 2
+        TYPE        ((byte) 0x02, 2), // 1 identifier byte + 1
+        DOMAINS     ((byte) 0x03, 3), // 1 identifier byte + 2
+        CAPABILITIES((byte) 0x04, 9), // 1 identifier byte + 8
+        ALGORITHM   ((byte) 0x05, 2), // 1 identifier byte + 1
+        LABEL       ((byte) 0x06, 41); // 1 identifier byte + 40
+
+        private final byte identifier;
+        private final int length;
+
+        ListFilter(byte id, int l) {
+            this.identifier = id;
+            this.length = l;
+        }
+
+        public byte getIdentifier() {
+            return this.identifier;
+        }
+
+        public int getLength() {
+            return this.length;
+        }
     }
 
     /**
@@ -136,13 +152,13 @@ public class YHCore {
                 for (ListFilter f : filters.keySet()) {
                     switch (f) {
                         case ID:
-                            bb = ByteBuffer.allocate(3);
-                            bb.put((byte) 0x01).putShort((short) filters.get(f));
+                            bb = ByteBuffer.allocate(ListFilter.ID.length);
+                            bb.put(ListFilter.ID.identifier).putShort((short) filters.get(f));
                             baos.write(bb.array());
                             break;
                         case TYPE:
-                            bb = ByteBuffer.allocate(2);
-                            bb.put((byte) 0x02);
+                            bb = ByteBuffer.allocate(ListFilter.TYPE.length);
+                            bb.put(ListFilter.TYPE.identifier);
                             Object type = filters.get(f);
                             if (type instanceof Byte) {
                                 bb.put((byte) type);
@@ -152,8 +168,8 @@ public class YHCore {
                             baos.write(bb.array());
                             break;
                         case DOMAINS:
-                            bb = ByteBuffer.allocate(3);
-                            bb.put((byte) 0x03);
+                            bb = ByteBuffer.allocate(ListFilter.DOMAINS.length);
+                            bb.put(ListFilter.DOMAINS.identifier);
                             Object domains = filters.get(f);
                             if (domains instanceof Short) {
                                 bb.putShort((short) domains);
@@ -163,8 +179,8 @@ public class YHCore {
                             baos.write(bb.array());
                             break;
                         case CAPABILITIES:
-                            bb = ByteBuffer.allocate(9);
-                            bb.put((byte) 0x04);
+                            bb = ByteBuffer.allocate(ListFilter.CAPABILITIES.length);
+                            bb.put(ListFilter.CAPABILITIES.identifier);
                             Object capabilities = filters.get(f);
                             if (capabilities instanceof Long) {
                                 bb.putLong(((long) capabilities));
@@ -174,14 +190,14 @@ public class YHCore {
                             baos.write(bb.array());
                             break;
                         case ALGORITHM:
-                            bb = ByteBuffer.allocate(2);
-                            bb.put((byte) 0x05).put((byte) filters.get(f));
+                            bb = ByteBuffer.allocate(ListFilter.ALGORITHM.length);
+                            bb.put(ListFilter.ALGORITHM.identifier).put((byte) filters.get(f));
                             baos.write(bb.array());
                             break;
                         case LABEL:
                             final String label = (String) filters.get(f);
-                            bb = ByteBuffer.allocate(41);
-                            bb.put((byte) 0x06).put(label.getBytes());
+                            bb = ByteBuffer.allocate(ListFilter.LABEL.length);
+                            bb.put(ListFilter.LABEL.identifier).put(label.getBytes());
                             baos.write(bb.array());
                             break;
                         default:
