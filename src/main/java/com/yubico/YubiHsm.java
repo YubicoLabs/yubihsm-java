@@ -17,15 +17,6 @@ public class YubiHsm {
 
     private Logger logger = Logger.getLogger(YubiHsm.class.getName());
 
-    public enum LIST_FILTERS {
-        ID,
-        TYPE,
-        DOMAINS,
-        CAPABILITIES,
-        ALGORITHM,
-        LABEL
-    }
-
     private Backend backend;
 
     public YubiHsm(Backend backend) {

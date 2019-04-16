@@ -42,10 +42,10 @@ public class YHSessionTest {
     }
 
     @Test
-    public void testSessionCreation() throws InvalidKeySpecException, NoSuchAlgorithmException, YHDeviceException,
-                                             YHInvalidResponseException, YHConnectionException, YHAuthenticationException,
-                                             NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException,
-                                             IllegalBlockSizeException, InvalidSessionException {
+    public void testSessionCreation()
+            throws InvalidKeySpecException, NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
+                   YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException,
+                   IllegalBlockSizeException, InvalidSessionException {
         logger.info("TEST START: testSessionCreation()");
 
         YHSession session1 = new YHSession(yubihsm, (short) 1, "password".toCharArray());

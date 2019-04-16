@@ -25,6 +25,15 @@ public class YHCore {
 
     private static Logger logger = Logger.getLogger(YHCore.class.getName());
 
+    public enum ListFilter {
+        ID,
+        TYPE,
+        DOMAINS,
+        CAPABILITIES,
+        ALGORITHM,
+        LABEL
+    }
+
     /**
      * Sends the Echo command with `data` as the input over an authenticated session
      *
@@ -112,7 +121,7 @@ public class YHCore {
         return session.sendSecureCmd(Command.GET_PSEUDO_RANDOM, data.array());
     }
 
-    public static List<YHObject> getObjectList(final YHSession session, final Map<YubiHsm.LIST_FILTERS, Object> filters)
+    public static List<YHObject> getObjectList(final YHSession session, final Map<ListFilter, Object> filters)
             throws IOException, InvalidSessionException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    NoSuchPaddingException, IllegalBlockSizeException {
@@ -124,7 +133,7 @@ public class YHCore {
         if (filters != null) {
             try {
                 ByteBuffer bb;
-                for (YubiHsm.LIST_FILTERS f : filters.keySet()) {
+                for (ListFilter f : filters.keySet()) {
                     switch (f) {
                         case ID:
                             bb = ByteBuffer.allocate(3);
@@ -221,17 +230,10 @@ public class YHCore {
      * @throws BadPaddingException                If the message encryption/decryption fails
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      */
-    public static void deleteObject(final YHSession session, final short objectID, final ObjectType objectType) throws InvalidSessionException,
-                                                                                                                NoSuchAlgorithmException,
-                                                                                                                YHDeviceException,
-                                                                                                                YHInvalidResponseException,
-                                                                                                                YHConnectionException,
-                                                                                                                InvalidKeyException,
-                                                                                                                YHAuthenticationException,
-                                                                                                                NoSuchPaddingException,
-                                                                                                                InvalidAlgorithmParameterException,
-                                                                                                                BadPaddingException,
-                                                                                                                IllegalBlockSizeException {
+    public static void deleteObject(final YHSession session, final short objectID, final ObjectType objectType)
+            throws InvalidSessionException, NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
+                   InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
+                   IllegalBlockSizeException {
         if (session == null) {
             throw new InvalidSessionException();
         }
@@ -264,17 +266,10 @@ public class YHCore {
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      * @throws IllegalBlockSizeException
      */
-    public static YHObject getObjectInfo(final YHSession session, final short objectID, final ObjectType objectType) throws InvalidSessionException,
-                                                                                                                     NoSuchAlgorithmException,
-                                                                                                                     YHDeviceException,
-                                                                                                                     YHInvalidResponseException,
-                                                                                                                     YHConnectionException,
-                                                                                                                     InvalidKeyException,
-                                                                                                                     YHAuthenticationException,
-                                                                                                                     NoSuchPaddingException,
-                                                                                                                     InvalidAlgorithmParameterException,
-                                                                                                                     BadPaddingException,
-                                                                                                                     IllegalBlockSizeException {
+    public static YHObject getObjectInfo(final YHSession session, final short objectID, final ObjectType objectType)
+            throws InvalidSessionException, NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
+                   InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
+                   IllegalBlockSizeException {
         if (session == null) {
             throw new InvalidSessionException();
         }

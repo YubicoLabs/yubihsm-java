@@ -173,8 +173,8 @@ public class YubiHsmTest {
                    NoSuchPaddingException, IllegalBlockSizeException {
 
         HashMap filters = new HashMap();
-        filters.put(YubiHsm.LIST_FILTERS.ID, id);
-        filters.put(YubiHsm.LIST_FILTERS.TYPE, type);
+        filters.put(YHCore.ListFilter.ID, id);
+        filters.put(YHCore.ListFilter.TYPE, type);
         List<YHObject> objects = YHCore.getObjectList(session, filters);
         if (exists) {
             assertEquals(1, objects.size());
