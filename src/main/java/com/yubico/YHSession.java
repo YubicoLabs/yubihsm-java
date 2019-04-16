@@ -268,8 +268,8 @@ public class YHSession {
     /**
      * Sends a command to the device and gets a response over an authenticated session
      *
-     * @param cmd     The command to send
-     * @param data    The input to the command
+     * @param cmd  The command to send
+     * @param data The input to the command
      * @return The output of the command
      * @throws NoSuchAlgorithmException           If message encryption or decryption fails
      * @throws YHDeviceException                  If the device return an error
@@ -282,15 +282,10 @@ public class YHSession {
      * @throws BadPaddingException                If message encryption or decryption fails
      * @throws IllegalBlockSizeException          If message encryption or decryption fails
      */
-    public byte[] sendSecureCmd(final Command cmd, final byte[] data) throws NoSuchAlgorithmException,
-                                                                                                YHDeviceException,
-                                                                                                YHInvalidResponseException,
-                                                                                                YHConnectionException,
-                                                                                                InvalidKeyException,
-                                                                                                YHAuthenticationException,
-                                                                                                NoSuchPaddingException,
-                                                                                                InvalidAlgorithmParameterException,
-                                                                                                BadPaddingException, IllegalBlockSizeException {
+    public byte[] sendSecureCmd(final Command cmd, final byte[] data)
+            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
+                   YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
+                   IllegalBlockSizeException {
 
         if (status != YHSession.SessionStatus.AUTHENTICATED) {
             createAuthenticatedSession();
