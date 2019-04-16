@@ -1,3 +1,4 @@
+import com.yubico.YHCore;
 import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
@@ -72,7 +73,7 @@ public class YubiHsmTest {
         for (int i = 0; i < 5; i++) {
             byte[] data = new byte[32];
             new Random().nextBytes(data);
-            byte[] response = yubihsm.secureEcho(session, data);
+            byte[] response = YHCore.secureEcho(session, data);
             assertTrue(Arrays.equals(response, data));
         }
         session.closeSession();
@@ -100,7 +101,7 @@ public class YubiHsmTest {
         YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
         assertNotNull("Failed to create an authenticated session", session);
 
-        yubihsm.resetDevice(session);
+        YHCore.resetDevice(session);
         session.closeSession();
 
         logger.info("TEST END: testResetDevice()");
@@ -114,7 +115,7 @@ public class YubiHsmTest {
         logger.info("TEST START: testGetPseudoRandom()");
         YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
         for (int i = 1; i < 20; i++) {
-            byte[] response = yubihsm.getRandom(session, i);
+            byte[] response = YHCore.getRandom(session, i);
             assertEquals(i, response.length);
         }
         session.closeSession();
@@ -154,35 +155,27 @@ public class YubiHsmTest {
         assertEquals(YHSession.SessionStatus.AUTHENTICATED, session2.getStatus());
         byte[] data = new byte[32];
         new Random().nextBytes(data);
-        byte[] response = yubihsm.secureEcho(session2, data);
+        byte[] response = YHCore.secureEcho(session2, data);
         assertTrue(Arrays.equals(response, data));
         session2.closeSession();
 
         // Delete the new Authentication key and verify deletion
-        yubihsm.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
+        YHCore.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
         listObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY, false);
 
         session.closeSession();
         logger.info("TEST END: testAuthenticationKeyObject()");
     }
 
-    private void listObject(final YHSession session, final short id, final ObjectType type, final boolean exists) throws IOException,
-                                                                                                                         InvalidSessionException,
-                                                                                                                         NoSuchAlgorithmException,
-                                                                                                                         YHConnectionException,
-                                                                                                                         InvalidKeyException,
-                                                                                                                         YHDeviceException,
-                                                                                                                         InvalidAlgorithmParameterException,
-                                                                                                                         YHAuthenticationException,
-                                                                                                                         YHInvalidResponseException,
-                                                                                                                         BadPaddingException,
-                                                                                                                         NoSuchPaddingException,
-                                                                                                                         IllegalBlockSizeException {
+    private void listObject(final YHSession session, final short id, final ObjectType type, final boolean exists)
+            throws IOException, InvalidSessionException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   NoSuchPaddingException, IllegalBlockSizeException {
 
         HashMap filters = new HashMap();
         filters.put(YubiHsm.LIST_FILTERS.ID, id);
         filters.put(YubiHsm.LIST_FILTERS.TYPE, type);
-        List<YHObject> objects = yubihsm.getObjectList(session, filters);
+        List<YHObject> objects = YHCore.getObjectList(session, filters);
         if (exists) {
             assertEquals(1, objects.size());
             YHObject object = objects.get(0);
@@ -195,13 +188,11 @@ public class YubiHsmTest {
 
     private void verifyObjectInfo(final YHSession session, final short id, final ObjectType type, final List<Capability> capabilities,
                                   final List domains, final Algorithm algorithm, final ObjectOrigin origin, final String label,
-                                  final List<Capability> delegatedCapabilities) throws InvalidSessionException, NoSuchAlgorithmException,
-                                                                                       YHConnectionException, InvalidKeyException,
-                                                                                       YHDeviceException, InvalidAlgorithmParameterException,
-                                                                                       YHAuthenticationException, YHInvalidResponseException,
-                                                                                       BadPaddingException, NoSuchPaddingException,
-                                                                                       IllegalBlockSizeException {
-        YHObject object = yubihsm.getObjectInfo(session, id, type);
+                                  final List<Capability> delegatedCapabilities)
+            throws InvalidSessionException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   NoSuchPaddingException, IllegalBlockSizeException {
+        YHObject object = YHCore.getObjectInfo(session, id, type);
         assertNotNull(object);
         assertEquals(capabilities, object.getCapabilities());
         assertEquals(id, object.getId());

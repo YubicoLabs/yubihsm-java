@@ -1,3 +1,4 @@
+import com.yubico.YHCore;
 import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
@@ -80,7 +81,7 @@ public class AsymmetricKeyEdTest {
 
         try {
             // Verify key properties
-            final YHObject key = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final YHObject key = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             assertNotEquals(0, key.getId());
             assertEquals(id, key.getId());
             assertEquals(ObjectType.TYPE_ASYMMETRIC_KEY, key.getType());
@@ -93,9 +94,9 @@ public class AsymmetricKeyEdTest {
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
             // Delete the key and verify deletion
-            yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             try {
-                yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+                YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {
                 assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
             }
@@ -125,7 +126,8 @@ public class AsymmetricKeyEdTest {
         // Test importing the key with a non Asymmetric key algorithm
         boolean exceptionThrown = false;
         try {
-            AsymmetricKeyEd.importKey(session, (short) 0, "", Arrays.asList(2, 5), Arrays.asList(Capability.SIGN_EDDSA), Algorithm.AES128_CCM_WRAP, d);
+            AsymmetricKeyEd
+                    .importKey(session, (short) 0, "", Arrays.asList(2, 5), Arrays.asList(Capability.SIGN_EDDSA), Algorithm.AES128_CCM_WRAP, d);
         } catch (UnsupportedAlgorithmException e) {
             exceptionThrown = true;
             assertEquals("Specified algorithm is not a supported ED algorithm", e.getMessage());
@@ -218,7 +220,7 @@ public class AsymmetricKeyEdTest {
 
         try {
 
-            final YHObject key = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final YHObject key = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             assertEquals(id, key.getId());
             assertEquals(ObjectType.TYPE_ASYMMETRIC_KEY, key.getType());
             assertEquals(domains, key.getDomains());
@@ -229,9 +231,9 @@ public class AsymmetricKeyEdTest {
             assertTrue(key.getCapabilities().containsAll(capabilities));
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
-            yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             try {
-                yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+                YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {
                 assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
             }
@@ -272,13 +274,13 @@ public class AsymmetricKeyEdTest {
         Ed25519PublicKeyParameters pubKey = importEdKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_EDDSA));
 
         try {
-            final YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final YHObject keyinfo = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             final AsymmetricKeyEd key = AsymmetricKeyEd.getInstance(keyinfo);
             byte[] returnedPubKeyBytes = (byte[]) key.getPublicKey(session);
             assertArrayEquals(pubKey.getEncoded(), returnedPubKeyBytes);
 
         } finally {
-            yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
 
         logger.info("TEST END: testPublicKey()");
@@ -297,7 +299,7 @@ public class AsymmetricKeyEdTest {
         short id = 0x1234;
         importEdKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.GET_OPAQUE));
         try {
-            YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject keyinfo = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             AsymmetricKeyEd key = AsymmetricKeyEd.getInstance(keyinfo);
             byte[] data = "test sign data".getBytes();
 
@@ -311,7 +313,7 @@ public class AsymmetricKeyEdTest {
             assertTrue("Succeeded in signing in spite of insufficient permissions", exceptionThrown);
 
         } finally {
-            yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 
@@ -326,14 +328,14 @@ public class AsymmetricKeyEdTest {
         Ed25519PublicKeyParameters pubKey = importEdKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_EDDSA));
 
         try {
-            final YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final YHObject keyinfo = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             final AsymmetricKeyEd key = AsymmetricKeyEd.getInstance(keyinfo);
 
             signDataTest(key, pubKey, new byte[0]);
             signDataTest(key, pubKey, "This is a signing test data".getBytes());
 
         } finally {
-            yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
 
         logger.info("TEST END: testSignData()");
@@ -354,5 +356,4 @@ public class AsymmetricKeyEdTest {
         signer.update(data, 0, data.length);
         assertTrue(signer.verifySignature(signature));
     }
-
 }

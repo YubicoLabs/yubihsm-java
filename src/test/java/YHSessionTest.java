@@ -1,3 +1,4 @@
+import com.yubico.YHCore;
 import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
@@ -93,7 +94,7 @@ public class YHSessionTest {
 
         byte[] data = new byte[32];
         new Random().nextBytes(data);
-        byte[] response = yubihsm.secureEcho(session1, data);
+        byte[] response = YHCore.secureEcho(session1, data);
         assertTrue(Arrays.equals(response, data));
 
         session1.closeSession();

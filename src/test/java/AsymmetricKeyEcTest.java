@@ -1,3 +1,4 @@
+import com.yubico.YHCore;
 import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
@@ -9,6 +10,7 @@ import com.yubico.objects.yhconcepts.ObjectOrigin;
 import com.yubico.objects.yhconcepts.ObjectType;
 import com.yubico.objects.yhobjects.AsymmetricKey;
 import com.yubico.objects.yhobjects.AsymmetricKeyEc;
+import com.yubico.objects.yhobjects.Opaque;
 import com.yubico.objects.yhobjects.YHObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -17,8 +19,12 @@ import org.junit.Test;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import java.io.ByteArrayInputStream;
 import java.net.MalformedURLException;
 import java.security.*;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.InvalidKeySpecException;
@@ -34,6 +40,27 @@ public class AsymmetricKeyEcTest {
 
     private static YubiHsm yubihsm;
     private static YHSession session;
+
+    private final String testCertificate = "-----BEGIN CERTIFICATE-----\n" +
+                                           "MIIDMzCCAhugAwIBAgIIV9+4OgOubr4wDQYJKoZIhvcNAQELBQAwGzEZMBcGA1UE\n" +
+                                           "AwwQTmV3TWFuYWdlbWVudEtleTAeFw0xODEyMTMwOTQ1MjVaFw0xODEyMjIxMDEw\n" +
+                                           "MTlaMBcxFTATBgNVBAMMDHl1Ymljb19hZG1pbjCCASIwDQYJKoZIhvcNAQEBBQAD\n" +
+                                           "ggEPADCCAQoCggEBAL2WcfkFWwrBO5ylKVdGMGmGBmiP6neQk8OHhZsTicxry6hw\n" +
+                                           "GJoivGrI6KuBj919+MWcXbgs5lYW1gV+YduUOGPj0JoGMHsZWDzkRo1iF1I0B9Nf\n" +
+                                           "tRhgkd0eSuhzoi1ainZ5MKvR0Tj5J6nnzs/Oy9W9EguUdNjh+LLGuvbJCuDhXYCU\n" +
+                                           "bgGWhNg+bpKtn4bFpOJatJVseXXQdRdJtzdKSFou2xtQPSJqE1+WurxJ1/Qx0ZaA\n" +
+                                           "wPywaAEkUbMRaPFsO2171ZflT01J+S4IO1BpHad6J47LAOWgKODcxdI231WymelB\n" +
+                                           "Qp719v/Bbry5L4/KBj6SWKlKvt7SfOnfxkC4r1ECAwEAAaN/MH0wDAYDVR0TAQH/\n" +
+                                           "BAIwADAfBgNVHSMEGDAWgBRn/G1+IF6vtGM40OvlGxTHnRCUWDAdBgNVHSUEFjAU\n" +
+                                           "BggrBgEFBQcDAgYIKwYBBQUHAwQwHQYDVR0OBBYEFHrLsuB8yPWS4LeMQs0UjYCT\n" +
+                                           "O1v+MA4GA1UdDwEB/wQEAwIF4DANBgkqhkiG9w0BAQsFAAOCAQEAs3c3gPCCC33E\n" +
+                                           "I7lQEp/hrA0bu9K6VCa9NrzSXP8DFXn4hgM487678yhh7PlQ9T60VVnxVpuJgs8M\n" +
+                                           "3PRiVvzY11ABjdnjjDMss5jNC3dOi7MLIT6xxDh5U/1XulEmUoqP7RkXCcmDKg+8\n" +
+                                           "Vd7TnsmlutTmwKRiLOa8zl/o3aJoeCqg+FdNC3hRZuR3w5mG5IlaZ+VLwY7tjdov\n" +
+                                           "12mcMSxsC1JG0aUXv+RdBUtNG1JXFBYA43FBwMNjZPsiYXYgN0T24zGW6OQnTbB3\n" +
+                                           "kw4LNCS2l7cuEDiHwFmxVyCSInUSzcbfryltKCzzqWOCSPuKxwZzhHuRQ1tyy+MB\n" +
+                                           "SKlmUkdizg==\n" +
+                                           "-----END CERTIFICATE-----";
 
     @BeforeClass
     public static void init()
@@ -93,7 +120,7 @@ public class AsymmetricKeyEcTest {
 
         try {
             // Verify key properties
-            final YHObject key = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final YHObject key = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             assertNotEquals(0, key.getId());
             assertEquals(id, key.getId());
             assertEquals(ObjectType.TYPE_ASYMMETRIC_KEY, key.getType());
@@ -106,9 +133,9 @@ public class AsymmetricKeyEcTest {
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
             // Delete the key and verify deletion
-            yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             try {
-                yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+                YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {
                 assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
             }
@@ -260,7 +287,7 @@ public class AsymmetricKeyEcTest {
 
         try {
             // Verify key properties
-            final YHObject key = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final YHObject key = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             assertEquals(id, key.getId());
             assertEquals(ObjectType.TYPE_ASYMMETRIC_KEY, key.getType());
             assertEquals(domains, key.getDomains());
@@ -272,9 +299,9 @@ public class AsymmetricKeyEcTest {
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
             // Delete key
-            yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             try {
-                yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+                YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {
                 assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
             }
@@ -373,12 +400,12 @@ public class AsymmetricKeyEcTest {
         }
 
         try {
-            final YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final YHObject keyinfo = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             final AsymmetricKeyEc key = AsymmetricKeyEc.getInstance(keyinfo);
             PublicKey returnedPubKey = (PublicKey) key.getPublicKey(session);
             assertEquals(keypair.getPublic(), returnedPubKey);
         } finally {
-            yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 
@@ -395,7 +422,7 @@ public class AsymmetricKeyEcTest {
         KeyPair keypair = importEcKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.DERIVE_ECDH), Algorithm.EC_P224, "secp224r1", 28);
         ;
         try {
-            final YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final YHObject keyinfo = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             final AsymmetricKeyEc key = AsymmetricKeyEc.getInstance(keyinfo);
 
             boolean exceptionThrown = false;
@@ -408,7 +435,7 @@ public class AsymmetricKeyEcTest {
             assertTrue("Succeeded to sign in spite of insufficient permissions", exceptionThrown);
 
         } finally {
-            yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 
@@ -441,7 +468,7 @@ public class AsymmetricKeyEcTest {
         KeyPair keypair = importEcKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_ECDSA), keyAlgorithm, curve, componentLength);
         PublicKey publicKey = keypair.getPublic();
         try {
-            final YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final YHObject keyinfo = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             final AsymmetricKeyEc key = AsymmetricKeyEc.getInstance(keyinfo);
 
             byte[] data = new byte[0];
@@ -457,7 +484,7 @@ public class AsymmetricKeyEcTest {
             signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA512, "SHA512withECDSA", data);
 
         } finally {
-            yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 
@@ -483,7 +510,7 @@ public class AsymmetricKeyEcTest {
                 importEcBrainpoolKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_ECDSA), keyAlgorithm, curve, componentLength);
         PublicKey publicKey = keyPair.getPublic();
         try {
-            final YHObject keyinfo = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final YHObject keyinfo = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             final AsymmetricKeyEc key = AsymmetricKeyEc.getInstance(keyinfo);
 
             signEcdsaBrainpool(publicKey, key, Algorithm.EC_ECDSA_SHA1, "SHA1withECDSA");
@@ -492,7 +519,7 @@ public class AsymmetricKeyEcTest {
             signEcdsaBrainpool(publicKey, key, Algorithm.EC_ECDSA_SHA512, "SHA512withECDSA");
 
         } finally {
-            yubihsm.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 
@@ -508,6 +535,76 @@ public class AsymmetricKeyEcTest {
         sig.initVerify(pubKey);
         sig.update(data);
         assertTrue(sig.verify(signature));
+    }
+
+    @Test
+    public void testSigningAttestationCertificate()
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, InvalidSessionException, UnsupportedAlgorithmException, CertificateException {
+        short attestingKeyid = 0x5678;
+        short attestedKeyid = 0x0123;
+        try {
+            KeyPair attestingKeypair = importEcKey(attestingKeyid, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_ATTESTATION_CERTIFICATE),
+                                                   Algorithm.EC_P224, "secp224r1", 28);
+            YHObject keyinfo = YHCore.getObjectInfo(session, attestingKeyid, ObjectType.TYPE_ASYMMETRIC_KEY);
+            AsymmetricKey attestingKey = new AsymmetricKey(keyinfo);
+
+            AsymmetricKey.generateAsymmetricKey(session, attestedKeyid, "", Arrays.asList(2, 5, 8),
+                                                Arrays.asList(Capability.SIGN_ECDSA), Algorithm.EC_P224);
+
+            boolean exceptionThrown = false;
+            try {
+                attestingKey.signAttestationCertificate(session, attestedKeyid);
+            } catch (UnsupportedOperationException e) {
+                exceptionThrown = true;
+            }
+            assertTrue(exceptionThrown);
+
+            Opaque.importCertificate(session, attestingKeyid, "", attestingKey.getDomains(), getTestCertificate());
+            X509Certificate attestationCert = attestingKey.signAttestationCertificate(session, attestedKeyid);
+
+            try {
+                attestationCert.verify(attestingKeypair.getPublic());
+            } catch (Exception e) {
+                fail("Attestation certificate was not valid");
+            }
+
+        } finally {
+            try {
+                YHCore.deleteObject(session, attestingKeyid, ObjectType.TYPE_ASYMMETRIC_KEY);
+            } catch (YHDeviceException e) {
+                if (!e.getErrorCode().equals(YHError.OBJECT_NOT_FOUND)) {
+                    throw e;
+                }
+            }
+
+            try {
+                YHCore.deleteObject(session, attestedKeyid, ObjectType.TYPE_ASYMMETRIC_KEY);
+            } catch (YHDeviceException e) {
+                if (!e.getErrorCode().equals(YHError.OBJECT_NOT_FOUND)) {
+                    throw e;
+                }
+            }
+
+            try {
+                YHCore.deleteObject(session, attestingKeyid, ObjectType.TYPE_OPAQUE);
+            } catch (YHDeviceException e) {
+                if (!e.getErrorCode().equals(YHError.OBJECT_NOT_FOUND)) {
+                    throw e;
+                }
+            }
+        }
+    }
+
+    private X509Certificate getTestCertificate() throws CertificateException {
+        String certStr = testCertificate.replace("-----BEGIN CERTIFICATE-----\n", "");
+        certStr = certStr.replace("-----END CERTIFICATE-----", "");
+        byte[] encoded = org.bouncycastle.util.encoders.Base64.decode(certStr);
+        ByteArrayInputStream in = new ByteArrayInputStream(encoded);
+
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        return (X509Certificate) cf.generateCertificate(in);
     }
 
 

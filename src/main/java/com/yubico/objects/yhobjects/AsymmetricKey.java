@@ -1,5 +1,6 @@
 package com.yubico.objects.yhobjects;
 
+import com.yubico.YHCore;
 import com.yubico.YHSession;
 import com.yubico.exceptions.*;
 import com.yubico.internal.util.Utils;
@@ -11,8 +12,12 @@ import com.yubico.objects.yhconcepts.ObjectType;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
 import java.security.*;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.util.Arrays;
@@ -26,6 +31,7 @@ public class AsymmetricKey extends YHObject {
 
     /**
      * Creates an AsymmetricKey object
+     *
      * @param key The key
      */
     public AsymmetricKey(YHObject key) {
@@ -124,7 +130,7 @@ public class AsymmetricKey extends YHObject {
         byte[] resp = session.sendSecureCmd(Command.GET_PUBLIC_KEY, bb.array());
         bb = ByteBuffer.wrap(resp);
         final Algorithm algorithm = Algorithm.getAlgorithm(bb.get());
-        if (algorithm==null || !algorithm.equals(getAlgorithm())) {
+        if (algorithm == null || !algorithm.equals(getAlgorithm())) {
             throw new YHInvalidResponseException("The public key algorithm returned by the device does not match the private key algorithm");
         }
 
@@ -134,6 +140,90 @@ public class AsymmetricKey extends YHObject {
         return pubKey;
     }
 
+    /**
+     * Returns an X509Certificate signed by this Asymmetric key and contains the public key of the Asymmetric key whose ID is 'keyToAttest'
+     *
+     * For this to work, there has to be an template X509Certificate object stored with the same ID as this Asymmetric key. There are no requirements
+     * regarding this template certificate apart from it having to be an X509Certificate
+     *
+     * @param session An authenticated session to communicate with the device over
+     * @param keyToAttest The object ID of the key that is to be attested
+     * @return A certificate signed by this Asymmetric key and contains the public key of the 'keyToAttest'
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     * @throws InvalidKeySpecException            If failed to construct the public key object
+     */
+    public X509Certificate signAttestationCertificate(final YHSession session, final short keyToAttest)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, CertificateException, InvalidSessionException {
+        return signAttestationCertificate(session, keyToAttest, getId());
+    }
+
+    /**
+     * Returns an X509Certificate signed by the Asymmetric key whose ID is 'attestingKey' and contains the public key of the Asymmetric key whose
+     * ID is 'keyToAttest'
+     *
+     * For this to work, there has to be an template X509Certificate object stored with the same ID as 'attestingKey'. There are no requirements
+     * regarding this template certificate apart from it having to be an X509Certificate
+     *
+     * @param session An authenticated session to communicate with the device over
+     * @param keyToAttest The object ID of the key that is to be attested
+     * @param attestingKey The object ID of the key that will sign the attestation certificate
+     * @return A certificate signed by 'attestingKey' and contains the public key of the 'keyToAttest'
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     * @throws InvalidKeySpecException            If failed to construct the public key object
+     */
+    public static X509Certificate signAttestationCertificate(final YHSession session, final short keyToAttest, final short attestingKey)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, CertificateException, InvalidSessionException {
+        if (keyToAttest == 0) {
+            throw new InvalidParameterException("Missing Asymmetric key to attest");
+        }
+
+        try {
+            YHCore.getObjectInfo(session, attestingKey, ObjectType.TYPE_OPAQUE);
+        } catch (YHDeviceException e) {
+            if (e.getErrorCode().equals(YHError.OBJECT_NOT_FOUND)) {
+                throw new UnsupportedOperationException("To sign attestation certificates, there has to exist a template X509Certificate with ID " +
+                                                        "0x" + Integer.toHexString(attestingKey) + ". Please use the Opaque class to import such a " +
+                                                        "template certificate and try again");
+            } else {
+                throw e;
+            }
+        }
+
+        ByteBuffer bb = ByteBuffer.allocate(4);
+        bb.putShort(keyToAttest);
+        bb.putShort(attestingKey);
+
+        byte[] cert = session.sendSecureCmd(Command.SIGN_ATTESTATION_CERTIFICATE, bb.array());
+        return getCertFromBytes(cert);
+    }
+
+    private static X509Certificate getCertFromBytes(final byte[] certBytes) throws CertificateException {
+        ByteArrayInputStream in = new ByteArrayInputStream(certBytes);
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        return (X509Certificate) cf.generateCertificate(in);
+    }
 
     /**
      * Throws an InvalidParameterException if any of the input parameters are null

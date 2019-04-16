@@ -1,3 +1,4 @@
+import com.yubico.YHCore;
 import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
@@ -99,7 +100,7 @@ public class OpaqueTest {
 
         try {
             // Verify object properties
-            final YHObject opaqueObj = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+            final YHObject opaqueObj = YHCore.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
             assertNotEquals(0, opaqueObj.getId());
             assertEquals(id, opaqueObj.getId());
             assertEquals(ObjectType.TYPE_OPAQUE, opaqueObj.getType());
@@ -116,9 +117,9 @@ public class OpaqueTest {
             assertArrayEquals(opaqueData, returnedOpaqueData);
         } finally {
             // Delete opaque object
-            yubihsm.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+            YHCore.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
             try {
-                yubihsm.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+                YHCore.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
             } catch (YHDeviceException e1) {
                 assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
             }
@@ -142,7 +143,7 @@ public class OpaqueTest {
 
         try {
             // Verify object properties
-            final YHObject opaqueObj = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+            final YHObject opaqueObj = YHCore.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
             assertNotEquals(0, opaqueObj.getId());
             assertEquals(id, opaqueObj.getId());
             assertEquals(ObjectType.TYPE_OPAQUE, opaqueObj.getType());
@@ -158,9 +159,9 @@ public class OpaqueTest {
             assertEquals(cert, returnedCert);
         } finally {
             // Delete opaque object
-            yubihsm.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+            YHCore.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
             try {
-                yubihsm.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+                YHCore.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
             } catch (YHDeviceException e1) {
                 assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
             }
@@ -180,13 +181,13 @@ public class OpaqueTest {
         short id =
                 Opaque.importOpaque(session, (short) 0, "", Arrays.asList(2, 5, 8), null, Algorithm.OPAQUE_X509_CERTIFICATE, testCert.getEncoded());
         try {
-            final YHObject opaqueObj = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+            final YHObject opaqueObj = YHCore.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
             Opaque opaque = new Opaque(opaqueObj);
             X509Certificate returnedCert = opaque.getCertificate(session);
             assertEquals(testCert, returnedCert);
         } finally {
             // Delete opaque object
-            yubihsm.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+            YHCore.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
         }
 
         logger.info("TEST END: testImportOpaqueCertificate()");
@@ -204,7 +205,7 @@ public class OpaqueTest {
         X509Certificate testCert = getTestCertificate();
         short id = Opaque.importOpaque(session, (short) 0, "", Arrays.asList(2, 5, 8), null, Algorithm.OPAQUE_DATA, testCert.getEncoded());
         try {
-            final YHObject opaqueObj = yubihsm.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+            final YHObject opaqueObj = YHCore.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
             Opaque opaque = new Opaque(opaqueObj);
             boolean exceptionThrown = false;
             try {
@@ -215,7 +216,7 @@ public class OpaqueTest {
             assertTrue("Succeeded in returning the opaque ", exceptionThrown);
         } finally {
             // Delete opaque object
-            yubihsm.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+            YHCore.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
         }
 
         logger.info("TEST END: testImportOpaqueCertificate()");
