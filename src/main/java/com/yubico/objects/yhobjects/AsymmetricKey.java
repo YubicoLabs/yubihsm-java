@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class AsymmetricKey extends YHObject {
-    static Logger logger = Logger.getLogger(AsymmetricKey.class.getName());
+    private static Logger logger = Logger.getLogger(AsymmetricKey.class.getName());
 
     public static final ObjectType TYPE = ObjectType.TYPE_ASYMMETRIC_KEY;
 
@@ -111,7 +111,8 @@ public class AsymmetricKey extends YHObject {
         bb = ByteBuffer.wrap(resp);
         final Algorithm algorithm = Algorithm.getAlgorithm(bb.get());
         if (algorithm == null || !algorithm.equals(getAlgorithm())) {
-            throw new YHInvalidResponseException("The public key algorithm returned by the device does not match the private key algorithm");
+            throw new YHInvalidResponseException("The public key algorithm was " + algorithm.toString() + ", which does not match the private key " +
+                                                 "algorithm " + getAlgorithm().toString());
         }
 
         byte[] pubKey = new byte[bb.remaining()];
@@ -254,6 +255,7 @@ public class AsymmetricKey extends YHObject {
      */
     protected byte[] getHashedData(final byte[] data, final Algorithm algorithm) throws NoSuchAlgorithmException {
         MessageDigest digest;
+        // TODO When implementation is done, if this scenario does not happen, remove the default
         if (algorithm == null) {
             return data;
         } else if (algorithm.equals(Algorithm.RSA_PKCS1_SHA1) || algorithm.equals(Algorithm.RSA_MGF1_SHA1) ||

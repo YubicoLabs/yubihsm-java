@@ -21,22 +21,15 @@ import java.util.logging.Logger;
 
 public class AsymmetricKeyEc extends AsymmetricKey {
 
-    static Logger logger = Logger.getLogger(AsymmetricKeyEc.class.getName());
+    private static Logger logger = Logger.getLogger(AsymmetricKeyEc.class.getName());
 
-    private Map<Algorithm, String> algorithmToCurveMap = new HashMap<Algorithm, String>() {{
-        put(Algorithm.EC_P224, "secp224r1");
-        put(Algorithm.EC_P256, "secp256r1");
-        put(Algorithm.EC_P384, "secp384r1");
-        put(Algorithm.EC_P521, "secp521r1");
-        put(Algorithm.EC_K256, "secp256k1");
-        put(Algorithm.EC_BP256, "brainpoolP256r1");
-        put(Algorithm.EC_BP384, "brainpoolP384r1");
-        put(Algorithm.EC_BP512, "brainpoolP512r1");
-    }};
-
-
-    private AsymmetricKeyEc(final YHObject key) {
-        super(key);
+    /**
+     * Created an AsymmetricKeyEc object
+     *
+     * @param keyinfo
+     */
+    public AsymmetricKeyEc(final YHObject keyinfo) {
+        super(keyinfo);
     }
 
     /**
@@ -270,7 +263,7 @@ public class AsymmetricKeyEc extends AsymmetricKey {
     private PublicKey getEcPublicKey(final ECPoint point)
             throws NoSuchAlgorithmException, InvalidParameterSpecException, InvalidKeySpecException {
         AlgorithmParameters parameters = AlgorithmParameters.getInstance("EC");
-        parameters.init(new ECGenParameterSpec(algorithmToCurveMap.get(getAlgorithm())));
+        parameters.init(new ECGenParameterSpec(getCurveFromAlgorithm(getAlgorithm())));
         ECParameterSpec ecParameters = parameters.getParameterSpec(ECParameterSpec.class);
         ECPublicKeySpec pubSpec = new ECPublicKeySpec(point, ecParameters);
         KeyFactory kf = KeyFactory.getInstance("EC");
@@ -298,14 +291,13 @@ public class AsymmetricKeyEc extends AsymmetricKey {
             throws NoSuchAlgorithmException, NoSuchProviderException, InvalidParameterSpecException, InvalidKeySpecException {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
         AlgorithmParameters parameters = AlgorithmParameters.getInstance("EC", "BC");
-        parameters.init(new ECGenParameterSpec(algorithmToCurveMap.get(getAlgorithm())));
+        parameters.init(new ECGenParameterSpec(getCurveFromAlgorithm(getAlgorithm())));
         ECParameterSpec ecParameters = parameters.getParameterSpec(ECParameterSpec.class);
         ECPublicKeySpec pubSpec = new ECPublicKeySpec(point, ecParameters);
         KeyFactory kf = KeyFactory.getInstance("EC", "BC");
         logger.info("Returned public EC key with ID 0x" + Integer.toHexString(getId()));
         return kf.generatePublic(pubSpec);
     }
-
 
     /**
      * @return The expected length of the private key component
@@ -324,5 +316,33 @@ public class AsymmetricKeyEc extends AsymmetricKey {
         } else {
             throw new InvalidParameterException("Unsupported EC algorithm: " + algorithm.toString());
         }
+    }
+
+    private String getCurveFromAlgorithm(final Algorithm algorithm) {
+        if (algorithm.equals(Algorithm.EC_P224)) {
+            return "secp224r1";
+        }
+        if (algorithm.equals(Algorithm.EC_P256)) {
+            return "secp256r1";
+        }
+        if (algorithm.equals(Algorithm.EC_P384)) {
+            return "secp384r1";
+        }
+        if (algorithm.equals(Algorithm.EC_P521)) {
+            return "secp521r1";
+        }
+        if (algorithm.equals(Algorithm.EC_K256)) {
+            return "secp256k1";
+        }
+        if (algorithm.equals(Algorithm.EC_BP256)) {
+            return "brainpoolP256r1";
+        }
+        if (algorithm.equals(Algorithm.EC_BP384)) {
+            return "brainpoolP384r1";
+        }
+        if (algorithm.equals(Algorithm.EC_BP512)) {
+            return "brainpoolP512r1";
+        }
+        return "";
     }
 }

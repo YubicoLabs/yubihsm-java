@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 
 public class AsymmetricKeyEd extends AsymmetricKey {
 
-    static Logger logger = Logger.getLogger(AsymmetricKeyEd.class.getName());
+    private static Logger logger = Logger.getLogger(AsymmetricKeyEd.class.getName());
 
     private AsymmetricKeyEd(final YHObject key) {
         super(key);

@@ -18,11 +18,14 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Class representing an Authentication Key Object
  */
 public class AuthenticationKey extends YHObject {
+
+    private static Logger logger = Logger.getLogger(AuthenticationKey.class.getName());
 
     public static final ObjectType TYPE = ObjectType.TYPE_AUTHENTICATION_KEY;
 
@@ -135,6 +138,7 @@ public class AuthenticationKey extends YHObject {
         encryptionKey = null;
         macKey = new byte[macKey.length];
         macKey = null;
+        logger.info("Destroyed long term encryption key and MAC key from cache");
     }
 
     /**
@@ -191,6 +195,8 @@ public class AuthenticationKey extends YHObject {
 
         encryptionKey = new byte[encryptionKey.length];
         macKey = new byte[macKey.length];
+
+        logger.info("Created an Authentication key with ID 0x"  + Integer.toHexString(id));
 
         return id;
     }
@@ -271,6 +277,8 @@ public class AuthenticationKey extends YHObject {
 
         encryptionKey = new byte[encryptionKey.length];
         macKey = new byte[macKey.length];
+
+        logger.info("Changed Authentication key with ID 0x"  + Integer.toHexString(id));
     }
 
     /**

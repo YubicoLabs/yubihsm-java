@@ -17,8 +17,10 @@ import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class AsymmetricKeyRsa extends AsymmetricKey {
+    private static Logger logger = Logger.getLogger(AsymmetricKeyRsa.class.getName());
 
     private final int RSA_PUBKEY_EXPONENT = 65537;
 

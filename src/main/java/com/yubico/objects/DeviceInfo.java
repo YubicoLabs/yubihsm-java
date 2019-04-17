@@ -17,14 +17,6 @@ public class DeviceInfo {
     private final int logUsed;
     private final List<Algorithm> supportedAlgorithms;
 
-    public DeviceInfo() {
-        version = null;
-        serialnumber = 0;
-        logSize = 0;
-        logUsed = 0;
-        supportedAlgorithms = null;
-    }
-
     /**
      * @param version      The firmware version of the device
      * @param serialnumber The device serialnumber

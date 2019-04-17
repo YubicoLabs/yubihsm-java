@@ -21,10 +21,7 @@ public class CommandUtils {
      * @return A byte array in the form: [command code (1 byte), length of data (2 bytes), data]
      */
     public static byte[] getTransceiveMessage(final Command cmd, final byte[] data) {
-        int dl = 0;
-        if (data != null) {
-            dl = data.length;
-        }
+        final int dl = data!=null? data.length : 0;
         ByteBuffer ret = ByteBuffer.allocate(dl + 3);
         ret.put(cmd.getCommandId());
         ret.putShort((short) dl);

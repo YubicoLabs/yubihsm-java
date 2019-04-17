@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 
 public class Opaque extends YHObject {
 
-    static Logger logger = Logger.getLogger(Opaque.class.getName());
+    private static Logger logger = Logger.getLogger(Opaque.class.getName());
 
     public static final ObjectType TYPE = ObjectType.TYPE_OPAQUE;
     private static final int MAX_OPAQUE_DATA_LENGTH = 1968;
