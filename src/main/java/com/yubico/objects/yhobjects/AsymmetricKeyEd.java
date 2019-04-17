@@ -108,7 +108,7 @@ public class AsymmetricKeyEd extends AsymmetricKey {
         byte[] resp = session.sendSecureCmd(Command.GET_PUBLIC_KEY, bb.array());
         bb = ByteBuffer.wrap(resp);
         final Algorithm algorithm = Algorithm.getAlgorithm(bb.get());
-        if (algorithm==null || !algorithm.equals(getAlgorithm())) {
+        if (algorithm == null || !algorithm.equals(getAlgorithm())) {
             throw new YHInvalidResponseException("The public key algorithm returned by the device does not match the private key algorithm");
         }
 

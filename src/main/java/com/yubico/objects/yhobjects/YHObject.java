@@ -12,9 +12,7 @@ import java.util.List;
  */
 public class YHObject {
 
-    /**
-     * The maximum length of an object's label
-     */
+    /** The maximum length of an object's label */
     public static final int LABEL_LENGTH = 40;
 
     private short id;
@@ -36,7 +34,7 @@ public class YHObject {
     /**
      * @param id       The object ID uniquely identifying the object together with the object type
      * @param type     The object type uniquely identifying the object together with the object ID
-     * @param sequence The number if previews objects that had had the same ID and type
+     * @param sequence The number of previews objects that had had the same ID and type
      */
     public YHObject(final short id, final ObjectType type, final byte sequence) {
         this.id = id;
@@ -80,7 +78,7 @@ public class YHObject {
     }
 
     /**
-     * Constructor to create an YHObject object by parsing a byte array
+     * Creates an YHObject object by parsing a byte array
      *
      * @param data The object data as a byte array in the form of {8 bytes capabilities + 2 bytes object ID + 2 bytes object size + 2 bytes domains
      *             + 1 byte type + 1 byte algorithm + 1 byte sequence + 1 byte object origin + 40 bytes label + 8 bytes delegated capabilities}
@@ -102,142 +100,82 @@ public class YHObject {
         delegatedCapabilities = Capability.getCapabilities(bb.getLong());
     }
 
-    /**
-     * @return The object ID
-     */
     public short getId() {
         return id;
     }
 
-    /**
-     * @param id The object ID
-     */
     public void setId(short id) {
         this.id = id;
     }
 
-    /**
-     * @return The object size
-     */
     public short getObjectSize() {
         return objectSize;
     }
 
-    /**
-     * @param objectSize the object size
-     */
     public void setObjectSize(short objectSize) {
         this.objectSize = objectSize;
     }
 
-    /**
-     * @return The object type
-     */
     public ObjectType getType() {
         return type;
     }
 
-    /**
-     * @param type The object type
-     */
     public void setType(ObjectType type) {
         this.type = type;
     }
 
-    /**
-     * @return The object sequence
-     */
     public byte getSequence() {
         return sequence;
     }
 
-    /**
-     * @param sequence The object sequence
-     */
     public void setSequence(byte sequence) {
         this.sequence = sequence;
     }
 
-    /**
-     * @return The object domains
-     */
     public List<Integer> getDomains() {
         return domains;
     }
 
-    /**
-     * @param domains The objects domains
-     */
     public void setDomains(List<Integer> domains) {
         this.domains = domains;
     }
 
-    /**
-     * @return The object algorithm
-     */
     public Algorithm getAlgorithm() {
         return algorithm;
     }
 
-    /**
-     * @param algorithm The object algorithm
-     */
     public void setAlgorithm(Algorithm algorithm) {
         this.algorithm = algorithm;
     }
 
-    /**
-     * @return The object origin
-     */
     public ObjectOrigin getOrigin() {
         return origin;
     }
 
-    /**
-     * @param origin The object origin
-     */
     public void setOrigin(ObjectOrigin origin) {
         this.origin = origin;
     }
 
-    /**
-     * @return The object label
-     */
     public String getLabel() {
         return label;
     }
 
-    /**
-     * @param label The object label
-     */
     public void setLabel(String label) {
         this.label = label;
     }
 
-    /**
-     * @return The object capabilities
-     */
     public List<Capability> getCapabilities() {
         return capabilities;
     }
 
-    /**
-     * @param capabilities The object capabilities
-     */
     public void setCapabilities(List<Capability> capabilities) {
         this.capabilities = capabilities;
     }
 
-    /**
-     * @return The object delegated capabilities
-     */
     public List<Capability> getDelegatedCapabilities() {
         return delegatedCapabilities;
     }
 
-    /**
-     * @param delegatedCapabilities The object delegated capabilities
-     */
     public void setDelegatedCapabilities(List<Capability> delegatedCapabilities) {
         this.delegatedCapabilities = delegatedCapabilities;
     }
@@ -291,16 +229,16 @@ public class YHObject {
      *
      * @param a
      * @param b
-     * @return True if the objects' IDs and the objects' types are equal. False otherwise
+     * @return True if the objects' IDs and types are equal. False otherwise
      */
     public static boolean equals(final YHObject a, final YHObject b) {
         return (a.getId() == b.getId()) && YHConcept.equals(a.getType(), b.getType());
     }
 
     /**
-     * Returns a usable non-null label value and verify the label's length.
+     * Returns a usable non-null label value and verifies its length.
      *
-     * @param label The input label
+     * @param label
      * @return The label. An empty string if the input label is null
      * @throws InvalidParameterException If the label is more than the maximum length allowed
      */

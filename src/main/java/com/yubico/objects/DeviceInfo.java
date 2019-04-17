@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Class representing various information about the YubiHSM
+ * Class representing various information about the YubiHSM device
  */
 public class DeviceInfo {
 
@@ -26,10 +26,10 @@ public class DeviceInfo {
     }
 
     /**
-     * @param version      The device version
+     * @param version      The firmware version of the device
      * @param serialnumber The device serialnumber
      * @param logSize      The number of log entries that can be stored on the device
-     * @param logUsed      The number of log entries that are on the device
+     * @param logUsed      The number of unread log entries that are on the device
      * @param algorithms   A list of algorithms supported by the device
      */
     public DeviceInfo(final String version, final int serialnumber, final int logSize, final int logUsed, final List<Algorithm> algorithms) {
@@ -43,7 +43,8 @@ public class DeviceInfo {
     /**
      * Creates a DeviceInfo object by parsing a byte array
      *
-     * @param info
+     * @param info The device data as a byte array in the form of {1 byte major version number + 1 byte minor version number + 1 byte build version
+     *             number + 4 bytes serial number + 1 bytes log size + 1 byte log unread log entries + 1 byte for each supported algorithms}
      */
     public DeviceInfo(final byte[] info) {
         ByteBuffer bb = ByteBuffer.wrap(info);
@@ -58,37 +59,22 @@ public class DeviceInfo {
         }
     }
 
-    /**
-     * @return The device version number in the form of major.minor.build
-     */
     public String getVersion() {
         return version;
     }
 
-    /**
-     * @return The device serial number
-     */
     public int getSerialnumber() {
         return serialnumber;
     }
 
-    /**
-     * @return The number of log entries that can be stored on the device
-     */
     public int getLogSize() {
         return logSize;
     }
 
-    /**
-     * @return The number of log entries that are on the device
-     */
     public int getLogUsed() {
         return logUsed;
     }
 
-    /**
-     * @return A list of algorithms supported by the device
-     */
     public List<Algorithm> getSupportedAlgorithms() {
         return supportedAlgorithms;
     }

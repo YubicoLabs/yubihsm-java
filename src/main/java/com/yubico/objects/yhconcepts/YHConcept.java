@@ -17,16 +17,10 @@ public class YHConcept {
         this.name = name;
     }
 
-    /**
-     * @return The concept's ID
-     */
     protected Object getId() {
         return id;
     }
 
-    /**
-     * @return The concept's name
-     */
     public String getName() {
         return name;
     }

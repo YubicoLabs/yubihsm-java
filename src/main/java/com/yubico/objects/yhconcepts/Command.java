@@ -5,25 +5,16 @@ package com.yubico.objects.yhconcepts;
  */
 public class Command extends YHConcept {
 
-    /**
-     * @param id   Command code
-     * @param name Command name
-     */
     private Command(final byte id, final String name) {
         super(id, name);
     }
 
-    /**
-     * @return The command code
-     */
     public byte getCommandId() {
         return (byte) getId();
     }
 
     /**
-     * Return the expected response code in case of successful execution of this command
-     *
-     * @return The successful response code
+     * Return the expected response code in case of a successful execution of this command
      */
     public byte getCommandResponse() {
         return (byte) (getCommandId() | 0x80);
@@ -51,7 +42,7 @@ public class Command extends YHConcept {
     /**
      * Compares this command with another command object
      *
-     * @param other Another object of type `Command`
+     * @param other Another Command object
      * @return True of this command code equals the other command's code. False otherwise
      */
     public boolean equals(final Command other) {
@@ -62,7 +53,7 @@ public class Command extends YHConcept {
      * Return the Command object with the specified ID
      *
      * @param id The command code
-     * @return The Command object whose ID is `id`. Null if the ID is unrecognized
+     * @return The Command object whose ID is `id`. Null if the ID is not recognized
      */
     public static Command getCommand(final byte id) {
         switch (id) {

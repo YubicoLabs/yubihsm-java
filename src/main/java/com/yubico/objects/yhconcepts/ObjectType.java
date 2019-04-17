@@ -5,17 +5,10 @@ package com.yubico.objects.yhconcepts;
  */
 public class ObjectType extends YHConcept {
 
-    /**
-     * @param id   Type ID
-     * @param name Type name
-     */
     private ObjectType(final byte id, final String name) {
         super(id, name);
     }
 
-    /**
-     * @return The type ID
-     */
     public byte getTypeId() {
         return (byte) getId();
     }
@@ -32,8 +25,8 @@ public class ObjectType extends YHConcept {
     /**
      * Return the ObjectType object with the specified ID
      *
-     * @param id The type ID
-     * @return The type object whose ID is `id`. Null if the ID is unrecognized
+     * @param id
+     * @return The type object whose ID is `id`. Null if the ID is not recognized
      */
     public static ObjectType getObjectType(final byte id) {
         switch (id) {
@@ -48,9 +41,13 @@ public class ObjectType extends YHConcept {
         }
     }
 
+    /** Object is an X509Certificate or raw data of any kind */
     public static final ObjectType TYPE_OPAQUE = new ObjectType((byte) 0x01, "Opaque");
+    /** Object is an Authentication key used to establish an encrypted communication session with the YubiHSM */
     public static final ObjectType TYPE_AUTHENTICATION_KEY = new ObjectType((byte) 0x2, "Authentication Key");
+    /** Object is an Asymmetric key of type RSA, EC or ED */
     public static final ObjectType TYPE_ASYMMETRIC_KEY = new ObjectType((byte) 0x03, "Asymmetric Key");
+    /** Object is a Wrap key used to export and import sensitive data securely */
     public static final ObjectType TYPE_WRAP_KEY = new ObjectType((byte) 0x04, "Wrap Key");
     public static final ObjectType TYPE_HMAC_KEY = new ObjectType((byte) 0x05, "HMAC Key");
     public static final ObjectType TYPE_TEMPLATE = new ObjectType((byte) 0x06, "Template");

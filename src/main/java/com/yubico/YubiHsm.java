@@ -61,8 +61,8 @@ public class YubiHsm {
     /**
      * Sends the Echo command with `data` as the input
      *
-     * @param data The input to the Echo command
-     * @return The device response to the Echo command
+     * @param data The data that should be echoed by the device
+     * @return The device response to the Echo command. Should be the same as `data`
      * @throws YHDeviceException          If the device return an error
      * @throws YHInvalidResponseException If the device returns a response that cannot be parsed
      * @throws YHConnectionException      If the connection to the device fails
@@ -72,7 +72,7 @@ public class YubiHsm {
     }
 
     /**
-     * Gets the device info from the device using the DeviceInfo command
+     * Retrieves the device info from the YubiHSM device
      *
      * @return The device info
      * @throws YHConnectionException      If the connection to the device fails

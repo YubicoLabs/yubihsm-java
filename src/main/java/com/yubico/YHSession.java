@@ -78,16 +78,10 @@ public class YHSession {
         sessionChain = null;
     }
 
-    /**
-     * @return The session ID
-     */
     public byte getSessionID() {
         return sessionID;
     }
 
-    /**
-     * @return The session status
-     */
     public SessionStatus getStatus() {
         return status;
     }
@@ -232,9 +226,10 @@ public class YHSession {
      * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
      * @throws YHDeviceException                  If the device return an error
      */
-    public void closeSession() throws YHAuthenticationException, NoSuchPaddingException, NoSuchAlgorithmException,
-                                      InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException,
-                                      YHConnectionException, YHInvalidResponseException, YHDeviceException {
+    public void closeSession()
+            throws YHAuthenticationException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException,
+                   InvalidKeyException, BadPaddingException, IllegalBlockSizeException, YHConnectionException, YHInvalidResponseException,
+                   YHDeviceException {
         if (status != SessionStatus.CREATED && status != SessionStatus.AUTHENTICATED) {
             logger.info("Session is not open. Doing nothing");
             return;
@@ -308,8 +303,8 @@ public class YHSession {
      * @throws YHDeviceException          If the device returns an error code
      * @throws YHAuthenticationException  If the session ID returned by the device is invalid (aka not in the range 0-15)
      */
-    private byte[] getCreateSessionResponse(final byte[] challenge) throws YHInvalidResponseException, YHConnectionException,
-                                                                           YHDeviceException, YHAuthenticationException {
+    private byte[] getCreateSessionResponse(final byte[] challenge)
+            throws YHInvalidResponseException, YHConnectionException, YHDeviceException, YHAuthenticationException {
         byte[] inputData = getCreateSessionInputData(challenge);
         logger.finer("Create Session data: " + Utils.getPrintableBytes(inputData));
         byte[] responseData = yubihsm.sendCmd(Command.CREATE_SESSION, inputData);
@@ -496,12 +491,9 @@ public class YHSession {
         return iv;
     }
 
-    private byte[] getEncryptedMessage(final byte[] message, final SecretKey encKey, final byte[] iv, final int mode) throws NoSuchAlgorithmException,
-                                                                                                                             NoSuchPaddingException,
-                                                                                                                             InvalidKeyException,
-                                                                                                                             InvalidAlgorithmParameterException,
-                                                                                                                             IllegalBlockSizeException,
-                                                                                                                             BadPaddingException {
+    private byte[] getEncryptedMessage(final byte[] message, final SecretKey encKey, final byte[] iv, final int mode)
+            throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException,
+                   IllegalBlockSizeException, BadPaddingException {
         Cipher cipher = Cipher.getInstance("AES/CBC/NOPADDING");
         cipher.init(mode, encKey, new IvParameterSpec(iv));
         return cipher.doFinal(message);

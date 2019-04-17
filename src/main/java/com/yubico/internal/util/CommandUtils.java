@@ -22,7 +22,7 @@ public class CommandUtils {
      */
     public static byte[] getTransceiveMessage(final Command cmd, final byte[] data) {
         int dl = 0;
-        if(data != null) {
+        if (data != null) {
             dl = data.length;
         }
         ByteBuffer ret = ByteBuffer.allocate(dl + 3);
@@ -37,9 +37,9 @@ public class CommandUtils {
     /**
      * Removes the leading response code and the length of the response and returns only the response data.
      *
-     * @param cmd      The command respond to
-     * @param response The raw response to cmd
-     * @return The response data
+     * @param cmd      The command to which the response belongs
+     * @param response The raw response received from the YubiHSM device (including leading meta data)
+     * @return The stripped command response data (with leading metadata removed)
      * @throws YHDeviceException          If the response contains an error code
      * @throws YHInvalidResponseException If the response cannot be parsed
      */
@@ -75,7 +75,9 @@ public class CommandUtils {
     }
 
     /**
-     * Returns whether data is actually an error message as defined by the YubiHSM
+     * Returns whether data is actually an error message as defined by the YubiHSM.
+     * <p>
+     * The data contains an error if it is 4 bytes long and the first 3 bytes are: 0x7f 0x00 0x01
      *
      * @param data The data to check
      * @return True if data contains an error code. False otherwise

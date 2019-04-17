@@ -82,7 +82,7 @@ public class HttpBackend implements Backend {
     /**
      * Sends an HTTP POST request to the device and gets a response
      *
-     * @param message the data to send to the device
+     * @param message the request payload to send to the device
      * @return the device response
      * @throws YHConnectionException if connection to, writing to or reading from the device fail
      */

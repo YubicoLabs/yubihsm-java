@@ -32,31 +32,11 @@ public class AsymmetricKey extends YHObject {
     /**
      * Creates an AsymmetricKey object
      *
-     * @param key The key
+     * @param key The key properties
      */
     public AsymmetricKey(YHObject key) {
         super(key.getId(), key.getType(), key.getCapabilities(), key.getObjectSize(), key.getDomains(), key.getAlgorithm(),
               key.getSequence(), key.getOrigin(), key.getLabel(), key.getDelegatedCapabilities());
-    }
-
-    /**
-     * @return A list of supported asymmetric key algorithms
-     */
-    public static List<Algorithm> getSupportedKeyAlgorithms() {
-        return Arrays.asList(Algorithm.RSA_2048, Algorithm.RSA_3072, Algorithm.RSA_4096, Algorithm.EC_P224, Algorithm.EC_P256, Algorithm.EC_P384,
-                             Algorithm.EC_P521, Algorithm.EC_K256, Algorithm.EC_BP256, Algorithm.EC_BP384, Algorithm.EC_BP512,
-                             Algorithm.EC_ED25519);
-    }
-
-    /**
-     * @return A list of supported signing algorithms
-     */
-    public static List<Algorithm> getSupportedSigningAlgorithms() {
-        return Arrays.asList(Algorithm.RSA_PKCS1_SHA1, Algorithm.RSA_PKCS1_SHA256, Algorithm.RSA_PKCS1_SHA384, Algorithm.RSA_PKCS1_SHA512,
-                             Algorithm.RSA_PSS_SHA1, Algorithm.RSA_PSS_SHA256,
-                             Algorithm.RSA_PSS_SHA384, Algorithm.RSA_PSS_SHA512, Algorithm.EC_ECDSA_SHA1, Algorithm.EC_ECDSA_SHA256,
-                             Algorithm.EC_ECDSA_SHA384, Algorithm.EC_ECDSA_SHA512);
-
     }
 
     /**
@@ -142,11 +122,11 @@ public class AsymmetricKey extends YHObject {
 
     /**
      * Returns an X509Certificate signed by this Asymmetric key and contains the public key of the Asymmetric key whose ID is 'keyToAttest'
-     *
+     * <p>
      * For this to work, there has to be an template X509Certificate object stored with the same ID as this Asymmetric key. There are no requirements
      * regarding this template certificate apart from it having to be an X509Certificate
      *
-     * @param session An authenticated session to communicate with the device over
+     * @param session     An authenticated session to communicate with the device over
      * @param keyToAttest The object ID of the key that is to be attested
      * @return A certificate signed by this Asymmetric key and contains the public key of the 'keyToAttest'
      * @throws NoSuchAlgorithmException           If the encryption/decryption fails
@@ -171,12 +151,12 @@ public class AsymmetricKey extends YHObject {
     /**
      * Returns an X509Certificate signed by the Asymmetric key whose ID is 'attestingKey' and contains the public key of the Asymmetric key whose
      * ID is 'keyToAttest'
-     *
+     * <p>
      * For this to work, there has to be an template X509Certificate object stored with the same ID as 'attestingKey'. There are no requirements
      * regarding this template certificate apart from it having to be an X509Certificate
      *
-     * @param session An authenticated session to communicate with the device over
-     * @param keyToAttest The object ID of the key that is to be attested
+     * @param session      An authenticated session to communicate with the device over
+     * @param keyToAttest  The object ID of the key that is to be attested
      * @param attestingKey The object ID of the key that will sign the attestation certificate
      * @return A certificate signed by 'attestingKey' and contains the public key of the 'keyToAttest'
      * @throws NoSuchAlgorithmException           If the encryption/decryption fails

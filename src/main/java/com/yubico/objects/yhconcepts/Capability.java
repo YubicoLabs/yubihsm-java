@@ -12,28 +12,16 @@ public class Capability extends YHConcept {
     private final String description;
     private final List<ObjectType> applicableObjects;
 
-    /**
-     * @param id                Capability ID
-     * @param name              Capability name
-     * @param description       Capability description
-     * @param applicableObjects A list of types of objects that can have this capability
-     */
     private Capability(final long id, final String name, final String description, final List<ObjectType> applicableObjects) {
         super(id, name);
         this.description = description;
         this.applicableObjects = applicableObjects;
     }
 
-    /**
-     * @return The capability ID
-     */
     public long getCapabilityId() {
         return (long) getId();
     }
 
-    /**
-     * @return The capability description
-     */
     public String getDescription() {
         return description;
     }
@@ -65,7 +53,7 @@ public class Capability extends YHConcept {
      * Converts a list of capabilities into a long object
      *
      * @param capabilities A list of capabilities
-     * @return `capabilities` as a long object
+     * @return `capabilities` as a 64 bit long object
      */
     public static long getCapabilities(final List<Capability> capabilities) {
         long ret = 0L;
@@ -78,7 +66,7 @@ public class Capability extends YHConcept {
     }
 
     /**
-     * Converts a long object into a list of capabilities
+     * Converts a 64 bit long object into a list of capabilities
      *
      * @param capabilities Capabilities as a long object
      * @return `capabilities` as a List of Capability
@@ -99,8 +87,8 @@ public class Capability extends YHConcept {
     /**
      * Return the Capability object with the specified ID
      *
-     * @param id The capability ID
-     * @return The Capability object whose ID is `id`. Null if the ID is unrecognized
+     * @param id A recognized algorithm ID
+     * @return The Capability object whose ID is `id`. Null if the ID is not recognized
      */
     public static Capability getCapability(final long id) {
         if (id == GET_OPAQUE.getCapabilityId()) {

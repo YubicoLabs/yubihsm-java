@@ -5,17 +5,10 @@ package com.yubico.objects.yhconcepts;
  */
 public class Algorithm extends YHConcept {
 
-    /**
-     * @param id   Algorithm ID
-     * @param name Algorithm name
-     */
     private Algorithm(final byte id, final String name) {
         super(id, name);
     }
 
-    /**
-     * @return The algorithm ID
-     */
     public byte getAlgorithmId() {
         return (byte) getId();
     }
@@ -29,10 +22,17 @@ public class Algorithm extends YHConcept {
         return String.format("0x%02X: " + getName(), getAlgorithmId());
     }
 
+    /**
+     * @return True if this algorithm is a supported RSA algorithm. False otherwise
+     */
     public boolean isRsaAlgorithm() {
         return isRsaAlgorithm(getAlgorithmId());
     }
 
+    /**
+     * @param algorithmId
+     * @return True if `algorithmId` is the ID of a supported RSA algorithm. False otherwise
+     */
     public static boolean isRsaAlgorithm(final byte algorithmId) {
         switch (algorithmId) {
             case 9: // RSA_2048
@@ -44,10 +44,17 @@ public class Algorithm extends YHConcept {
         }
     }
 
+    /**
+     * @return True if this algorithm is a supported EC algorithm. False otherwise
+     */
     public boolean isEcAlgorithm() {
         return isEcAlgorithm(getAlgorithmId());
     }
 
+    /**
+     * @param algorithmId
+     * @return True if `algorithmId` is the ID of a supported EC algorithm. False otherwise
+     */
     public static boolean isEcAlgorithm(final byte algorithmId) {
         switch (algorithmId) {
             case 12: // EC_P256
@@ -64,20 +71,25 @@ public class Algorithm extends YHConcept {
         }
     }
 
+    /**
+     * @return True if this algorithm is a supported ED algorithm. False otherwise
+     */
     public boolean isEdAlgorithm() {
         return isEdAlgorithm(getAlgorithmId());
     }
 
+    /**
+     * @param algorithmId
+     * @return True `algorithmId` is the ID of a supported ED algorithm. False otherwise
+     */
     public static boolean isEdAlgorithm(final byte algorithmId) {
         return algorithmId == EC_ED25519.getAlgorithmId();
     }
 
 
     /**
-     * Return the Algorithm object with the specified ID
-     *
-     * @param id The algorithm ID
-     * @return The algorithm object whose ID is `id`. Null if the ID is unrecognized
+     * @param id An algorithm ID, value 1 to 47
+     * @return Algorithm object whose ID is `id`. Null if `id` is not recognized
      */
     public static Algorithm getAlgorithm(final byte id) {
         switch (id) {
@@ -132,52 +144,99 @@ public class Algorithm extends YHConcept {
         }
     }
 
+    /** Algorithm used for signing with RSA-PKCS#1v1.5 */
     public static final Algorithm RSA_PKCS1_SHA1 = new Algorithm((byte) 1, "rsa-pkcs1-sha1");
+    /** Algorithm used for signing with RSA-PKCS#1v1.5 */
     public static final Algorithm RSA_PKCS1_SHA256 = new Algorithm((byte) 2, "rsa-pkcs1-sha256");
+    /** Algorithm used for signing with RSA-PKCS#1v1.5 */
     public static final Algorithm RSA_PKCS1_SHA384 = new Algorithm((byte) 3, "rsa-pkcs1-sha384");
+    /** Algorithm used for signing with RSA-PKCS#1v1.5 */
     public static final Algorithm RSA_PKCS1_SHA512 = new Algorithm((byte) 4, "rsa-pkcs1-sha512");
+    /** Algorithm used for signing with RSA-PSS */
     public static final Algorithm RSA_PSS_SHA1 = new Algorithm((byte) 5, "rsa-pss-sha1");
+    /** Algorithm used for signing with RSA-PSS */
     public static final Algorithm RSA_PSS_SHA256 = new Algorithm((byte) 6, "rsa-pss-sha256");
+    /** Algorithm used for signing with RSA-PSS */
     public static final Algorithm RSA_PSS_SHA384 = new Algorithm((byte) 7, "rsa-pss-sha384");
+    /** Algorithm used for signing with RSA-PSS */
     public static final Algorithm RSA_PSS_SHA512 = new Algorithm((byte) 8, "rsa-pss-sha512");
+    /** Algorithm for RSA key generation */
     public static final Algorithm RSA_2048 = new Algorithm((byte) 9, "rsa2048");
+    /** Algorithm for RSA key generation */
     public static final Algorithm RSA_3072 = new Algorithm((byte) 10, "rsa3072");
+    /** Algorithm for RSA key generation */
     public static final Algorithm RSA_4096 = new Algorithm((byte) 11, "rsa4096");
+    /** Algorithm for EC key generation. Curve secp256r1 */
     public static final Algorithm EC_P256 = new Algorithm((byte) 12, "ecp256");
+    /** Algorithm for EC key generation. Curve secp384r1 */
     public static final Algorithm EC_P384 = new Algorithm((byte) 13, "ecp384");
+    /** Algorithm for EC key generation. Curve secp521r1 */
     public static final Algorithm EC_P521 = new Algorithm((byte) 14, "ecp521");
+    /** Algorithm for EC key generation. Curve secp256k1 */
     public static final Algorithm EC_K256 = new Algorithm((byte) 15, "eck256");
+    /** Algorithm for EC key generation. Curve brainpool256r1 */
     public static final Algorithm EC_BP256 = new Algorithm((byte) 16, "ecbp256");
+    /** Algorithm for EC key generation. Curve brainpool384r1 */
     public static final Algorithm EC_BP384 = new Algorithm((byte) 17, "ecbp384");
+    /** Algorithm for EC key generation. Curve brainpool512r1 */
     public static final Algorithm EC_BP512 = new Algorithm((byte) 18, "ecbp512");
+    /**  */
     public static final Algorithm HMAC_SHA1 = new Algorithm((byte) 19, "hmac-sha1");
+    /**  */
     public static final Algorithm HMAC_SHA256 = new Algorithm((byte) 20, "hmac-sha256");
+    /**  */
     public static final Algorithm HMAC_SHA384 = new Algorithm((byte) 21, "hmac-sha384");
+    /**  */
     public static final Algorithm HMAC_SHA512 = new Algorithm((byte) 22, "hmac-sha512");
+    /** Algorithm used for signing with ECDSA */
     public static final Algorithm EC_ECDSA_SHA1 = new Algorithm((byte) 23, "ecdsa-sha1");
+    /** Algorithm used for deriving ECDH secret shared key */
     public static final Algorithm EC_ECDH = new Algorithm((byte) 24, "ecdh");
+    /** Algorithm used for decryption using RSA-OAEP */
     public static final Algorithm RSA_OAEP_SHA1 = new Algorithm((byte) 25, "rsa-oaep-sha1");
+    /** Algorithm used for decryption using RSA-OAEP */
     public static final Algorithm RSA_OAEP_SHA256 = new Algorithm((byte) 26, "rsa-oaep-sha256");
+    /** Algorithm used for decryption using RSA-OAEP */
     public static final Algorithm RSA_OAEP_SHA384 = new Algorithm((byte) 27, "rsa-oaep-sha384");
+    /** Algorithm used for decryption using RSA-OAEP */
     public static final Algorithm RSA_OAEP_SHA512 = new Algorithm((byte) 28, "rsa-oaep-sha512");
+    /**  */
     public static final Algorithm AES128_CCM_WRAP = new Algorithm((byte) 29, "aes128-ccm-wrap");
+    /** Algorithm used for storing Opaque objects */
     public static final Algorithm OPAQUE_DATA = new Algorithm((byte) 30, "opaque-data");
+    /** Algorithm used to storing an X509Certificate as an Opaque object */
     public static final Algorithm OPAQUE_X509_CERTIFICATE = new Algorithm((byte) 31, "opaque-x509-certificate");
+    /** Algorithm used for signing and decryption with RSA-PSS */
     public static final Algorithm RSA_MGF1_SHA1 = new Algorithm((byte) 32, "mgf1-sha1");
+    /** Algorithm used for signing and decryption with RSA-PSS */
     public static final Algorithm RSA_MGF1_SHA256 = new Algorithm((byte) 33, "mgf1-sha256");
+    /** Algorithm used for signing and decryption with RSA-PSS */
     public static final Algorithm RSA_MGF1_SHA384 = new Algorithm((byte) 34, "mgf1-sha384");
+    /** Algorithm used for signing and decryption with RSA-PSS */
     public static final Algorithm RSA_MGF1_SHA512 = new Algorithm((byte) 35, "mgf1-sha512");
+    /**  */
     public static final Algorithm TEMPLATE_SSH = new Algorithm((byte) 36, "template-ssh");
+    /**  */
     public static final Algorithm AES128_YUBICO_OTP = new Algorithm((byte) 37, "aes128-yubico-otp");
+    /** Algorithm used to create Authentication Keys */
     public static final Algorithm AES128_YUBICO_AUTHENTICATION = new Algorithm((byte) 38, "aes128-yubico-authentication");
+    /**  */
     public static final Algorithm AES192_YUBICO_OTP = new Algorithm((byte) 39, "aes192-yubico-otp");
+    /**  */
     public static final Algorithm AES256_YUBICO_OTP = new Algorithm((byte) 40, "aes256-yubico-otp");
+    /**  */
     public static final Algorithm AES192_CCM_WRAP = new Algorithm((byte) 41, "aes192-ccm-wrap");
+    /**  */
     public static final Algorithm AES256_CCM_WRAP = new Algorithm((byte) 42, "aes256-ccm-wrap");
+    /** Algorithm used to signing with ECDSA */
     public static final Algorithm EC_ECDSA_SHA256 = new Algorithm((byte) 43, "ecdsa-sha256");
+    /** Algorithm used to signing with ECDSA */
     public static final Algorithm EC_ECDSA_SHA384 = new Algorithm((byte) 44, "ecdsa-sha384");
+    /** Algorithm used to signing with ECDSA */
     public static final Algorithm EC_ECDSA_SHA512 = new Algorithm((byte) 45, "ecdsa-sha512");
+    /** Algorithm used to signing with EdDSA */
     public static final Algorithm EC_ED25519 = new Algorithm((byte) 46, "ed25519");
+    /** Algorithm for EC key generation. Curve secp224r1 */
     public static final Algorithm EC_P224 = new Algorithm((byte) 47, "ecp224");
 
 }

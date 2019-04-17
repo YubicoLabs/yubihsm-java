@@ -35,7 +35,7 @@ public class Opaque extends YHObject {
     /**
      * Creates an Opaque object
      *
-     * @param opaque The opaque objecy
+     * @param opaque The opaque object properties
      */
     public Opaque(YHObject opaque) {
         super(opaque.getId(), opaque.getType(), opaque.getCapabilities(), opaque.getObjectSize(), opaque.getDomains(), opaque.getAlgorithm(),

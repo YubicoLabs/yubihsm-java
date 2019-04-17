@@ -5,17 +5,10 @@ package com.yubico.objects.yhconcepts;
  */
 public class ObjectOrigin extends YHConcept {
 
-    /**
-     * @param id   Origin ID
-     * @param name Origin name
-     */
     private ObjectOrigin(final byte id, final String name) {
         super(id, name);
     }
 
-    /**
-     * @return The ID of the origin
-     */
     public byte getOriginId() {
         return (byte) getId();
     }
@@ -32,8 +25,8 @@ public class ObjectOrigin extends YHConcept {
     /**
      * Return the ObjectOrigin object with the specified ID
      *
-     * @param id The origin ID
-     * @return The origin object whose ID is `id`. Null if the ID is unrecognized
+     * @param id
+     * @return The origin object whose ID is `id`. Null if the ID is not recognized
      */
     public static ObjectOrigin getObjectOrigin(final byte id) {
         switch (id) {

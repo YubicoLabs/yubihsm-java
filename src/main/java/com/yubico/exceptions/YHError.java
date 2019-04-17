@@ -5,28 +5,18 @@ package com.yubico.exceptions;
  */
 public class YHError {
 
-    private final byte code;
+    private final byte errorCcode;
     private final String description;
 
-    /**
-     * @param code        Error code
-     * @param description Error description
-     */
     private YHError(final byte code, final String description) {
-        this.code = code;
+        this.errorCcode = code;
         this.description = description;
     }
 
-    /**
-     * @return The error code
-     */
-    public byte getCode() {
-        return code;
+    public byte getErrorCode() {
+        return errorCcode;
     }
 
-    /**
-     * @return The error description
-     */
     public String getDescription() {
         return description;
     }
@@ -35,17 +25,17 @@ public class YHError {
      * @return The error code and name as a formatted String
      */
     public String toString() {
-        return String.format("0x%02X: " + description, code);
+        return String.format("0x%02X: " + description, errorCcode);
     }
 
     /**
      * Compares this error to another error
      *
-     * @param other A YHError object
-     * @return True of the two error codes are equal. False otherwise
+     * @param other Another YHError object
+     * @return True if the error codes of both objects are equal. False otherwise
      */
     public boolean equals(final YHError other) {
-        return this.getCode() == other.getCode();
+        return this.getErrorCode() == other.getErrorCode();
     }
 
     public int hashCode() {
@@ -53,49 +43,31 @@ public class YHError {
     }
 
     /**
-     * Returns the error whose code is specified
+     * Returns the YHError object with the specified error code
      *
-     * @param code The error code
-     * @return The error object whose code is specified
+     * @param errorCode A recognized error code
+     * @return An YHError object
      */
-    public static YHError getError(final byte code) {
-        switch (code) {
-            case 0x00:
-                return OK;
-            case 0x01:
-                return INVALID_COMMAND;
-            case 0x02:
-                return INVALID_DATA;
-            case 0x03:
-                return INVALID_SESSION;
-            case 0x04:
-                return AUTHENTICATION_FAILED;
-            case 0x05:
-                return SESSIONS_FULL;
-            case 0x06:
-                return SESSION_FAILED;
-            case 0x07:
-                return STORAGE_FAILED;
-            case 0x08:
-                return WRONG_LENGTH;
-            case 0x09:
-                return INSUFFICIENT_PERMISSIONS;
-            case 0x0a:
-                return LOG_FULL;
-            case 0x0b:
-                return OBJECT_NOT_FOUND;
-            case 0x0c:
-                return INVALID_ID;
-            case 0x0e:
-                return SSH_CA_CONSTRAINT_VIOLATION;
-            case 0x0f:
-                return INVALID_OTP;
-            case 0x10:
-                return DEMO_MODE;
-            case 0x11:
-                return OBJECT_EXISTS;
-            default:
-                return new YHError(code, "Error unknown");
+    public static YHError getError(final byte errorCode) {
+        switch (errorCode) {
+            case 0x00: return OK;
+            case 0x01: return INVALID_COMMAND;
+            case 0x02: return INVALID_DATA;
+            case 0x03: return INVALID_SESSION;
+            case 0x04: return AUTHENTICATION_FAILED;
+            case 0x05: return SESSIONS_FULL;
+            case 0x06: return SESSION_FAILED;
+            case 0x07: return STORAGE_FAILED;
+            case 0x08: return WRONG_LENGTH;
+            case 0x09: return INSUFFICIENT_PERMISSIONS;
+            case 0x0a: return LOG_FULL;
+            case 0x0b: return OBJECT_NOT_FOUND;
+            case 0x0c: return INVALID_ID;
+            case 0x0e: return SSH_CA_CONSTRAINT_VIOLATION;
+            case 0x0f: return INVALID_OTP;
+            case 0x10: return DEMO_MODE;
+            case 0x11: return OBJECT_EXISTS;
+            default: return new YHError(errorCode, "Error unknown");
         }
     }
 
@@ -125,7 +97,7 @@ public class YHError {
     /** No object found matching given ID and Type */
     public static final YHError OBJECT_NOT_FOUND =
             new YHError((byte) 0x0b, "No object found matching given ID and Type");
-    /** Specified ID is reserved */
+    /** Invalid ID */
     public static final YHError INVALID_ID = new YHError((byte) 0x0c, "Invalid ID");
     /** Constraints in SSH Template not met */
     public static final YHError SSH_CA_CONSTRAINT_VIOLATION =
