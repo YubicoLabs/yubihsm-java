@@ -39,7 +39,7 @@ public class YHError {
     }
 
     public int hashCode() {
-        return super.hashCode();
+        return errorCcode;
     }
 
     /**
