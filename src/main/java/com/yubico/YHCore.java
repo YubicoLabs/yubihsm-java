@@ -289,7 +289,7 @@ public class YHCore {
         if (session == null) {
             throw new InvalidSessionException();
         }
-        Utils.checkNullValue(objectType, "Object type is necessary to identify the object to delete");
+        Utils.checkNullValue(objectType, "Object type is necessary to identify the object");
 
         logger.finer("Getting object info for " + objectType.getName() + " " + String.format("0x%02X", objectID));
 
