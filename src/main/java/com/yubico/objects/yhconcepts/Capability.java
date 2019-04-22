@@ -26,16 +26,10 @@ public class Capability extends YHConcept {
         return description;
     }
 
-    /**
-     * @return A list of types of objects that can have the capability
-     */
     public List<ObjectType> getApplicableObjects() {
         return applicableObjects;
     }
 
-    /**
-     * @return A String representation of the capability
-     */
     public String toString() {
         StringBuilder builder = new StringBuilder("");
         builder.append(String.format("Capability: 0x%08X \n", getCapabilityId()));
@@ -57,7 +51,7 @@ public class Capability extends YHConcept {
      */
     public static long getCapabilities(final List<Capability> capabilities) {
         long ret = 0L;
-        if(capabilities != null) {
+        if (capabilities != null) {
             for (Capability c : capabilities) {
                 ret = ret | c.getCapabilityId();
             }

@@ -13,11 +13,6 @@ public class ObjectType extends YHConcept {
         return (byte) getId();
     }
 
-    /**
-     * Returns a String representation of the type
-     *
-     * @return The ID and name of the type as a formatted String
-     */
     public String toString() {
         return String.format("0x%02X: " + getName(), getTypeId());
     }

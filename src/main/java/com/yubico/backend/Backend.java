@@ -7,7 +7,7 @@ public interface Backend {
     /**
      * Sends a raw message to the device and returns a response
      *
-     * @param message The data to send to the device
+     * @param message The data to send to the device (including the command)
      * @return The device response
      * @throws YHConnectionException If connection with the device fails
      */

@@ -10,6 +10,7 @@ import com.yubico.objects.yhconcepts.ObjectOrigin;
 import com.yubico.objects.yhconcepts.ObjectType;
 import com.yubico.objects.yhobjects.Opaque;
 import com.yubico.objects.yhobjects.YHObject;
+import com.yubico.objects.yhobjects.YHObjectInfo;
 import org.bouncycastle.util.encoders.Base64;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -87,7 +88,7 @@ public class OpaqueTest {
     public void testImportOpaque()
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidSessionException, UnsupportedAlgorithmException, CertificateException {
+                   IllegalBlockSizeException, UnsupportedAlgorithmException, CertificateException {
         logger.info("TEST START: testImportOpaque()");
 
         final List domains = Arrays.asList(2, 5, 8);
@@ -100,7 +101,7 @@ public class OpaqueTest {
 
         try {
             // Verify object properties
-            final YHObject opaqueObj = YHCore.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+            final YHObjectInfo opaqueObj = YHObject.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
             assertNotEquals(0, opaqueObj.getId());
             assertEquals(id, opaqueObj.getId());
             assertEquals(ObjectType.TYPE_OPAQUE, opaqueObj.getType());
@@ -112,14 +113,14 @@ public class OpaqueTest {
             assertTrue(opaqueObj.getCapabilities().containsAll(capabilities));
             assertEquals(0, opaqueObj.getDelegatedCapabilities().size());
 
-            Opaque opaque = new Opaque(opaqueObj);
+            Opaque opaque = new Opaque(id, Algorithm.OPAQUE_DATA);
             byte[] returnedOpaqueData = opaque.getOpaque(session);
             assertArrayEquals(opaqueData, returnedOpaqueData);
         } finally {
             // Delete opaque object
-            YHCore.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+            YHObject.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
             try {
-                YHCore.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+                YHObject.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
             } catch (YHDeviceException e1) {
                 assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
             }
@@ -132,7 +133,7 @@ public class OpaqueTest {
     public void testImportCertificate()
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidSessionException, CertificateException {
+                   IllegalBlockSizeException, CertificateException {
         logger.info("TEST START: testImportCertificate()");
 
         final List domains = Arrays.asList(2, 5, 8);
@@ -143,7 +144,7 @@ public class OpaqueTest {
 
         try {
             // Verify object properties
-            final YHObject opaqueObj = YHCore.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+            final YHObjectInfo opaqueObj = YHObject.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
             assertNotEquals(0, opaqueObj.getId());
             assertEquals(id, opaqueObj.getId());
             assertEquals(ObjectType.TYPE_OPAQUE, opaqueObj.getType());
@@ -154,14 +155,14 @@ public class OpaqueTest {
             assertEquals(0, opaqueObj.getCapabilities().size());
             assertEquals(0, opaqueObj.getDelegatedCapabilities().size());
 
-            Opaque opaque = new Opaque(opaqueObj);
+            Opaque opaque = new Opaque(id, Algorithm.OPAQUE_X509_CERTIFICATE);
             X509Certificate returnedCert = opaque.getCertificate(session);
             assertEquals(cert, returnedCert);
         } finally {
             // Delete opaque object
-            YHCore.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+            YHObject.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
             try {
-                YHCore.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+                YHObject.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
             } catch (YHDeviceException e1) {
                 assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
             }
@@ -174,20 +175,19 @@ public class OpaqueTest {
     public void testImportOpaqueCertificate()
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidSessionException, UnsupportedAlgorithmException, CertificateException {
+                   IllegalBlockSizeException, UnsupportedAlgorithmException, CertificateException {
         logger.info("TEST START: testImportOpaqueCertificate()");
 
         X509Certificate testCert = getTestCertificate();
         short id =
                 Opaque.importOpaque(session, (short) 0, "", Arrays.asList(2, 5, 8), null, Algorithm.OPAQUE_X509_CERTIFICATE, testCert.getEncoded());
         try {
-            final YHObject opaqueObj = YHCore.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
-            Opaque opaque = new Opaque(opaqueObj);
+            Opaque opaque = new Opaque(id, Algorithm.OPAQUE_X509_CERTIFICATE);
             X509Certificate returnedCert = opaque.getCertificate(session);
             assertEquals(testCert, returnedCert);
         } finally {
             // Delete opaque object
-            YHCore.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+            YHObject.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
         }
 
         logger.info("TEST END: testImportOpaqueCertificate()");
@@ -198,15 +198,14 @@ public class OpaqueTest {
     public void testImportOpaqueCertificateWithWrongAlgorithm()
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidSessionException, UnsupportedAlgorithmException, CertificateException {
+                   IllegalBlockSizeException, UnsupportedAlgorithmException, CertificateException {
         logger.info("TEST START: testImportOpaqueCertificate()");
 
 
         X509Certificate testCert = getTestCertificate();
         short id = Opaque.importOpaque(session, (short) 0, "", Arrays.asList(2, 5, 8), null, Algorithm.OPAQUE_DATA, testCert.getEncoded());
         try {
-            final YHObject opaqueObj = YHCore.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
-            Opaque opaque = new Opaque(opaqueObj);
+            Opaque opaque = new Opaque(id, Algorithm.OPAQUE_DATA);
             boolean exceptionThrown = false;
             try {
                 opaque.getCertificate(session);
@@ -216,7 +215,7 @@ public class OpaqueTest {
             assertTrue("Succeeded in returning the opaque ", exceptionThrown);
         } finally {
             // Delete opaque object
-            YHCore.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+            YHObject.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
         }
 
         logger.info("TEST END: testImportOpaqueCertificate()");
@@ -233,7 +232,7 @@ public class OpaqueTest {
         boolean exceptionThrown = false;
         try {
             Opaque.importOpaque(session, (short) 0, "", Arrays.asList(2, 5, 8), null, Algorithm.OPAQUE_DATA, new byte[0]);
-        } catch (InvalidParameterException e) {
+        } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
         assertTrue("Succeeded in importing an empty byte array as an opaque object", exceptionThrown);
@@ -243,7 +242,7 @@ public class OpaqueTest {
         exceptionThrown = false;
         try {
             Opaque.importOpaque(session, (short) 0, "", Arrays.asList(2, 5, 8), null, Algorithm.OPAQUE_DATA, opaqueData);
-        } catch (InvalidParameterException e) {
+        } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
         assertTrue("Succeeded in importing an opaque object that is too large", exceptionThrown);

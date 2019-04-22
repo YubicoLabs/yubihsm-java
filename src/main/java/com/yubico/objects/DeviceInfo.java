@@ -1,6 +1,7 @@
 package com.yubico.objects;
 
 import com.yubico.objects.yhconcepts.Algorithm;
+import lombok.NonNull;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ public class DeviceInfo {
      * @param info The device data as a byte array in the form of {1 byte major version number + 1 byte minor version number + 1 byte build version
      *             number + 4 bytes serial number + 1 bytes log size + 1 byte log unread log entries + 1 byte for each supported algorithms}
      */
-    public DeviceInfo(final byte[] info) {
+    public DeviceInfo(@NonNull final byte[] info) {
         ByteBuffer bb = ByteBuffer.wrap(info);
         version = bb.get() + "." + bb.get() + "." + bb.get();
         serialnumber = bb.getInt();

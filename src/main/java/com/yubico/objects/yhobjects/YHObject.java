@@ -1,254 +1,299 @@
 package com.yubico.objects.yhobjects;
 
+import com.yubico.YHSession;
+import com.yubico.exceptions.YHAuthenticationException;
+import com.yubico.exceptions.YHConnectionException;
+import com.yubico.exceptions.YHDeviceException;
+import com.yubico.exceptions.YHInvalidResponseException;
 import com.yubico.internal.util.Utils;
-import com.yubico.objects.yhconcepts.*;
+import com.yubico.objects.yhconcepts.Capability;
+import com.yubico.objects.yhconcepts.Command;
+import com.yubico.objects.yhconcepts.ObjectType;
+import lombok.NonNull;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.security.InvalidParameterException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
 
-/**
- * Class representing objects stored on the device
- */
 public class YHObject {
-
-    /** The maximum length of an object's label */
-    public static final int LABEL_LENGTH = 40;
+    private static Logger log = Logger.getLogger(YHObject.class.getName());
 
     private short id;
-    private short objectSize;
     private ObjectType type;
-    private byte sequence;
-    private List<Integer> domains;
-    private Algorithm algorithm;
-    private ObjectOrigin origin;
-    private String label;
-    private List<Capability> capabilities;
-    private List<Capability> delegatedCapabilities;
 
-    protected YHObject(final short id, final ObjectType type) {
+    public enum ListFilter {
+        ID          ((byte) 0x01, 3), // 1 identifier byte + 2
+        TYPE        ((byte) 0x02, 2), // 1 identifier byte + 1
+        DOMAINS     ((byte) 0x03, 3), // 1 identifier byte + 2
+        CAPABILITIES((byte) 0x04, 9), // 1 identifier byte + 8
+        ALGORITHM   ((byte) 0x05, 2), // 1 identifier byte + 1
+        LABEL       ((byte) 0x06, 41); // 1 identifier byte + 40
+
+        private final byte identifier;
+        private final int length;
+
+        ListFilter(byte id, int l) {
+            this.identifier = id;
+            this.length = l;
+        }
+
+        public byte getIdentifier() {
+            return this.identifier;
+        }
+
+        public int getLength() {
+            return this.length;
+        }
+    }
+
+    protected YHObject() {}
+
+    public YHObject(final short id, @NonNull final ObjectType type) {
         this.id = id;
         this.type = type;
-    }
-
-    /**
-     * @param id       The object ID uniquely identifying the object together with the object type
-     * @param type     The object type uniquely identifying the object together with the object ID
-     * @param sequence The number of previews objects that had had the same ID and type
-     */
-    public YHObject(final short id, final ObjectType type, final byte sequence) {
-        this.id = id;
-        this.type = type;
-        this.sequence = sequence;
-
-        this.capabilities = null;
-        this.objectSize = -1;
-        this.domains = null;
-        this.algorithm = null;
-        this.origin = null;
-        this.label = "";
-        this.delegatedCapabilities = null;
-    }
-
-    /**
-     * @param objectId              The object ID uniquely identifying the object together with the object type
-     * @param type                  The object type uniquely identifying the object together with the object ID
-     * @param capabilities          What the object can be used to do
-     * @param size                  The object size in bytes
-     * @param domains               The domains that the object can operate within
-     * @param algorithm             The algorithm used to create this object when applicable
-     * @param sequence              The number of previous objects that had had the same ID and type
-     * @param origin                Where the object has been created originally
-     * @param label                 The object label
-     * @param delegatedCapabilities What capabilities can the object bestow on other objects when applicable
-     */
-    public YHObject(final short objectId, final ObjectType type, final List<Capability> capabilities, final short size, final List<Integer> domains,
-                    final Algorithm algorithm, final byte sequence, final ObjectOrigin origin, final String label,
-                    final List<Capability> delegatedCapabilities) {
-        this.capabilities = capabilities;
-        this.id = objectId;
-        this.objectSize = size;
-        this.domains = domains;
-        this.type = type;
-        this.algorithm = algorithm;
-        this.sequence = sequence;
-        this.origin = origin;
-        this.label = label;
-        this.delegatedCapabilities = delegatedCapabilities;
-    }
-
-    /**
-     * Creates an YHObject object by parsing a byte array
-     *
-     * @param data The object data as a byte array in the form of {8 bytes capabilities + 2 bytes object ID + 2 bytes object size + 2 bytes domains
-     *             + 1 byte type + 1 byte algorithm + 1 byte sequence + 1 byte object origin + 40 bytes label + 8 bytes delegated capabilities}
-     */
-    public YHObject(final byte[] data) {
-        ByteBuffer bb = ByteBuffer.wrap(data);
-        capabilities = Capability.getCapabilities(bb.getLong());
-        id = bb.getShort();
-        objectSize = bb.getShort();
-        domains = Utils.getListFromShort(bb.getShort());
-        type = ObjectType.getObjectType(bb.get());
-        algorithm = Algorithm.getAlgorithm(bb.get());
-        sequence = bb.get();
-        origin = ObjectOrigin.getObjectOrigin(bb.get());
-        byte[] l = new byte[LABEL_LENGTH];
-        bb.get(l, 0, LABEL_LENGTH);
-        label = new String(l);
-        label = label.trim();
-        delegatedCapabilities = Capability.getCapabilities(bb.getLong());
     }
 
     public short getId() {
         return id;
     }
 
-    public void setId(short id) {
+    protected void setId(short id) {
         this.id = id;
-    }
-
-    public short getObjectSize() {
-        return objectSize;
-    }
-
-    public void setObjectSize(short objectSize) {
-        this.objectSize = objectSize;
     }
 
     public ObjectType getType() {
         return type;
     }
 
-    public void setType(ObjectType type) {
+    protected void setType(@NonNull ObjectType type) {
         this.type = type;
     }
 
-    public byte getSequence() {
-        return sequence;
-    }
-
-    public void setSequence(byte sequence) {
-        this.sequence = sequence;
-    }
-
-    public List<Integer> getDomains() {
-        return domains;
-    }
-
-    public void setDomains(List<Integer> domains) {
-        this.domains = domains;
-    }
-
-    public Algorithm getAlgorithm() {
-        return algorithm;
-    }
-
-    public void setAlgorithm(Algorithm algorithm) {
-        this.algorithm = algorithm;
-    }
-
-    public ObjectOrigin getOrigin() {
-        return origin;
-    }
-
-    public void setOrigin(ObjectOrigin origin) {
-        this.origin = origin;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
-    }
-
-    public List<Capability> getCapabilities() {
-        return capabilities;
-    }
-
-    public void setCapabilities(List<Capability> capabilities) {
-        this.capabilities = capabilities;
-    }
-
-    public List<Capability> getDelegatedCapabilities() {
-        return delegatedCapabilities;
-    }
-
-    public void setDelegatedCapabilities(List<Capability> delegatedCapabilities) {
-        this.delegatedCapabilities = delegatedCapabilities;
-    }
-
     /**
-     * @return A String representation of the object
-     */
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Object ID: " + id).append("\n");
-        builder.append("Object Type: " + type.getName()).append("\n");
-        builder.append("Sequence: " + sequence).append("\n");
-        if (objectSize > 0) {
-            builder.append("Size: " + objectSize + " bytes").append("\n");
-        }
-        if (domains != null && !domains.isEmpty()) {
-            builder.append("Domains: ");
-            for (int d : domains) {
-                builder.append(d).append(" ");
-            }
-            builder.append("\n");
-        }
-        if (algorithm != null) {
-            builder.append("Algorithm: " + algorithm.getName()).append("\n");
-        }
-        if (origin != null) {
-            builder.append("Origin: ").append(origin.getName()).append("\n");
-        }
-        if (label != null && !label.isEmpty()) {
-            builder.append("Label: ").append(label).append("\n");
-        }
-        if (capabilities != null && !capabilities.isEmpty()) {
-            builder.append("Capabilities: ");
-            for (Capability c : capabilities) {
-                builder.append(c.getName()).append(" ");
-            }
-            builder.append("\n");
-        }
-        if (delegatedCapabilities != null && !delegatedCapabilities.isEmpty()) {
-            builder.append("Delegated capabilities: ");
-            for (Capability c : delegatedCapabilities) {
-                builder.append(c.getName()).append(" ");
-            }
-            builder.append("\n");
-        }
-        return builder.toString();
-    }
-
-    /**
-     * Compares two YHObject objects
+     * Return a list of objects on the device. The return value can be filtered by object ID, type, domains, capabilities, algorithm and/or label
      *
-     * @param a
-     * @param b
-     * @return True if the objects' IDs and types are equal. False otherwise
+     * @param session An authenticated session to communicate with the device over
+     * @param filters The filter applied to the result
+     * @return A list of objects on the device
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     * @throws IOException                        If failed to parse the filter
      */
-    public static boolean equals(final YHObject a, final YHObject b) {
-        return (a.getId() == b.getId()) && YHConcept.equals(a.getType(), b.getType());
+    public static List<YHObjectInfo> getObjectList(@NonNull final YHSession session, final Map<ListFilter, Object> filters)
+            throws IOException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   NoSuchPaddingException, IllegalBlockSizeException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        if (filters != null) {
+            try {
+                ByteBuffer bb;
+                for (ListFilter f : filters.keySet()) {
+                    switch (f) {
+                        case ID:
+                            bb = ByteBuffer.allocate(ListFilter.ID.length);
+                            bb.put(ListFilter.ID.identifier).putShort((short) filters.get(f));
+                            baos.write(bb.array());
+                            break;
+                        case TYPE:
+                            bb = ByteBuffer.allocate(ListFilter.TYPE.length);
+                            bb.put(ListFilter.TYPE.identifier);
+                            Object type = filters.get(f);
+                            if (type instanceof Byte) {
+                                bb.put((byte) type);
+                            } else if (type instanceof ObjectType) {
+                                bb.put(((ObjectType) type).getTypeId());
+                            }
+                            baos.write(bb.array());
+                            break;
+                        case DOMAINS:
+                            bb = ByteBuffer.allocate(ListFilter.DOMAINS.length);
+                            bb.put(ListFilter.DOMAINS.identifier);
+                            Object domains = filters.get(f);
+                            if (domains instanceof Short) {
+                                bb.putShort((short) domains);
+                            } else if (domains instanceof List) {
+                                bb.putShort(Utils.getShortFromList((List) domains));
+                            }
+                            baos.write(bb.array());
+                            break;
+                        case CAPABILITIES:
+                            bb = ByteBuffer.allocate(ListFilter.CAPABILITIES.length);
+                            bb.put(ListFilter.CAPABILITIES.identifier);
+                            Object capabilities = filters.get(f);
+                            if (capabilities instanceof Long) {
+                                bb.putLong(((long) capabilities));
+                            } else if (capabilities instanceof List) {
+                                bb.putLong(Capability.getCapabilities((List) capabilities));
+                            }
+                            baos.write(bb.array());
+                            break;
+                        case ALGORITHM:
+                            bb = ByteBuffer.allocate(ListFilter.ALGORITHM.length);
+                            bb.put(ListFilter.ALGORITHM.identifier).put((byte) filters.get(f));
+                            baos.write(bb.array());
+                            break;
+                        case LABEL:
+                            final String label = (String) filters.get(f);
+                            bb = ByteBuffer.allocate(ListFilter.LABEL.length);
+                            bb.put(ListFilter.LABEL.identifier).put(label.getBytes());
+                            baos.write(bb.array());
+                            break;
+                        default:
+                            // do nothing
+                            break;
+
+                    }
+                }
+            } catch (IOException e) {
+                log.severe("Failed to construct input message to the " + Command.LIST_OBJECTS.getName() + " command");
+                throw e;
+            }
+        }
+
+        byte[] cmdMessage = baos.toByteArray();
+        byte[] response = session.sendSecureCmd(Command.LIST_OBJECTS, cmdMessage);
+        if (response.length % 4 != 0) {
+            log.finer(Command.LIST_OBJECTS.getName() + " response: " + Utils.getPrintableBytes(response));
+            throw new YHInvalidResponseException("Expecting length of response to " + Command.LIST_OBJECTS.getName() + " command to be a multiple " +
+                                                 "of 4 but have received " + response.length + " bytes instead");
+        }
+        ByteBuffer bb = ByteBuffer.wrap(response);
+        List<YHObjectInfo> ret = new ArrayList<>();
+        while (bb.hasRemaining()) {
+            ret.add(new YHObjectInfo(bb.getShort(), ObjectType.getObjectType(bb.get()), bb.get()));
+        }
+        log.fine("Response to " + Command.LIST_OBJECTS.getName() + " command contained " + ret.size() + " objects");
+        return ret;
     }
 
     /**
-     * Returns a usable non-null label value and verifies its length.
+     * Deletes a this object from the device
      *
-     * @param label
-     * @return The label. An empty string if the input label is null
-     * @throws InvalidParameterException If the label is more than the maximum length allowed
+     * @param session An authenticated session to communicate with the device over
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      */
-    protected static String getLabel(String label) {
-        if (label == null) {
-            return "";
-        }
-        if (label.length() > LABEL_LENGTH) {
-            throw new InvalidParameterException("Invalid parameter: label");
-        }
-        return label;
+    public void deleteObject(YHSession session)
+            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
+                   InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
+                   IllegalBlockSizeException {
+        deleteObject(session, getId(), getType());
     }
+
+    /**
+     * Deletes a specific object from the device
+     *
+     * @param session    An authenticated session to communicate with the device over
+     * @param objectID   The ID of the subject to delete
+     * @param objectType The type of the object to delete
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     */
+    public static void deleteObject(@NonNull final YHSession session, final short objectID, @NonNull final ObjectType objectType)
+            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
+                   InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
+                   IllegalBlockSizeException {
+
+        log.finer("Deleting " + objectType.getName() + " " + String.format("0x%02X", objectID));
+
+        ByteBuffer bb = ByteBuffer.allocate(3);
+        bb.putShort(objectID);
+        bb.put(objectType.getTypeId());
+        session.sendSecureCmd(Command.DELETE_OBJECT, bb.array());
+    }
+
+    /**
+     * Retrieves details of a this object from the device
+     *
+     * @param session An authenticated session to communicate with the device over
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     * @throws IllegalBlockSizeException
+     */
+    public YHObjectInfo getObjectInfo(final YHSession session)
+            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
+                   InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
+                   IllegalBlockSizeException {
+        return getObjectInfo(session, getId(), getType());
+    }
+
+    /**
+     * Retrieves details of a specific object in the device
+     *
+     * @param session    An authenticated session to communicate with the device over
+     * @param objectID   The ID of the subject to delete
+     * @param objectType The type of the object to delete
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     * @throws IllegalBlockSizeException
+     */
+    public static YHObjectInfo getObjectInfo(@NonNull final YHSession session, final short objectID, @NonNull final ObjectType objectType)
+            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
+                   InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
+                   IllegalBlockSizeException {
+
+        log.finer("Getting object info for " + objectType.getName() + " " + String.format("0x%02X", objectID));
+
+        ByteBuffer bb = ByteBuffer.allocate(3);
+        bb.putShort(objectID);
+        bb.put(objectType.getTypeId());
+        byte[] response = session.sendSecureCmd(Command.GET_OBJECT_INFO, bb.array());
+        YHObjectInfo info = new YHObjectInfo(response);
+
+        log.finer("Response to " + Command.GET_OBJECT_INFO.getName() + " returned:");
+        log.finer(info.toString());
+
+        return info;
+    }
+
 }

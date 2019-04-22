@@ -1,5 +1,7 @@
 package com.yubico.objects.yhconcepts;
 
+import lombok.NonNull;
+
 /**
  * Class representing different concepts known to the device
  */
@@ -32,7 +34,7 @@ public class YHConcept {
      * @param b Another YHConcept object
      * @return True of the two objects are of the same type and whose IDs are equals. False otherwise
      */
-    public static boolean equals(final YHConcept a, final YHConcept b) {
+    public static boolean equals(@NonNull final YHConcept a, @NonNull final YHConcept b) {
         if (!a.getClass().equals(b.getClass())) {
             return false;
         }

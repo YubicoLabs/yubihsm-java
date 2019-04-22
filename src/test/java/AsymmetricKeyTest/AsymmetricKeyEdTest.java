@@ -1,4 +1,5 @@
-import com.yubico.YHCore;
+package AsymmetricKeyTest;
+
 import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
@@ -11,6 +12,7 @@ import com.yubico.objects.yhconcepts.ObjectType;
 import com.yubico.objects.yhobjects.AsymmetricKey;
 import com.yubico.objects.yhobjects.AsymmetricKeyEd;
 import com.yubico.objects.yhobjects.YHObject;
+import com.yubico.objects.yhobjects.YHObjectInfo;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.Signer;
 import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator;
@@ -69,7 +71,7 @@ public class AsymmetricKeyEdTest {
     public void testGenerateKey()
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidSessionException {
+                   IllegalBlockSizeException {
         logger.info("TEST START: testGenerateKey()");
 
         final List domains = Arrays.asList(2, 5, 8);
@@ -77,11 +79,12 @@ public class AsymmetricKeyEdTest {
         final String label = "asym_key";
 
         // Generate the key on the device
-        final short id = AsymmetricKey.generateAsymmetricKey(session, (short) 0, label, domains, capabilities, Algorithm.EC_ED25519);
+        YHObjectInfo keyinfo = AsymmetricKeyEd.getObjectInfoForNewKey((short) 0, label, domains, Algorithm.EC_ED25519, capabilities);
+        final short id = AsymmetricKey.generateAsymmetricKey(session, keyinfo);
 
         try {
             // Verify key properties
-            final YHObject key = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final YHObjectInfo key = YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             assertNotEquals(0, key.getId());
             assertEquals(id, key.getId());
             assertEquals(ObjectType.TYPE_ASYMMETRIC_KEY, key.getType());
@@ -94,9 +97,9 @@ public class AsymmetricKeyEdTest {
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
             // Delete the key and verify deletion
-            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             try {
-                YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+                YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {
                 assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
             }
@@ -126,31 +129,33 @@ public class AsymmetricKeyEdTest {
         // Test importing the key with a non Asymmetric key algorithm
         boolean exceptionThrown = false;
         try {
-            AsymmetricKeyEd
-                    .importKey(session, (short) 0, "", Arrays.asList(2, 5), Arrays.asList(Capability.SIGN_EDDSA), Algorithm.AES128_CCM_WRAP, d);
-        } catch (UnsupportedAlgorithmException e) {
+            YHObjectInfo keyinfo = AsymmetricKeyEd.getObjectInfoForNewKey((short) 0, "", Arrays.asList(2, 5), Algorithm.AES128_CCM_WRAP,
+                                                    Arrays.asList(Capability.SIGN_EDDSA));
+            AsymmetricKeyEd.importKey(session, keyinfo, d);
+        } catch (IllegalArgumentException e) {
             exceptionThrown = true;
-            assertEquals("Specified algorithm is not a supported ED algorithm", e.getMessage());
         }
         assertTrue("Succeeded in importing an ED key even though the specified algorithm is a non asymmetric key algorithm", exceptionThrown);
 
         // Test importing an RSA key as an ED key
         exceptionThrown = false;
         try {
-            AsymmetricKeyEd.importKey(session, (short) 0, "", Arrays.asList(2, 5), Arrays.asList(Capability.SIGN_EDDSA), Algorithm.RSA_3072, d);
-        } catch (UnsupportedAlgorithmException e) {
+            YHObjectInfo keyinfo = AsymmetricKeyEd.getObjectInfoForNewKey((short) 0, "", Arrays.asList(2, 5), Algorithm.RSA_3072,
+                                                    Arrays.asList(Capability.SIGN_EDDSA));
+            AsymmetricKeyEd.importKey(session, keyinfo, d);
+        } catch (IllegalArgumentException e) {
             exceptionThrown = true;
-            assertEquals("Specified algorithm is not a supported ED algorithm", e.getMessage());
         }
         assertTrue("Succeeded in importing an RSA key as an ED key", exceptionThrown);
 
         // Test importing an ED key without specifying the private key
         exceptionThrown = false;
         try {
-            AsymmetricKeyEd.importKey(session, (short) 0, "", Arrays.asList(2, 5), Arrays.asList(Capability.SIGN_ECDSA), Algorithm.EC_P256, null);
-        } catch (InvalidParameterException e) {
+            YHObjectInfo keyinfo = AsymmetricKeyEd.getObjectInfoForNewKey((short) 0, "", Arrays.asList(2, 5), Algorithm.EC_P256,
+                                                    Arrays.asList(Capability.SIGN_EDDSA));
+            AsymmetricKeyEd.importKey(session, keyinfo, null);
+        } catch (IllegalArgumentException e) {
             exceptionThrown = true;
-            assertEquals("Missing parameter: k", e.getMessage());
         }
         assertTrue("Succeeded in importing an ED key in spite of missing private key", exceptionThrown);
 
@@ -165,32 +170,25 @@ public class AsymmetricKeyEdTest {
         logger.info("TEST START: testNonEcKey()");
 
         // Test creating an AsymmetricKeyEd object without algorithm
-        YHObject objectInfo = new YHObject((short) 0x1234, AsymmetricKey.TYPE, (byte) 0);
         boolean exceptionThrown = false;
         try {
-            AsymmetricKeyEd.getInstance(objectInfo);
-        } catch (UnsupportedAlgorithmException e) {
+            new AsymmetricKeyEd((short) 0x1234, null);
+        } catch (IllegalArgumentException e) {
             exceptionThrown = true;
-            assertEquals("The object is not an ED key", e.getMessage());
         }
         assertTrue("Succeeded in creating an AsymmetricKeyEd object in spite of missing algorithm", exceptionThrown);
 
         // Test creating an AsymmetricKeyEd object with a non ED algorithm
-        objectInfo = new YHObject((short) 0x1234, AsymmetricKey.TYPE, Arrays.asList(Capability.SIGN_ECDSA), (short) 128, Arrays.asList(2, 5),
-                                  Algorithm.RSA_2048, (byte) 0, ObjectOrigin.YH_ORIGIN_IMPORTED, "", null);
         exceptionThrown = false;
         try {
-            AsymmetricKeyEd.getInstance(objectInfo);
-        } catch (UnsupportedAlgorithmException e) {
+            new AsymmetricKeyEd((short) 0x1234, Algorithm.RSA_2048);
+        } catch (IllegalArgumentException e) {
             exceptionThrown = true;
-            assertEquals("The object is not an ED key", e.getMessage());
         }
         assertTrue("Succeeded in creating an AsymmetricKeyEd object with a non ED algorithm", exceptionThrown);
 
         // Test creating an AsymmetricKeyEd object for a key that does not exist in the device
-        objectInfo = new YHObject((short) 0x1234, AsymmetricKey.TYPE, Arrays.asList(Capability.SIGN_PKCS), (short) 2048, Arrays.asList(2, 5),
-                                  Algorithm.EC_ED25519, (byte) 0, ObjectOrigin.YH_ORIGIN_IMPORTED, "", null);
-        AsymmetricKeyEd key = AsymmetricKeyEd.getInstance(objectInfo);
+        AsymmetricKeyEd key = new AsymmetricKeyEd((short) 0x1234, Algorithm.EC_ED25519);
         exceptionThrown = false;
         try {
             key.getPublicKey(session);
@@ -207,7 +205,7 @@ public class AsymmetricKeyEdTest {
     public void testImportKey()
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidSessionException, UnsupportedAlgorithmException {
+                   IllegalBlockSizeException, UnsupportedAlgorithmException {
         logger.info("TEST START: testImportKey()");
 
         final List domains = Arrays.asList(2, 5, 8);
@@ -220,7 +218,7 @@ public class AsymmetricKeyEdTest {
 
         try {
 
-            final YHObject key = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final YHObjectInfo key = YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             assertEquals(id, key.getId());
             assertEquals(ObjectType.TYPE_ASYMMETRIC_KEY, key.getType());
             assertEquals(domains, key.getDomains());
@@ -231,9 +229,9 @@ public class AsymmetricKeyEdTest {
             assertTrue(key.getCapabilities().containsAll(capabilities));
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
-            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             try {
-                YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+                YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {
                 assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
             }
@@ -254,7 +252,8 @@ public class AsymmetricKeyEdTest {
         Ed25519PrivateKeyParameters privateKey = (Ed25519PrivateKeyParameters) asymmetricCipherKeyPair.getPrivate();
         Ed25519PublicKeyParameters publicKey = (Ed25519PublicKeyParameters) asymmetricCipherKeyPair.getPublic();
 
-        AsymmetricKeyEd.importKey(session, id, label, domains, capabilities, Algorithm.EC_ED25519, privateKey.getEncoded());
+        YHObjectInfo keyinfo = AsymmetricKeyEd.getObjectInfoForNewKey(id, label, domains, Algorithm.EC_ED25519, capabilities);
+        AsymmetricKeyEd.importKey(session, keyinfo, privateKey.getEncoded());
         return publicKey;
     }
 
@@ -266,7 +265,7 @@ public class AsymmetricKeyEdTest {
     public void testPublicKey()
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidSessionException, UnsupportedAlgorithmException {
+                   IllegalBlockSizeException, UnsupportedAlgorithmException {
 
         logger.info("TEST START: testPublicKey()");
 
@@ -274,13 +273,12 @@ public class AsymmetricKeyEdTest {
         Ed25519PublicKeyParameters pubKey = importEdKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_EDDSA));
 
         try {
-            final YHObject keyinfo = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
-            final AsymmetricKeyEd key = AsymmetricKeyEd.getInstance(keyinfo);
-            byte[] returnedPubKeyBytes = (byte[]) key.getPublicKey(session);
+            final AsymmetricKeyEd key = new AsymmetricKeyEd(id, Algorithm.EC_ED25519);
+            byte[] returnedPubKeyBytes = key.getPublicKey(session);
             assertArrayEquals(pubKey.getEncoded(), returnedPubKeyBytes);
 
         } finally {
-            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
 
         logger.info("TEST END: testPublicKey()");
@@ -295,12 +293,11 @@ public class AsymmetricKeyEdTest {
     public void testSignDataWithInsufficientPermissions()
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidSessionException, UnsupportedAlgorithmException {
+                   IllegalBlockSizeException, UnsupportedAlgorithmException {
         short id = 0x1234;
         importEdKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.GET_OPAQUE));
         try {
-            YHObject keyinfo = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
-            AsymmetricKeyEd key = AsymmetricKeyEd.getInstance(keyinfo);
+            AsymmetricKeyEd key = new AsymmetricKeyEd(id, Algorithm.EC_ED25519);
             byte[] data = "test sign data".getBytes();
 
             boolean exceptionThrown = false;
@@ -313,7 +310,7 @@ public class AsymmetricKeyEdTest {
             assertTrue("Succeeded in signing in spite of insufficient permissions", exceptionThrown);
 
         } finally {
-            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 
@@ -321,21 +318,20 @@ public class AsymmetricKeyEdTest {
     public void testSignData()
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidSessionException, UnsupportedAlgorithmException {
+                   IllegalBlockSizeException, UnsupportedAlgorithmException {
         logger.info("TEST START: testSignData()");
 
         final short id = 0x1234;
         Ed25519PublicKeyParameters pubKey = importEdKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_EDDSA));
 
         try {
-            final YHObject keyinfo = YHCore.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
-            final AsymmetricKeyEd key = AsymmetricKeyEd.getInstance(keyinfo);
+            final AsymmetricKeyEd key = new AsymmetricKeyEd(id, Algorithm.EC_ED25519);
 
             signDataTest(key, pubKey, new byte[0]);
             signDataTest(key, pubKey, "This is a signing test data".getBytes());
 
         } finally {
-            YHCore.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
 
         logger.info("TEST END: testSignData()");
@@ -344,7 +340,7 @@ public class AsymmetricKeyEdTest {
     private void signDataTest(AsymmetricKeyEd key, Ed25519PublicKeyParameters pubKey, byte[] data)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidSessionException, UnsupportedAlgorithmException {
+                   IllegalBlockSizeException {
 
         byte[] signature = key.signEddsa(session, data);
         assertEquals(64, signature.length);

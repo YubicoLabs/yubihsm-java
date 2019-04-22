@@ -7,6 +7,7 @@ import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.Command;
 import com.yubico.objects.yhconcepts.ObjectType;
+import lombok.NonNull;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -26,20 +27,30 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class Opaque extends YHObject {
-
-    private static Logger logger = Logger.getLogger(Opaque.class.getName());
+    private static Logger log = Logger.getLogger(Opaque.class.getName());
 
     public static final ObjectType TYPE = ObjectType.TYPE_OPAQUE;
     private static final int MAX_OPAQUE_DATA_LENGTH = 1968;
 
+    private Algorithm algorithm;
+
     /**
      * Creates an Opaque object
      *
-     * @param opaque The opaque object properties
+     * @param id        The object ID of this key
+     * @param algorithm A supported Opaque object algorithm. Can be {{@link Algorithm.OPAQUE_X509_CERTIFICATE}} or {{@link Algorithm.OPAQUE_DATA}}
      */
-    public Opaque(YHObject opaque) {
-        super(opaque.getId(), opaque.getType(), opaque.getCapabilities(), opaque.getObjectSize(), opaque.getDomains(), opaque.getAlgorithm(),
-              opaque.getSequence(), opaque.getOrigin(), opaque.getLabel(), opaque.getDelegatedCapabilities());
+    public Opaque(final short id, @NonNull final Algorithm algorithm) {
+        if (!algorithm.equals(Algorithm.OPAQUE_DATA) && !algorithm.equals(Algorithm.OPAQUE_X509_CERTIFICATE)) {
+            throw new IllegalArgumentException("An Asymmetric key algorithm must be a supported RSA algorithm");
+        }
+        setId(id);
+        setType(TYPE);
+        this.algorithm = algorithm;
+    }
+
+    public Algorithm getAlgorithm() {
+        return algorithm;
     }
 
     /**
@@ -63,17 +74,14 @@ public class Opaque extends YHObject {
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      * @throws CertificateEncodingException       If parsing the certificate fails
      */
-    public static short importCertificate(final YHSession session, short id, final String label, final List<Integer> domains,
-                                          final X509Certificate certificate)
+    public static short importCertificate(@NonNull final YHSession session, short id, final String label, @NonNull final List<Integer> domains,
+                                          @NonNull final X509Certificate certificate)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, CertificateEncodingException {
-
-        Utils.checkNullValue(session, "Missing parameter: session");
-        Utils.checkNullValue(certificate, "Missing parameter: certificate");
         Utils.checkEmptyList(domains, "For an object to be useful, it must be accessible in at least one domain");
 
-        return putOpaque(session, id, getLabel(label), domains, 0L, Algorithm.OPAQUE_X509_CERTIFICATE, certificate.getEncoded());
+        return putOpaque(session, id, label, domains, null, Algorithm.OPAQUE_X509_CERTIFICATE, certificate.getEncoded());
     }
 
     /**
@@ -100,16 +108,11 @@ public class Opaque extends YHObject {
      * @throws UnsupportedAlgorithmException      If the specified key algorithm is not an RSA algorithm
      * @throws CertificateException               If parsing the data as a certificate fails. Applicable if the algorithm is {{@link Algorithm.OPAQUE_X509_CERTIFICATE}}
      */
-    public static short importOpaque(final YHSession session, short id, final String label, final List<Integer> domains,
-                                     final List<Capability> capabilities, final Algorithm algorithm, final byte[] opaqueData)
+    public static short importOpaque(@NonNull final YHSession session, short id, final String label, @NonNull final List<Integer> domains,
+                                     final List<Capability> capabilities, @NonNull final Algorithm algorithm, @NonNull final byte[] opaqueData)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, UnsupportedAlgorithmException, CertificateException {
-
-        Utils.checkNullValue(session, "Missing parameter: session");
-        Utils.checkEmptyList(domains, "For an object to be useful, it must be accessible in at least one domain");
-
-        Utils.checkNullValue(algorithm, "Missing parameter: algorithm");
         if (!algorithm.equals(Algorithm.OPAQUE_DATA) && !algorithm.equals(Algorithm.OPAQUE_X509_CERTIFICATE)) {
             throw new UnsupportedAlgorithmException("Specified algorithm is not a supported algorithm for Opaque objects");
         }
@@ -122,23 +125,24 @@ public class Opaque extends YHObject {
         if (algorithm.equals(Algorithm.OPAQUE_X509_CERTIFICATE)) {
             return importCertificate(session, id, label, domains, getCertFromBytes(opaqueData));
         }
-        return putOpaque(session, id, getLabel(label), domains, getCapabilities(capabilities), algorithm, opaqueData);
+        return putOpaque(session, id, label, domains, capabilities, algorithm, opaqueData);
     }
 
     /**
      * Sends the Put Opaque Key command to the device
      */
-    private static short putOpaque(final YHSession session, short id, final String label, final List<Integer> domains,
-                                   final long capabilities, final Algorithm algorithm, final byte[] opaqueData)
+    private static short putOpaque(@NonNull final YHSession session, short id, final String label, @NonNull final List<Integer> domains,
+                                   final List<Capability> capabilities, @NonNull final Algorithm algorithm, @NonNull final byte[] opaqueData)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
+        Utils.checkEmptyList(domains, "An object has to be accessible in at least one domain to be useful");
 
         ByteBuffer bb = ByteBuffer.allocate(53 + opaqueData.length); // 2 + 40 + 2 + 8 + 1 + opaque data
         bb.putShort(id);
-        bb.put(Arrays.copyOf(label.getBytes(), LABEL_LENGTH));
+        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), YHObjectInfo.LABEL_LENGTH));
         bb.putShort(Utils.getShortFromList(domains));
-        bb.putLong(capabilities);
+        bb.putLong(Capability.getCapabilities(capabilities));
         bb.put(algorithm.getAlgorithmId());
         bb.put(opaqueData);
 
@@ -146,17 +150,9 @@ public class Opaque extends YHObject {
         bb = ByteBuffer.wrap(resp);
         id = bb.getShort();
 
-        logger.info("Imported opaque object with ID 0x" + Integer.toHexString(id) + " and algorithm " + algorithm.toString());
+        log.info("Imported opaque object with ID 0x" + Integer.toHexString(id) + " and algorithm " + algorithm.toString());
         return id;
     }
-
-    private static long getCapabilities(final List<Capability> capabilities) {
-        if (capabilities == null || capabilities.isEmpty()) {
-            return 0L;
-        }
-        return Capability.getCapabilities(capabilities);
-    }
-
 
     /**
      * Retrieves an Opaque object from the YubiHSM.
@@ -174,7 +170,7 @@ public class Opaque extends YHObject {
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      */
-    public byte[] getOpaque(final YHSession session)
+    public byte[] getOpaque(@NonNull final YHSession session)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException {
@@ -182,7 +178,7 @@ public class Opaque extends YHObject {
         bb.putShort(getId());
 
         byte[] resp = session.sendSecureCmd(Command.GET_OPAQUE, bb.array());
-        logger.info("Returned Opaque object with ID 0x" + Integer.toHexString(getId()));
+        log.info("Returned Opaque object with ID 0x" + Integer.toHexString(getId()));
         return resp;
     }
 
@@ -214,7 +210,7 @@ public class Opaque extends YHObject {
         return getCertFromBytes(certBytes);
     }
 
-    private static X509Certificate getCertFromBytes(final byte[] certBytes) throws CertificateException {
+    private static X509Certificate getCertFromBytes(@NonNull final byte[] certBytes) throws CertificateException {
         ByteArrayInputStream in = new ByteArrayInputStream(certBytes);
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         return (X509Certificate) cf.generateCertificate(in);

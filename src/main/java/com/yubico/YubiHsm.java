@@ -14,8 +14,7 @@ import java.util.logging.Logger;
  * This class handles commands and command packages for communication with the device. It also implements basic YubiHSM commands
  */
 public class YubiHsm {
-
-    private Logger logger = Logger.getLogger(YubiHsm.class.getName());
+    private Logger log = Logger.getLogger(YubiHsm.class.getName());
 
     private Backend backend;
 
@@ -82,7 +81,7 @@ public class YubiHsm {
     public DeviceInfo getDeviceInfo() throws YHConnectionException, YHInvalidResponseException, YHDeviceException {
         byte[] data = sendCmd(Command.DEVICE_INFO, new byte[0]);
         DeviceInfo info = new DeviceInfo(data);
-        logger.fine("Got device info: " + info.toString());
+        log.fine("Got device info: " + info.toString());
         return info;
 
     }

@@ -30,11 +30,6 @@ public class Command extends YHConcept {
         return command == ERROR.getCommandId();
     }
 
-    /**
-     * Returns a String representation of the command
-     *
-     * @return The command code and name as a formatted String
-     */
     public String toString() {
         return String.format("0x%02X: " + getName(), getCommandId());
     }
@@ -46,6 +41,9 @@ public class Command extends YHConcept {
      * @return True of this command code equals the other command's code. False otherwise
      */
     public boolean equals(final Command other) {
+        if(other == null) {
+            return false;
+        }
         return this.getCommandId() == other.getCommandId();
     }
 

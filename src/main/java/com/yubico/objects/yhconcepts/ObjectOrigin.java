@@ -13,11 +13,6 @@ public class ObjectOrigin extends YHConcept {
         return (byte) getId();
     }
 
-    /**
-     * Returns a String representation of the origin
-     *
-     * @return The ID and name of the origin as a formatted String
-     */
     public String toString() {
         return String.format("0x%02X: " + getName(), getOriginId());
     }

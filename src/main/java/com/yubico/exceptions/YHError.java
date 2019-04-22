@@ -5,16 +5,16 @@ package com.yubico.exceptions;
  */
 public class YHError {
 
-    private final byte errorCcode;
+    private final byte errorCode;
     private final String description;
 
     private YHError(final byte code, final String description) {
-        this.errorCcode = code;
+        this.errorCode = code;
         this.description = description;
     }
 
     public byte getErrorCode() {
-        return errorCcode;
+        return errorCode;
     }
 
     public String getDescription() {
@@ -25,7 +25,7 @@ public class YHError {
      * @return The error code and name as a formatted String
      */
     public String toString() {
-        return String.format("0x%02X: " + description, errorCcode);
+        return String.format("0x%02X: " + description, errorCode);
     }
 
     /**
@@ -35,11 +35,14 @@ public class YHError {
      * @return True if the error codes of both objects are equal. False otherwise
      */
     public boolean equals(final YHError other) {
+        if (other == null) {
+            return false;
+        }
         return this.getErrorCode() == other.getErrorCode();
     }
 
     public int hashCode() {
-        return errorCcode;
+        return errorCode;
     }
 
     /**

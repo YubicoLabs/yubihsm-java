@@ -2,6 +2,7 @@ package com.yubico.backend;
 
 import com.yubico.exceptions.YHConnectionException;
 import com.yubico.internal.util.Utils;
+import lombok.NonNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -16,8 +17,7 @@ import java.util.logging.Logger;
  * Handles connection to the YubiHSM over HTTP
  */
 public class HttpBackend implements Backend {
-
-    private Logger logger = Logger.getLogger(HttpBackend.class.getName());
+    private Logger log = Logger.getLogger(HttpBackend.class.getName());
 
     private final String DEFAULT_URL = "http://localhost:12345/connector/api";
     private final int DEFAULT_TIMEOUT = 0;
@@ -63,7 +63,7 @@ public class HttpBackend implements Backend {
      */
     private HttpURLConnection getConnection() throws YHConnectionException {
         if (connection == null) {
-            logger.finer("Opening HTTP connection to the device");
+            log.finer("Opening HTTP connection to the device");
             HttpURLConnection conn;
             try {
                 conn = (HttpURLConnection) url.openConnection();
@@ -87,9 +87,9 @@ public class HttpBackend implements Backend {
      * @throws YHConnectionException if connection to, writing to or reading from the device fail
      */
     @Override
-    public byte[] transceive(byte[] message) throws YHConnectionException {
+    public byte[] transceive(@NonNull byte[] message) throws YHConnectionException {
 
-        logger.finest("SEND >> " + Utils.getPrintableBytes(message));
+        log.finest("SEND >> " + Utils.getPrintableBytes(message));
 
         HttpURLConnection conn = getConnection();
         try {
@@ -104,10 +104,10 @@ public class HttpBackend implements Backend {
         InputStream in;
         try {
             if (conn.getResponseCode() < 400) {
-                logger.finer("Received HTTP response OK");
+                log.finer("Received HTTP response OK");
                 in = conn.getInputStream();
             } else {
-                logger.info("Received HTTP error response");
+                log.info("Received HTTP error response");
                 in = conn.getErrorStream();
             }
         } catch (IOException e) {
@@ -130,7 +130,7 @@ public class HttpBackend implements Backend {
             throw new YHConnectionException(e);
         }
         close();
-        logger.finest("RECEIVE: " + Utils.getPrintableBytes(response));
+        log.finest("RECEIVE: " + Utils.getPrintableBytes(response));
 
         return response;
     }

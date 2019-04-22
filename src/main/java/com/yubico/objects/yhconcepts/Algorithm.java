@@ -13,11 +13,6 @@ public class Algorithm extends YHConcept {
         return (byte) getId();
     }
 
-    /**
-     * Returns a String representation of the algorithm
-     *
-     * @return The ID and name of the algorithm as a formatted String
-     */
     public String toString() {
         return String.format("0x%02X: " + getName(), getAlgorithmId());
     }

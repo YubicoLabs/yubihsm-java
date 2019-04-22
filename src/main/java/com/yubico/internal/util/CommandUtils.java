@@ -4,13 +4,13 @@ import com.yubico.exceptions.YHDeviceException;
 import com.yubico.exceptions.YHError;
 import com.yubico.exceptions.YHInvalidResponseException;
 import com.yubico.objects.yhconcepts.Command;
+import lombok.NonNull;
 
 import java.nio.ByteBuffer;
 import java.util.logging.Logger;
 
 public class CommandUtils {
-
-    private static Logger logger = Logger.getLogger(CommandUtils.class.getName());
+    private static Logger log = Logger.getLogger(CommandUtils.class.getName());
 
 
     /**
@@ -20,8 +20,8 @@ public class CommandUtils {
      * @param data The input to the command
      * @return A byte array in the form: [command code (1 byte), length of data (2 bytes), data]
      */
-    public static byte[] getTransceiveMessage(final Command cmd, final byte[] data) {
-        final int dl = data!=null? data.length : 0;
+    public static byte[] getTransceiveMessage(@NonNull final Command cmd, final byte[] data) {
+        final int dl = data != null ? data.length : 0;
         ByteBuffer ret = ByteBuffer.allocate(dl + 3);
         ret.put(cmd.getCommandId());
         ret.putShort((short) dl);
@@ -40,18 +40,18 @@ public class CommandUtils {
      * @throws YHDeviceException          If the response contains an error code
      * @throws YHInvalidResponseException If the response cannot be parsed
      */
-    public static byte[] getResponseData(final Command cmd, final byte[] response)
+    public static byte[] getResponseData(@NonNull final Command cmd, @NonNull final byte[] response)
             throws YHDeviceException, YHInvalidResponseException {
         byte respCode = response[0];
         if (respCode == cmd.getCommandResponse()) {
-            logger.fine("Received response from device for " + cmd.getName());
+            log.fine("Received response from device for " + cmd.getName());
         } else if (isErrorResponse(response)) {
             final YHError error = YHError.getError(response[3]);
-            logger.severe("Device returned error code: " + error.toString());
+            log.severe("Device returned error code: " + error.toString());
             throw new YHDeviceException(error);
         } else {
             final String err = "Unrecognized response: " + Utils.getPrintableBytes(response);
-            logger.severe(err);
+            log.severe(err);
             throw new YHInvalidResponseException(err);
         }
 
@@ -59,7 +59,7 @@ public class CommandUtils {
         int dataLength = response.length - 3;
         if (dataLength != expectedDataLength) {
             final String err = "Unexpected length of response from device. Expected " + expectedDataLength + ", found " + dataLength;
-            logger.severe(err);
+            log.severe(err);
             throw new YHInvalidResponseException(err);
         }
 
@@ -80,7 +80,7 @@ public class CommandUtils {
      * @return True if data contains an error code. False otherwise
      */
     public static boolean isErrorResponse(final byte[] data) {
-        if (data.length != 4) {
+        if (data == null || data.length != 4) {
             return false;
         }
 

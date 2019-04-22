@@ -10,6 +10,7 @@ import com.yubico.objects.yhconcepts.ObjectOrigin;
 import com.yubico.objects.yhconcepts.ObjectType;
 import com.yubico.objects.yhobjects.AuthenticationKey;
 import com.yubico.objects.yhobjects.YHObject;
+import com.yubico.objects.yhobjects.YHObjectInfo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -62,15 +63,15 @@ public class AuthenticationKeyTest {
     public void testGetAuthenticationKey()
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   InvalidKeySpecException, IllegalBlockSizeException, InvalidSessionException {
+                   InvalidKeySpecException, IllegalBlockSizeException {
         logger.info("TEST START: testGetAuthenticationKey()");
-        final List domains = Arrays.asList(2, 5, 8);
-        final List capabilities = Arrays.asList(Capability.SIGN_ECDSA, Capability.GET_OPAQUE);
-        final String label = "test_auth_key";
-        final short id = AuthenticationKey.importAuthenticationKey(session, (short) 0, label, domains, capabilities, capabilities,
-                                                                   "foo123".toCharArray());
+        List domains = Arrays.asList(2, 5, 8);
+        List capabilities = Arrays.asList(Capability.SIGN_ECDSA, Capability.GET_OPAQUE);
+        String label = "test_auth_key";
+        YHObjectInfo keyinfo = AuthenticationKey.getObjectInfoForNewKey((short) 0, label, domains, capabilities, capabilities);
+        short id = AuthenticationKey.importAuthenticationKey(session, keyinfo, "foo123".toCharArray());
 
-        final YHObject authKey = YHCore.getObjectInfo(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
+        final YHObjectInfo authKey = YHObject.getObjectInfo(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
         assertEquals(id, authKey.getId());
         assertEquals(ObjectType.TYPE_AUTHENTICATION_KEY, authKey.getType());
         assertEquals(domains, authKey.getDomains());
@@ -82,9 +83,9 @@ public class AuthenticationKeyTest {
         assertEquals(capabilities.size(), authKey.getDelegatedCapabilities().size());
         assertTrue(authKey.getDelegatedCapabilities().containsAll(capabilities));
 
-        YHCore.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
+        YHObject.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
         try {
-            YHCore.getObjectInfo(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
+            YHObject.getObjectInfo(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
         } catch (YHDeviceException e1) {
             assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
         }
@@ -95,7 +96,7 @@ public class AuthenticationKeyTest {
     public void testChangeAuthenticationKey()
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   InvalidKeySpecException, IllegalBlockSizeException, InvalidSessionException {
+                   InvalidKeySpecException, IllegalBlockSizeException {
 
         logger.info("TEST START: testChangeAuthenticationKey()");
 
@@ -103,8 +104,8 @@ public class AuthenticationKeyTest {
         ArrayList capabilities = new ArrayList(Arrays.asList(Capability.SIGN_ECDSA, Capability.GET_OPAQUE, Capability.CHANGE_AUTHENTICATION_KEY));
 
         // Create a new authentication key
-        final short id = AuthenticationKey.importAuthenticationKey(session, (short) 0, "test_auth_key", domains, capabilities, capabilities,
-                                                                   "foo123".toCharArray());
+        YHObjectInfo keyinfo = AuthenticationKey.getObjectInfoForNewKey((short) 0, "test_auth_key", domains, capabilities, capabilities);
+        final short id = AuthenticationKey.importAuthenticationKey(session, keyinfo, "foo123".toCharArray());
 
         // Open an authenticated session with the new key, verify that communication works then close the session
         YHSession session1 = new YHSession(yubihsm, id, "foo123".toCharArray());
@@ -143,7 +144,7 @@ public class AuthenticationKeyTest {
         assertEquals(YHSession.SessionStatus.CLOSED, session1.getStatus());
 
         // Delete the authentication key
-        YHCore.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
+        YHObject.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
 
         logger.info("TEST END: testChangeAuthenticationKey()");
 

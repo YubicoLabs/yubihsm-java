@@ -1,5 +1,8 @@
 package com.yubico.internal.util;
 
+import com.yubico.objects.yhobjects.YHObjectInfo;
+import lombok.NonNull;
+
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,8 +10,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class Utils {
-
-    static Logger logger = Logger.getLogger(Utils.class.getName());
+    static Logger log = Logger.getLogger(Utils.class.getName());
 
     /**
      * Returns a String representation of a byte array. Each individual byte is represented in hexadecimal format and every 8 bytes are grouped
@@ -38,7 +40,7 @@ public class Utils {
      * @param blockSize The number that the resulting array length should be a multiple of
      * @return `ba` with padding
      */
-    public static byte[] addPadding(final byte[] ba, final int blockSize) {
+    public static byte[] addPadding(final @NonNull byte[] ba, final int blockSize) {
         int padLength = blockSize - (ba.length % blockSize);
         byte[] ret = Arrays.copyOf(ba, ba.length + padLength);
         ret[ba.length] = (byte) 0x80;
@@ -52,9 +54,9 @@ public class Utils {
      * @param blockSize The number that the resulting array length should be a multiple of
      * @return `ba` without the padding
      */
-    public static byte[] removePadding(final byte[] ba, final int blockSize) {
+    public static byte[] removePadding(@NonNull final byte[] ba, final int blockSize) {
         if (ba.length % blockSize != 0) {
-            logger.fine("Byte array was not padded. Doing nothing");
+            log.fine("Byte array was not padded. Doing nothing");
             return ba;
         }
         int index = ba.length - 1;
@@ -106,38 +108,44 @@ public class Utils {
     }
 
     /**
-     * Throws an InvalidParameterException with a specific error message if `value` is null
-     *
-     * @param value        The value to check whether it is null
-     * @param errorMessage The error message to include in the InvalidParameterException
-     */
-    public static void checkNullValue(final Object value, final String errorMessage) {
-        if (value == null) {
-            throw new InvalidParameterException(errorMessage);
-        }
-    }
-
-    /**
-     * Throws an InvalidParameterException with a specific error message if `ba` is null or empty
+     * Throws an IllegalArgumentException with a specific error message if `ba` is null or empty
      *
      * @param ba           The byte array to check
      * @param errorMessage The error message to include in the InvalidParameterException
      */
-    public static void checkEmptyByteArray(final byte[] ba, final String errorMessage) {
-        if (ba == null || ba.length == 0) {
-            throw new InvalidParameterException(errorMessage);
+    public static void checkEmptyByteArray(@NonNull final byte[] ba, final String errorMessage) {
+        if (ba.length == 0) {
+            throw new IllegalArgumentException(errorMessage);
         }
     }
 
     /**
-     * Throws an InvalidParameterException with a specific error message if `l` is null or empty
+     * Throws an IllegalArgumentException with a specific error message if `l` is null or empty
      *
      * @param l            The list to check
      * @param errorMessage The error message to include in the InvalidParameterException
      */
-    public static void checkEmptyList(final List l, final String errorMessage) {
-        if (l == null || l.isEmpty()) {
-            throw new InvalidParameterException(errorMessage);
+    public static void checkEmptyList(@NonNull final List l, final String errorMessage) {
+        if (l.isEmpty()) {
+            throw new IllegalArgumentException(errorMessage);
         }
     }
+
+    /**
+     * Returns a usable non-null label value and verifies its length.
+     *
+     * @param label
+     * @return The label. An empty string if the input label is null
+     * @throws InvalidParameterException If the label is more than the maximum length allowed
+     */
+    public static String getLabel(String label) {
+        if (label == null) {
+            return "";
+        }
+        if (label.length() > YHObjectInfo.LABEL_LENGTH) {
+            throw new IllegalArgumentException("Label is too long");
+        }
+        return label;
+    }
+
 }
