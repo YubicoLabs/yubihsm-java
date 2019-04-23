@@ -9,6 +9,7 @@ import com.yubico.internal.util.Utils;
 import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.Command;
 import com.yubico.objects.yhconcepts.ObjectType;
+import com.yubico.objects.yhconcepts.YHConcept;
 import lombok.NonNull;
 
 import javax.crypto.BadPaddingException;
@@ -77,6 +78,16 @@ public class YHObject {
 
     protected void setType(@NonNull ObjectType type) {
         this.type = type;
+    }
+
+    /**
+     * Compares two YHObject objects
+     *
+     * @param other
+     * @return True if the objects' IDs and types are equal. False otherwise
+     */
+    public boolean equals(@NonNull final YHObject other) {
+        return (getId() == other.getId()) && YHConcept.equals(getType(), other.getType());
     }
 
     /**
@@ -290,8 +301,7 @@ public class YHObject {
         byte[] response = session.sendSecureCmd(Command.GET_OBJECT_INFO, bb.array());
         YHObjectInfo info = new YHObjectInfo(response);
 
-        log.finer("Response to " + Command.GET_OBJECT_INFO.getName() + " returned:");
-        log.finer(info.toString());
+        log.info("Returned metadata for " + objectType.getName() + " with ID 0x" + Integer.toHexString(objectID));
 
         return info;
     }

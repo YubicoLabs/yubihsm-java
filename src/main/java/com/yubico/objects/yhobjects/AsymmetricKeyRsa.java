@@ -45,8 +45,8 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
      *
      * @param session An authenticated session to communicate with the device over
      * @param keyinfo The metadata of the key to import. Set the ID to 0 to have it generated
-     * @param primeP  The secret prime P. For ECC, the private key integer d. For EDC, the private key integer k.
-     * @param primeQ  The secret prime Q. For ECC and EDC, not applicable and recommend to set to 'null'
+     * @param primeP  The secret prime P.
+     * @param primeQ  The secret prime Q.
      * @return ID of the RSA key on the device
      * @throws NoSuchAlgorithmException           If the encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
@@ -68,9 +68,15 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
         verifyObjectInfoForNewKeyRsa(keyinfo);
 
         final int componentLength = getBlockSize(keyinfo.getAlgorithm()) / 2;
-        if (primeP.length != componentLength || primeQ.length != componentLength) {
-            throw new InvalidParameterException("Invalid parameter: primeP, primeQ");
+        if (primeP.length != componentLength) {
+            throw new InvalidParameterException(
+                    "Invalid parameter. Expected primeP that is " + componentLength + " bytes long, but was " + primeP.length + " bytes");
         }
+        if (primeQ.length != componentLength) {
+            throw new InvalidParameterException(
+                    "Invalid parameter. Expected primeQ that is " + componentLength + " bytes long, but was " + primeQ.length + " bytes");
+        }
+
 
         return putKey(session, keyinfo, primeP, primeQ);
     }
@@ -329,9 +335,9 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
     /**
      * Converts the input parameters into an ObjectInfo object. This object is meant to be used when generating or importing a new RSA key
      *
-     * @param id The object ID of the key. Use 0 to have the ID generated
-     * @param label The key label
-     * @param domains The domains where the key will be accessible
+     * @param id           The object ID of the key. Use 0 to have the ID generated
+     * @param label        The key label
+     * @param domains      The domains where the key will be accessible
      * @param keyAlgorithm The key generation algorithm
      * @param capabilities The capabilities of the RSA key
      * @return An ObjectInfo object

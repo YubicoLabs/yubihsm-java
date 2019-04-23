@@ -143,7 +143,7 @@ public class YubiHsmTest {
 
         // Import a new authentication key into the HSM and verify import
         listObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY, false);
-        YHObjectInfo keyinfo = AuthenticationKey.getObjectInfoForNewKey((short) 0, label, domains, capabilities, delegatedCapabilities);
+        YHObjectInfo keyinfo = AuthenticationKey.getObjectInfoForNewKey(id, label, domains, capabilities, delegatedCapabilities);
         AuthenticationKey
                 .importAuthenticationKey(session, keyinfo, "foo123".toCharArray());
         listObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY, true);

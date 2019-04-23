@@ -212,14 +212,4 @@ public class YHObjectInfo {
         return builder.toString();
     }
 
-    /**
-     * Compares two YHObjectInfo objects
-     *
-     * @param other
-     * @return True if the objects' IDs and types are equal. False otherwise
-     */
-    public boolean equals(@NonNull final YHObjectInfo other) {
-        return (getId() == other.getId()) && YHConcept.equals(getType(), other.getType());
-    }
-
 }
