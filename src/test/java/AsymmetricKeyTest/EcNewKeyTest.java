@@ -90,8 +90,7 @@ public class EcNewKeyTest {
         final String label = "asym_key";
 
         // Generate the key on the device
-        YHObjectInfo keyinfo = AsymmetricKeyEc.getObjectInfoForNewKey((short) 0, label, domains, algorithm, capabilities);
-        final short id = AsymmetricKey.generateAsymmetricKey(session, keyinfo);
+        final short id = AsymmetricKey.generateAsymmetricKey(session, (short) 0, label, domains, algorithm, capabilities);
 
         try {
             // Verify key properties
@@ -137,9 +136,7 @@ public class EcNewKeyTest {
         // Test importing the key with a non Asymmetric key algorithm
         boolean exceptionThrown = false;
         try {
-            YHObjectInfo keyinfo = AsymmetricKeyEc.getObjectInfoForNewKey((short) 0, "", Arrays.asList(2, 5), Algorithm.AES128_CCM_WRAP,
-                                                                          Arrays.asList(Capability.SIGN_ECDSA));
-            AsymmetricKeyEc.importKey(session, keyinfo, d);
+            AsymmetricKeyEc.importKey(session, (short) 0, "", Arrays.asList(2), Algorithm.AES128_CCM_WRAP, Arrays.asList(Capability.SIGN_ECDSA), d);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -148,9 +145,7 @@ public class EcNewKeyTest {
         // Test importing an RSA key as an EC key
         exceptionThrown = false;
         try {
-            YHObjectInfo keyinfo = AsymmetricKeyEc.getObjectInfoForNewKey((short) 0, "", Arrays.asList(2, 5), Algorithm.RSA_3072,
-                                                                          Arrays.asList(Capability.SIGN_ECDSA));
-            AsymmetricKeyEc.importKey(session, keyinfo, d);
+            AsymmetricKeyEc.importKey(session, (short) 0, "", Arrays.asList(2), Algorithm.RSA_3072, Arrays.asList(Capability.SIGN_ECDSA), d);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -159,9 +154,7 @@ public class EcNewKeyTest {
         // Test importing an EC key whose parameter does not match the specified EC algorithm
         exceptionThrown = false;
         try {
-            YHObjectInfo keyinfo = AsymmetricKeyEc.getObjectInfoForNewKey((short) 0, "", Arrays.asList(2, 5), Algorithm.EC_P224,
-                                                                          Arrays.asList(Capability.SIGN_ECDSA));
-            AsymmetricKeyEc.importKey(session, keyinfo, d);
+            AsymmetricKeyEc.importKey(session, (short) 0, "", Arrays.asList(2, 5), Algorithm.EC_P224, Arrays.asList(Capability.SIGN_ECDSA), d);
         } catch (InvalidParameterException e) {
             exceptionThrown = true;
         }
@@ -170,9 +163,7 @@ public class EcNewKeyTest {
         // Test importing an EC key without specifying the private key
         exceptionThrown = false;
         try {
-            YHObjectInfo keyinfo = AsymmetricKeyEc.getObjectInfoForNewKey((short) 0, "", Arrays.asList(2, 5), Algorithm.EC_P256,
-                                                                          Arrays.asList(Capability.SIGN_ECDSA));
-            AsymmetricKeyEc.importKey(session, keyinfo, null);
+            AsymmetricKeyEc.importKey(session, (short) 0, "", Arrays.asList(2), Algorithm.EC_P256, Arrays.asList(Capability.SIGN_ECDSA), null);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }

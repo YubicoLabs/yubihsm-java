@@ -41,7 +41,7 @@ public class Opaque extends YHObject {
      * @param algorithm A supported Opaque object algorithm. Can be {{@link Algorithm.OPAQUE_X509_CERTIFICATE}} or {{@link Algorithm.OPAQUE_DATA}}
      */
     public Opaque(final short id, @NonNull final Algorithm algorithm) {
-        if (!algorithm.equals(Algorithm.OPAQUE_DATA) && !algorithm.equals(Algorithm.OPAQUE_X509_CERTIFICATE)) {
+        if (!isOpaqueAlgorithm(algorithm)) {
             throw new IllegalArgumentException("An Asymmetric key algorithm must be a supported RSA algorithm");
         }
         setId(id);
@@ -51,6 +51,13 @@ public class Opaque extends YHObject {
 
     public Algorithm getAlgorithm() {
         return algorithm;
+    }
+
+    public static boolean isOpaqueAlgorithm(final Algorithm algorithm) {
+        if (algorithm == null) {
+            return false;
+        }
+        return algorithm.equals(Algorithm.OPAQUE_DATA) || algorithm.equals(Algorithm.OPAQUE_X509_CERTIFICATE);
     }
 
     /**
@@ -113,8 +120,8 @@ public class Opaque extends YHObject {
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, UnsupportedAlgorithmException, CertificateException {
-        if (!algorithm.equals(Algorithm.OPAQUE_DATA) && !algorithm.equals(Algorithm.OPAQUE_X509_CERTIFICATE)) {
-            throw new UnsupportedAlgorithmException("Specified algorithm is not a supported algorithm for Opaque objects");
+        if (!isOpaqueAlgorithm(algorithm)) {
+            throw new UnsupportedAlgorithmException(algorithm.getName() + " is not a supported algorithm for Opaque objects");
         }
 
         Utils.checkEmptyByteArray(opaqueData, "Missing parameter: opaqueData");

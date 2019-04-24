@@ -79,8 +79,7 @@ public class AsymmetricKeyEdTest {
         final String label = "asym_key";
 
         // Generate the key on the device
-        YHObjectInfo keyinfo = AsymmetricKeyEd.getObjectInfoForNewKey((short) 0, label, domains, Algorithm.EC_ED25519, capabilities);
-        final short id = AsymmetricKey.generateAsymmetricKey(session, keyinfo);
+        final short id = AsymmetricKey.generateAsymmetricKey(session, (short) 0, label, domains, Algorithm.EC_ED25519, capabilities);
 
         try {
             // Verify key properties
@@ -129,9 +128,7 @@ public class AsymmetricKeyEdTest {
         // Test importing the key with a non Asymmetric key algorithm
         boolean exceptionThrown = false;
         try {
-            YHObjectInfo keyinfo = AsymmetricKeyEd.getObjectInfoForNewKey((short) 0, "", Arrays.asList(2, 5), Algorithm.AES128_CCM_WRAP,
-                                                    Arrays.asList(Capability.SIGN_EDDSA));
-            AsymmetricKeyEd.importKey(session, keyinfo, d);
+            AsymmetricKeyEd.importKey(session, (short) 0, "", Arrays.asList(2), Algorithm.AES128_CCM_WRAP, Arrays.asList(Capability.SIGN_EDDSA), d);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -140,9 +137,7 @@ public class AsymmetricKeyEdTest {
         // Test importing an RSA key as an ED key
         exceptionThrown = false;
         try {
-            YHObjectInfo keyinfo = AsymmetricKeyEd.getObjectInfoForNewKey((short) 0, "", Arrays.asList(2, 5), Algorithm.RSA_3072,
-                                                    Arrays.asList(Capability.SIGN_EDDSA));
-            AsymmetricKeyEd.importKey(session, keyinfo, d);
+            AsymmetricKeyEd.importKey(session, (short) 0, "", Arrays.asList(2), Algorithm.RSA_3072, Arrays.asList(Capability.SIGN_EDDSA), d);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -151,9 +146,7 @@ public class AsymmetricKeyEdTest {
         // Test importing an ED key without specifying the private key
         exceptionThrown = false;
         try {
-            YHObjectInfo keyinfo = AsymmetricKeyEd.getObjectInfoForNewKey((short) 0, "", Arrays.asList(2, 5), Algorithm.EC_P256,
-                                                    Arrays.asList(Capability.SIGN_EDDSA));
-            AsymmetricKeyEd.importKey(session, keyinfo, null);
+            AsymmetricKeyEd.importKey(session, (short) 0, "", Arrays.asList(2), Algorithm.EC_P256, Arrays.asList(Capability.SIGN_EDDSA), null);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -252,8 +245,7 @@ public class AsymmetricKeyEdTest {
         Ed25519PrivateKeyParameters privateKey = (Ed25519PrivateKeyParameters) asymmetricCipherKeyPair.getPrivate();
         Ed25519PublicKeyParameters publicKey = (Ed25519PublicKeyParameters) asymmetricCipherKeyPair.getPublic();
 
-        YHObjectInfo keyinfo = AsymmetricKeyEd.getObjectInfoForNewKey(id, label, domains, Algorithm.EC_ED25519, capabilities);
-        AsymmetricKeyEd.importKey(session, keyinfo, privateKey.getEncoded());
+        AsymmetricKeyEd.importKey(session, id, label, domains, Algorithm.EC_ED25519, capabilities, privateKey.getEncoded());
         return publicKey;
     }
 

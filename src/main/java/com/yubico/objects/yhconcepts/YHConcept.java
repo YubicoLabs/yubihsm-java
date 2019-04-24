@@ -30,6 +30,16 @@ public class YHConcept {
     /**
      * Compares two concept objects
      *
+     * @param other A YHConcept object
+     * @return True of the two objects are of the same type and whose IDs are equals. False otherwise
+     */
+    public boolean equals(@NonNull final YHConcept other) {
+        return equals(this, other);
+    }
+
+    /**
+     * Compares two concept objects
+     *
      * @param a A YHConcept object
      * @param b Another YHConcept object
      * @return True of the two objects are of the same type and whose IDs are equals. False otherwise

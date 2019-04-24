@@ -68,26 +68,24 @@ public class AuthenticationKeyTest {
         List domains = Arrays.asList(2, 5, 8);
         List capabilities = Arrays.asList(Capability.SIGN_ECDSA, Capability.GET_OPAQUE);
         String label = "test_auth_key";
-        YHObjectInfo keyinfo = AuthenticationKey.getObjectInfoForNewKey((short) 0, label, domains, capabilities, capabilities);
-        short id = AuthenticationKey.importAuthenticationKey(session, keyinfo, "foo123".toCharArray());
+        short id = AuthenticationKey.importAuthenticationKey(session, (short) 0, label, domains,
+                                                             Algorithm.AES128_YUBICO_AUTHENTICATION, capabilities, capabilities,
+                                                             "foo123".toCharArray());
 
-        final YHObjectInfo authKey = YHObject.getObjectInfo(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
-        assertEquals(id, authKey.getId());
-        assertEquals(ObjectType.TYPE_AUTHENTICATION_KEY, authKey.getType());
-        assertEquals(domains, authKey.getDomains());
-        assertEquals(Algorithm.AES128_YUBICO_AUTHENTICATION, authKey.getAlgorithm());
-        assertEquals(ObjectOrigin.YH_ORIGIN_IMPORTED, authKey.getOrigin());
-        assertEquals(label, authKey.getLabel());
-        assertEquals(capabilities.size(), authKey.getCapabilities().size());
-        assertTrue(authKey.getCapabilities().containsAll(capabilities));
-        assertEquals(capabilities.size(), authKey.getDelegatedCapabilities().size());
-        assertTrue(authKey.getDelegatedCapabilities().containsAll(capabilities));
-
-        YHObject.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
         try {
-            YHObject.getObjectInfo(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
-        } catch (YHDeviceException e1) {
-            assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
+            final YHObjectInfo authKey = YHObject.getObjectInfo(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
+            assertEquals(id, authKey.getId());
+            assertEquals(ObjectType.TYPE_AUTHENTICATION_KEY, authKey.getType());
+            assertEquals(domains, authKey.getDomains());
+            assertEquals(Algorithm.AES128_YUBICO_AUTHENTICATION, authKey.getAlgorithm());
+            assertEquals(ObjectOrigin.YH_ORIGIN_IMPORTED, authKey.getOrigin());
+            assertEquals(label, authKey.getLabel());
+            assertEquals(capabilities.size(), authKey.getCapabilities().size());
+            assertTrue(authKey.getCapabilities().containsAll(capabilities));
+            assertEquals(capabilities.size(), authKey.getDelegatedCapabilities().size());
+            assertTrue(authKey.getDelegatedCapabilities().containsAll(capabilities));
+        } finally {
+            YHObject.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
         }
         logger.info("TEST END: testGetAuthenticationKey()");
     }
@@ -104,48 +102,48 @@ public class AuthenticationKeyTest {
         ArrayList capabilities = new ArrayList(Arrays.asList(Capability.SIGN_ECDSA, Capability.GET_OPAQUE, Capability.CHANGE_AUTHENTICATION_KEY));
 
         // Create a new authentication key
-        YHObjectInfo keyinfo = AuthenticationKey.getObjectInfoForNewKey((short) 0, "test_auth_key", domains, capabilities, capabilities);
-        final short id = AuthenticationKey.importAuthenticationKey(session, keyinfo, "foo123".toCharArray());
-
-        // Open an authenticated session with the new key, verify that communication works then close the session
-        YHSession session1 = new YHSession(yubihsm, id, "foo123".toCharArray());
-        session1.createAuthenticatedSession();
-        assertEquals(id, session1.getAuthenticationKeyID());
-        byte[] data = new byte[32];
-        new Random().nextBytes(data);
-        byte[] response = YHCore.secureEcho(session1, data);
-        assertTrue(Arrays.equals(response, data));
-
-        // Change the session key password
-        AuthenticationKey.changeAuthenticationKey(session1, id, "bar123".toCharArray());
-        session1.closeSession();
-        assertEquals(YHSession.SessionStatus.CLOSED, session1.getStatus());
-
-        // Open a new authenticated session with the old password. Expect failure
-        session1 = new YHSession(yubihsm, id, "foo123".toCharArray());
-        assertEquals(id, session1.getAuthenticationKeyID());
+        final short id = AuthenticationKey.importAuthenticationKey(session, (short) 0, "", domains, Algorithm.AES128_YUBICO_AUTHENTICATION,
+                                                                   capabilities, capabilities, "foo123".toCharArray());
         try {
+            // Open an authenticated session with the new key, verify that communication works then close the session
+            YHSession session1 = new YHSession(yubihsm, id, "foo123".toCharArray());
             session1.createAuthenticatedSession();
-        } catch (Exception e) {
-            assertTrue("Expected YHAuthenticationException. Instead got " + e.getClass().getName(),
-                       (e instanceof YHAuthenticationException));
-            YHAuthenticationException exp = (YHAuthenticationException) e;
-            assertEquals(YHError.AUTHENTICATION_FAILED, exp.getErrorCode());
+            assertEquals(id, session1.getAuthenticationKeyID());
+            byte[] data = new byte[32];
+            new Random().nextBytes(data);
+            byte[] response = YHCore.secureEcho(session1, data);
+            assertTrue(Arrays.equals(response, data));
+
+            // Change the session key password
+            AuthenticationKey.changeAuthenticationKey(session1, id, "bar123".toCharArray());
+            session1.closeSession();
+            assertEquals(YHSession.SessionStatus.CLOSED, session1.getStatus());
+
+            // Open a new authenticated session with the old password. Expect failure
+            session1 = new YHSession(yubihsm, id, "foo123".toCharArray());
+            assertEquals(id, session1.getAuthenticationKeyID());
+            try {
+                session1.createAuthenticatedSession();
+            } catch (Exception e) {
+                assertTrue("Expected YHAuthenticationException. Instead got " + e.getClass().getName(),
+                           (e instanceof YHAuthenticationException));
+                YHAuthenticationException exp = (YHAuthenticationException) e;
+                assertEquals(YHError.AUTHENTICATION_FAILED, exp.getErrorCode());
+            }
+
+            // Open a new authenticated session with the new password, verify that communication works then close the session
+            session1 = new YHSession(yubihsm, id, "bar123".toCharArray());
+            session1.createAuthenticatedSession();
+            assertEquals(id, session1.getAuthenticationKeyID());
+            assertEquals(YHSession.SessionStatus.AUTHENTICATED, session1.getStatus());
+            response = YHCore.secureEcho(session1, data);
+            assertTrue(Arrays.equals(response, data));
+            session1.closeSession();
+            assertEquals(YHSession.SessionStatus.CLOSED, session1.getStatus());
+        } finally {
+            // Delete the authentication key
+            YHObject.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
         }
-
-        // Open a new authenticated session with the new password, verify that communication works then close the session
-        session1 = new YHSession(yubihsm, id, "bar123".toCharArray());
-        session1.createAuthenticatedSession();
-        assertEquals(id, session1.getAuthenticationKeyID());
-        assertEquals(YHSession.SessionStatus.AUTHENTICATED, session1.getStatus());
-        response = YHCore.secureEcho(session1, data);
-        assertTrue(Arrays.equals(response, data));
-        session1.closeSession();
-        assertEquals(YHSession.SessionStatus.CLOSED, session1.getStatus());
-
-        // Delete the authentication key
-        YHObject.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
-
         logger.info("TEST END: testChangeAuthenticationKey()");
 
     }

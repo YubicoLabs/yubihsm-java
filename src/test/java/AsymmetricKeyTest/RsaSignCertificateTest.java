@@ -72,9 +72,8 @@ public class RsaSignCertificateTest {
             AsymmetricKey attestingKey = new AsymmetricKey(attestingKeyid, Algorithm.RSA_2048);
 
 
-            YHObjectInfo genKeyInfo = AsymmetricKeyRsa.getObjectInfoForNewKey(attestedKeyid, "", Arrays.asList(2, 5, 8), Algorithm.RSA_2048,
-                                                                              Arrays.asList(Capability.SIGN_PKCS));
-            AsymmetricKey.generateAsymmetricKey(session, genKeyInfo);
+            AsymmetricKey.generateAsymmetricKey(session, attestedKeyid, "", Arrays.asList(2, 5, 8), Algorithm.RSA_2048,
+                                                Arrays.asList(Capability.SIGN_PKCS));
 
 
             boolean exceptionThrown = false;

@@ -88,8 +88,7 @@ public class AsymmetricKeyTestHelper {
             q = Arrays.copyOfRange(q, q.length - componentLength, q.length);
         }
 
-        YHObjectInfo keyinfo = AsymmetricKeyRsa.getObjectInfoForNewKey(id, label, domains, algorithm, capabilities);
-        AsymmetricKeyRsa.importKey(session, keyinfo, p, q);
+        AsymmetricKeyRsa.importKey(session, id, label, domains, algorithm, capabilities, p, q);
 
         return publicKey;
     }
@@ -115,8 +114,7 @@ public class AsymmetricKeyTestHelper {
             d = Arrays.copyOfRange(d, d.length - componentLength, d.length);
         }
 
-        YHObjectInfo keyinfo = AsymmetricKeyEc.getObjectInfoForNewKey(id, label, domains, algorithm, capabilities);
-        AsymmetricKeyEc.importKey(session, keyinfo, d);
+        AsymmetricKeyEc.importKey(session, id, label, domains, algorithm, capabilities, d);
         return keypair;
     }
 
@@ -142,8 +140,7 @@ public class AsymmetricKeyTestHelper {
             d = Arrays.copyOfRange(d, d.length - componentLength, d.length);
         }
 
-        YHObjectInfo keyinfo = AsymmetricKeyEc.getObjectInfoForNewKey(id, label, domains, algorithm, capabilities);
-        AsymmetricKeyEc.importKey(session, keyinfo, d);
+        AsymmetricKeyEc.importKey(session, id, label, domains, algorithm, capabilities, d);
         return keypair;
     }
 

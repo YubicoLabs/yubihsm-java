@@ -5,7 +5,6 @@ import com.yubico.exceptions.YHAuthenticationException;
 import com.yubico.exceptions.YHConnectionException;
 import com.yubico.exceptions.YHDeviceException;
 import com.yubico.exceptions.YHInvalidResponseException;
-import com.yubico.internal.util.Utils;
 import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.Command;
@@ -32,7 +31,7 @@ public class AsymmetricKeyEd extends AsymmetricKey {
      * @param keyAlgorithm A supported ED key algorithm
      */
     public AsymmetricKeyEd(final short id, @NonNull final Algorithm keyAlgorithm) {
-        if (!keyAlgorithm.isEdAlgorithm()) {
+        if (!isEdAlgorithm(keyAlgorithm)) {
             throw new IllegalArgumentException("An Asymmetric key algorithm must be a supported ED algorithm");
         }
         setId(id);
@@ -43,10 +42,14 @@ public class AsymmetricKeyEd extends AsymmetricKey {
     /**
      * Imports a user generated ED key into the YubiHSM
      *
-     * @param session An authenticated session to communicate with the device over
-     * @param keyinfo The metadata of the key to import. Set the ID to 0 to have it generated
-     * @param k       The private key integer k.
-     * @return ID of the ED key on the device
+     * @param session      An authenticated session to communicate with the device over
+     * @param id           The desired Object ID of the imported ED key. Set to 0 to have it generated
+     * @param label        The label of the imported ED key
+     * @param domains      The domains where the imported ED key will be accessible
+     * @param keyAlgorithm The algorithm used to generate the imported ED key
+     * @param capabilities The actions that can be performed using the imported ED key
+     * @param k            The private key integer k.
+     * @return ID of the imported ED key on the device
      * @throws NoSuchAlgorithmException           If the encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
      * @throws YHInvalidResponseException         If the response from the device cannot be parsed
@@ -58,15 +61,16 @@ public class AsymmetricKeyEd extends AsymmetricKey {
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      */
-    public static short importKey(final YHSession session, @NonNull final YHObjectInfo keyinfo, @NonNull final byte[] k)
+    public static short importKey(final YHSession session, final short id, final String label, @NonNull final List<Integer> domains,
+                                  @NonNull final Algorithm keyAlgorithm, final List<Capability> capabilities, @NonNull final byte[] k)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
-        verifyObjectInfoForNewKeyEd(keyinfo);
+        verifyParametersForNewKeyEd(domains, keyAlgorithm);
         if (k.length != 32) {
             throw new InvalidParameterException("Invalid parameter: k");
         }
-        return putKey(session, keyinfo, k, null);
+        return putKey(session, id, label, domains, keyAlgorithm, capabilities, k, null);
     }
 
     /**
@@ -124,30 +128,11 @@ public class AsymmetricKeyEd extends AsymmetricKey {
         return signature;
     }
 
-    /**
-     * Converts the input parameters into an ObjectInfo object. This object is meant to be used when generating or importing a new ED key
-     *
-     * @param id           The object ID of the key. Use 0 to have the ID generated
-     * @param label        The key label
-     * @param domains      The domains where the key will be accessible
-     * @param keyAlgorithm The key generation algorithm
-     * @param capabilities The capabilities of the ED key
-     * @return An ObjectInfo object
-     */
-    public static YHObjectInfo getObjectInfoForNewKey(final short id, final String label, @NonNull final List<Integer> domains,
-                                                      @NonNull final Algorithm keyAlgorithm, final List<Capability> capabilities) {
+    private static void verifyParametersForNewKeyEd(@NonNull final List<Integer> domains, @NonNull final Algorithm keyAlgorithms) {
         if (domains.isEmpty()) {
-            throw new IllegalArgumentException("An Asymmetric key must be accessible on at least 1 domain to be useful");
+            throw new IllegalArgumentException("Domains parameter cannot be null or empty");
         }
-        if (!keyAlgorithm.isEdAlgorithm()) {
-            throw new IllegalArgumentException("Algorithm must be a supported ED algorithm");
-        }
-        return new YHObjectInfo(id, TYPE, Utils.getLabel(label), domains, keyAlgorithm, capabilities, null);
-    }
-
-    private static void verifyObjectInfoForNewKeyEd(@NonNull final YHObjectInfo keyinfo) {
-        verifyObjectInfoForNewKey(keyinfo);
-        if (!keyinfo.getAlgorithm().isEdAlgorithm()) {
+        if (!isEdAlgorithm(keyAlgorithms)) {
             throw new IllegalArgumentException("Key algorithm must be a supported ED algorithm");
         }
     }

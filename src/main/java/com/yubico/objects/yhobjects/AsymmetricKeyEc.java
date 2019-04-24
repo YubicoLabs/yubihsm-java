@@ -29,7 +29,7 @@ public class AsymmetricKeyEc extends AsymmetricKey {
      * @param keyAlgorithm A supported EC key algorithm
      */
     public AsymmetricKeyEc(final short id, @NonNull final Algorithm keyAlgorithm) {
-        if (!keyAlgorithm.isEcAlgorithm()) {
+        if (!isEcAlgorithm(keyAlgorithm)) {
             throw new IllegalArgumentException("An Asymmetric key algorithm must be a supported EC algorithm");
         }
         setId(id);
@@ -41,10 +41,14 @@ public class AsymmetricKeyEc extends AsymmetricKey {
     /**
      * Imports a user generated EC key into the YubiHSM
      *
-     * @param session An authenticated session to communicate with the device over
-     * @param keyinfo The metadata of the key to import. Set the ID to 0 to have it generated
-     * @param d       The private key integer d
-     * @return ID of the EC key on the device
+     * @param session      An authenticated session to communicate with the device over
+     * @param id           The desired Object ID of the imported EC key. Set to 0 to have it generated
+     * @param label        The label of the imported EC key
+     * @param domains      The domains where the imported EC key will be accessible
+     * @param keyAlgorithm The algorithm used to generate the imported EC key
+     * @param capabilities The actions that can be performed using the imported EC key
+     * @param d            The private key integer d
+     * @return ID of the imported EC key on the device
      * @throws NoSuchAlgorithmException           If the encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
      * @throws YHInvalidResponseException         If the response from the device cannot be parsed
@@ -57,16 +61,17 @@ public class AsymmetricKeyEc extends AsymmetricKey {
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      * @throws UnsupportedAlgorithmException      If the key algorithm is not recognized.
      */
-    public static short importKey(final YHSession session, @NonNull final YHObjectInfo keyinfo, @NonNull final byte[] d)
+    public static short importKey(final YHSession session, final short id, final String label, @NonNull final List<Integer> domains,
+                                  @NonNull final Algorithm keyAlgorithm, final List<Capability> capabilities, @NonNull final byte[] d)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, UnsupportedAlgorithmException {
-        verifyObjectInfoForNewEcKey(keyinfo);
-        if (d.length != getEcComponentLength(keyinfo.getAlgorithm())) {
+        verifyParametersForNewEcKey(domains, keyAlgorithm);
+        if (d.length != getEcComponentLength(keyAlgorithm)) {
             throw new InvalidParameterException("Invalid parameter: d");
         }
 
-        return putKey(session, keyinfo, d, null);
+        return putKey(session, id, label, domains, keyAlgorithm, capabilities, d, null);
     }
 
     /**
@@ -194,27 +199,6 @@ public class AsymmetricKeyEc extends AsymmetricKey {
         return ecdh;
     }
 
-    /**
-     * Converts the input parameters into an ObjectInfo object. This object is meant to be used when generating or importing a new EC key
-     *
-     * @param id           The object ID of the key. Use 0 to have the ID generated
-     * @param label        The key label
-     * @param domains      The domains where the key will be accessible
-     * @param keyAlgorithm The key generation algorithm
-     * @param capabilities The capabilities of the EC key
-     * @return An ObjectInfo object
-     */
-    public static YHObjectInfo getObjectInfoForNewKey(final short id, final String label, @NonNull final List<Integer> domains,
-                                                      @NonNull final Algorithm keyAlgorithm, final List<Capability> capabilities) {
-        if (domains.isEmpty()) {
-            throw new IllegalArgumentException("An Asymmetric key must be accessible on at least 1 domain to be useful");
-        }
-        if (!keyAlgorithm.isEcAlgorithm()) {
-            throw new IllegalArgumentException("Algorithm must be a supported EC algorithm");
-        }
-        return new YHObjectInfo(id, TYPE, Utils.getLabel(label), domains, keyAlgorithm, capabilities, null);
-    }
-
     // -------------------- help methods -------------------------------------
 
     /**
@@ -327,9 +311,11 @@ public class AsymmetricKeyEc extends AsymmetricKey {
         return algorithm.equals(Algorithm.EC_BP256) || algorithm.equals(Algorithm.EC_BP384) || algorithm.equals(Algorithm.EC_BP512);
     }
 
-    private static void verifyObjectInfoForNewEcKey(@NonNull final YHObjectInfo keyinfo) {
-        verifyObjectInfoForNewKey(keyinfo);
-        if (!keyinfo.getAlgorithm().isEcAlgorithm()) {
+    private static void verifyParametersForNewEcKey(@NonNull final List<Integer> domains, @NonNull final Algorithm keyAlgorithm) {
+        if (domains.isEmpty()) {
+            throw new IllegalArgumentException("Domains parameter cannot be null or empty");
+        }
+        if (!isEcAlgorithm(keyAlgorithm)) {
             throw new IllegalArgumentException("Key algorithm must be a supported EC algorithm");
         }
     }

@@ -19,6 +19,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class AsymmetricKey extends YHObject {
@@ -36,8 +37,8 @@ public class AsymmetricKey extends YHObject {
      * @param id           The Object ID of this key
      * @param keyAlgorithm A supported RSA, EC or ED key algorithm
      */
-    public AsymmetricKey(final short id, final @NonNull Algorithm keyAlgorithm) {
-        if (!(keyAlgorithm.isRsaAlgorithm() || keyAlgorithm.isEcAlgorithm() || keyAlgorithm.isEdAlgorithm())) {
+    public AsymmetricKey(final short id, @NonNull final Algorithm keyAlgorithm) {
+        if (!isAsymmetricKeyAlgorithm(keyAlgorithm)) {
             throw new IllegalArgumentException("An Asymmetric key algorithm must be a supported RSA, EC or ED algorithm");
         }
         setId(id);
@@ -53,11 +54,44 @@ public class AsymmetricKey extends YHObject {
         this.keyAlgorithm = algorithm;
     }
 
+    public static boolean isAsymmetricKeyAlgorithm(final Algorithm algorithm) {
+        return isRsaKeyAlgorithm(algorithm) || isEcAlgorithm(algorithm) || isEdAlgorithm(algorithm);
+    }
+
+    /**
+     * @return True `algorithm` is a supported algorithm for RSA keys. False otherwise
+     */
+    public static boolean isRsaKeyAlgorithm(final Algorithm algorithm) {
+        List rsaAlgorithms = Arrays.asList(Algorithm.RSA_2048, Algorithm.RSA_3072, Algorithm.RSA_4096);
+        return rsaAlgorithms.contains(algorithm);
+    }
+
+    /**
+     * @return True if `algorithm` is a supported algorithm for EC keys. False otherwise
+     */
+    public static boolean isEcAlgorithm(final Algorithm algorithm) {
+        List ecAlgorithsms = Arrays.asList(Algorithm.EC_P256, Algorithm.EC_P384, Algorithm.EC_P521, Algorithm.EC_K256, Algorithm.EC_BP256,
+                                           Algorithm.EC_BP384, Algorithm.EC_BP512, Algorithm.EC_P224);
+        return ecAlgorithsms.contains(algorithm);
+    }
+
+    /**
+     * @return True `algorithm` is a supported algorithm for ED keys. False otherwise
+     */
+    public static boolean isEdAlgorithm(final Algorithm algorithm) {
+        return algorithm.equals(Algorithm.EC_ED25519);
+    }
+
+
     /**
      * Generates an asymmetric key on the YubiHSM
      *
-     * @param session An authenticated session to communicate with the device over
-     * @param keyinfo The metadata of the Asymmetric key to generate. Set the ID to 0 to have it generated
+     * @param session      An authenticated session to communicate with the device over
+     * @param id           The desired object ID for the new Asymmetric key. Set to 0 to have it generated
+     * @param label        The label of the new Asymmetric key. Must be a maximum of 40 characters
+     * @param domains      The domains where the new Asymmetric key can be available
+     * @param keyAlgorithm The algorithm used to generate the new Asymmetric key
+     * @param capabilities The actions that can be performed using the new Asymmetric key
      * @return ID of the Asymmetric Key generated on the device
      * @throws NoSuchAlgorithmException           If the encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
@@ -70,25 +104,27 @@ public class AsymmetricKey extends YHObject {
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      */
-    public static short generateAsymmetricKey(@NonNull final YHSession session, @NonNull final YHObjectInfo keyinfo)
+    public static short generateAsymmetricKey(@NonNull final YHSession session, final short id, final String label,
+                                              @NonNull final List<Integer> domains, @NonNull final Algorithm keyAlgorithm,
+                                              final List<Capability> capabilities)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
-        verifyObjectInfoForNewKey(keyinfo);
+        verifyParametersForNewKey(domains, keyAlgorithm);
 
         ByteBuffer bb = ByteBuffer.allocate(53); // 2 bytes object ID + 40 bytes label + 2 bytes domains + 8 bytes capabilities + 1 byte algorithm
-        bb.putShort(keyinfo.getId());
-        bb.put(Arrays.copyOf(keyinfo.getLabel().getBytes(), YHObjectInfo.LABEL_LENGTH));
-        bb.putShort(Utils.getShortFromList(keyinfo.getDomains()));
-        bb.putLong(Capability.getCapabilities(keyinfo.getCapabilities()));
-        bb.put(keyinfo.getAlgorithm().getAlgorithmId());
+        bb.putShort(id);
+        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), YHObjectInfo.LABEL_LENGTH));
+        bb.putShort(Utils.getShortFromList(domains));
+        bb.putLong(Capability.getCapabilities(capabilities));
+        bb.put(keyAlgorithm.getAlgorithmId());
 
         byte[] resp = session.sendSecureCmd(Command.GENERATE_ASYMMETRIC_KEY, bb.array());
         bb = ByteBuffer.wrap(resp);
-        short id = bb.getShort();
+        short newid = bb.getShort();
 
-        log.info("Generated asymmetric key with ID 0x" + Integer.toHexString(id));
-        return id;
+        log.info("Generated asymmetric key with ID 0x" + Integer.toHexString(newid) + " using " + keyAlgorithm.getName() + " algorithm");
+        return newid;
     }
 
     /**
@@ -214,12 +250,13 @@ public class AsymmetricKey extends YHObject {
     /**
      * Sends the Put Asymmetric Key command to the device
      */
-    protected static short putKey(@NonNull final YHSession session, @NonNull final YHObjectInfo keyinfo, @NonNull final byte[] p1,
+    protected static short putKey(@NonNull final YHSession session, final short id, final String label, @NonNull final List<Integer> domains,
+                                  @NonNull final Algorithm keyAlgorithm, final List<Capability> capabilities, @NonNull final byte[] p1,
                                   final byte[] p2)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
-        verifyObjectInfoForNewKey(keyinfo);
+        verifyParametersForNewKey(domains, keyAlgorithm);
 
         int length = 53 + p1.length; // 2 bytes ID + 40 bytes label + 2 bytes domains + 8 bytes capabilities + 1 byte algorithm + p1 length
         if (p2 != null) {
@@ -227,11 +264,11 @@ public class AsymmetricKey extends YHObject {
         }
 
         ByteBuffer bb = ByteBuffer.allocate(length);
-        bb.putShort(keyinfo.getId());
-        bb.put(Arrays.copyOf(keyinfo.getLabel().getBytes(), YHObjectInfo.LABEL_LENGTH));
-        bb.putShort(Utils.getShortFromList(keyinfo.getDomains()));
-        bb.putLong(Capability.getCapabilities(keyinfo.getCapabilities()));
-        bb.put(keyinfo.getAlgorithm().getAlgorithmId());
+        bb.putShort(id);
+        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), YHObjectInfo.LABEL_LENGTH));
+        bb.putShort(Utils.getShortFromList(domains));
+        bb.putLong(Capability.getCapabilities(capabilities));
+        bb.put(keyAlgorithm.getAlgorithmId());
         bb.put(p1);
         if (p2 != null) {
             bb.put(p2);
@@ -239,10 +276,10 @@ public class AsymmetricKey extends YHObject {
 
         byte[] resp = session.sendSecureCmd(Command.PUT_ASYMMETRIC_KEY, bb.array());
         bb = ByteBuffer.wrap(resp);
-        short id = bb.getShort();
+        short newid = bb.getShort();
 
-        log.info("Imported asymmetric key with ID 0x" + Integer.toHexString(id) + " and algorithm " + keyinfo.getAlgorithm().toString());
-        return id;
+        log.info("Imported asymmetric key with ID 0x" + Integer.toHexString(newid) + " and algorithm " + keyAlgorithm.getName());
+        return newid;
     }
 
     /**
@@ -268,15 +305,11 @@ public class AsymmetricKey extends YHObject {
         return digest.digest(data);
     }
 
-    protected static void verifyObjectInfoForNewKey(@NonNull final YHObjectInfo keyinfo) {
-        if (keyinfo.getType() != null && !keyinfo.getType().equals(TYPE)) {
-            throw new IllegalArgumentException("The key information does not belong to an Asymmetric key");
-        }
-        if (keyinfo.getDomains() == null || keyinfo.getDomains().isEmpty()) {
+    private static void verifyParametersForNewKey(@NonNull final List<Integer> domains, Algorithm keyAlgorithm) {
+        if (domains.isEmpty()) {
             throw new IllegalArgumentException("Domains parameter cannot be null or empty");
         }
-        final Algorithm algo = keyinfo.getAlgorithm();
-        if (algo == null || !(algo.isRsaAlgorithm() || algo.isEcAlgorithm() || algo.isEdAlgorithm())) {
+        if (!isAsymmetricKeyAlgorithm(keyAlgorithm)) {
             throw new IllegalArgumentException("Key algorithm must be a supported RSA, EC or ED algorithm");
         }
     }

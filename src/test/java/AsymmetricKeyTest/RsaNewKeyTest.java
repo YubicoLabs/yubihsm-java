@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 public class RsaNewKeyTest {
     Logger logger = Logger.getLogger(RsaNewKeyTest.class.getName());
@@ -56,24 +55,6 @@ public class RsaNewKeyTest {
                    IllegalBlockSizeException {
         session.closeSession();
         yubihsm.close();
-    }
-
-    @Test
-    public void testNewKeyInfo() {
-        logger.info("TEST START: testNewKeyInfo()");
-        List domains = Arrays.asList(2, 5, 8);
-        List capabilities = Arrays.asList(Capability.SIGN_PKCS, Capability.SIGN_ECDSA, Capability.SIGN_EDDSA);
-        String label = "new_key";
-
-        YHObjectInfo keyinfo = AsymmetricKeyRsa.getObjectInfoForNewKey((short) 0, label, domains, Algorithm.RSA_2048, capabilities);
-        assertEquals(0, keyinfo.getId());
-        assertEquals(ObjectType.TYPE_ASYMMETRIC_KEY, keyinfo.getType());
-        assertEquals(label, keyinfo.getLabel());
-        assertEquals(domains, keyinfo.getDomains());
-        assertEquals(Algorithm.RSA_2048, keyinfo.getAlgorithm());
-        assertEquals(capabilities, keyinfo.getCapabilities());
-        assertNull(keyinfo.getDelegatedCapabilities());
-        logger.info("TEST END: testNewKeyInfo()");
     }
 
     @Test
@@ -110,9 +91,8 @@ public class RsaNewKeyTest {
         // Test importing the key with a non Asymmetric key algorithm
         boolean exceptionThrown = false;
         try {
-            YHObjectInfo keyinfo = AsymmetricKeyRsa.getObjectInfoForNewKey((short) 0, "", Arrays.asList(2, 5), Algorithm.AES128_CCM_WRAP,
-                                                                           Arrays.asList(Capability.SIGN_PKCS));
-            AsymmetricKeyRsa.importKey(session, keyinfo, p, q);
+            AsymmetricKeyRsa.importKey(session, (short) 0, "", Arrays.asList(2, 5), Algorithm.AES128_CCM_WRAP, Arrays.asList(Capability.SIGN_PKCS),
+                                       p, q);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -121,9 +101,7 @@ public class RsaNewKeyTest {
         // Test importing an EC key as an RSA key
         exceptionThrown = false;
         try {
-            YHObjectInfo keyinfo = AsymmetricKeyRsa.getObjectInfoForNewKey((short) 0, "", Arrays.asList(2, 5), Algorithm.EC_P224,
-                                                                           Arrays.asList(Capability.SIGN_PKCS));
-            AsymmetricKeyRsa.importKey(session, keyinfo, p, q);
+            AsymmetricKeyRsa.importKey(session, (short) 0, "", Arrays.asList(2, 5), Algorithm.EC_P224, Arrays.asList(Capability.SIGN_PKCS), p, q);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -132,21 +110,8 @@ public class RsaNewKeyTest {
         // Test importing an RSA key whose parameter does not match the specified RSA algorithm
         exceptionThrown = false;
         try {
-            YHObjectInfo keyinfo = AsymmetricKeyRsa.getObjectInfoForNewKey((short) 0, "", Arrays.asList(2, 5), Algorithm.RSA_3072,
-                                                                           Arrays.asList(Capability.SIGN_PKCS));
-            AsymmetricKeyRsa.importKey(session, keyinfo, p, q);
+            AsymmetricKeyRsa.importKey(session, (short) 0, "", Arrays.asList(2, 5), Algorithm.RSA_3072, Arrays.asList(Capability.SIGN_PKCS), p, q);
         } catch (InvalidParameterException e) {
-            exceptionThrown = true;
-        }
-        assertTrue("Succeeded in importing an RSA key whose parameters do not match the specified algorithm", exceptionThrown);
-
-        // Test importing an RSA key whose with wring type
-        exceptionThrown = false;
-        try {
-            YHObjectInfo keyinfo = new YHObjectInfo((short) 0, ObjectType.TYPE_OPAQUE, "", Arrays.asList(2, 5), Algorithm.RSA_3072,
-                                                                           Arrays.asList(Capability.SIGN_PKCS), null);
-            AsymmetricKeyRsa.importKey(session, keyinfo, p, q);
-        } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
         assertTrue("Succeeded in importing an RSA key whose parameters do not match the specified algorithm", exceptionThrown);
@@ -154,9 +119,8 @@ public class RsaNewKeyTest {
         // Test importing an RSA key without specifying one of the required private key primes
         exceptionThrown = false;
         try {
-            YHObjectInfo keyinfo = AsymmetricKeyRsa.getObjectInfoForNewKey((short) 0, "", Arrays.asList(2, 5), Algorithm.RSA_2048,
-                                                                           Arrays.asList(Capability.SIGN_PKCS));
-            AsymmetricKeyRsa.importKey(session, keyinfo, p, null);
+            AsymmetricKeyRsa.importKey(session, (short) 0, "", Arrays.asList(2, 5), Algorithm.RSA_2048, Arrays.asList(Capability.SIGN_PKCS), p,
+                                       null);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -230,10 +194,9 @@ public class RsaNewKeyTest {
         List domains = Arrays.asList(2, 5, 8);
         List capabilities = Arrays.asList(Capability.SIGN_PKCS, Capability.SIGN_ECDSA, Capability.SIGN_EDDSA);
         String label = "rsa_key";
-        YHObjectInfo keyinfo = AsymmetricKeyRsa.getObjectInfoForNewKey((short) 0, label, domains, algorithm, capabilities);
 
         // Generate the key on the device
-        short id = AsymmetricKey.generateAsymmetricKey(session, keyinfo);
+        short id = AsymmetricKey.generateAsymmetricKey(session, (short) 0, label, domains, algorithm, capabilities);
 
         try {
             // Verify key properties

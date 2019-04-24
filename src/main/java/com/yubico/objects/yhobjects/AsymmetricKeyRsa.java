@@ -3,7 +3,6 @@ package com.yubico.objects.yhobjects;
 
 import com.yubico.YHSession;
 import com.yubico.exceptions.*;
-import com.yubico.internal.util.Utils;
 import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.Command;
@@ -32,7 +31,7 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
      * @param keyAlgorithm A supported RSA key algorithm
      */
     public AsymmetricKeyRsa(final short id, @NonNull final Algorithm keyAlgorithm) {
-        if (!keyAlgorithm.isRsaAlgorithm()) {
+        if (!isRsaKeyAlgorithm(keyAlgorithm)) {
             throw new IllegalArgumentException("An Asymmetric key algorithm must be a supported RSA algorithm");
         }
         setId(id);
@@ -43,11 +42,15 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
     /**
      * Imports a user generated RSA key into the YubiHSM
      *
-     * @param session An authenticated session to communicate with the device over
-     * @param keyinfo The metadata of the key to import. Set the ID to 0 to have it generated
-     * @param primeP  The secret prime P.
-     * @param primeQ  The secret prime Q.
-     * @return ID of the RSA key on the device
+     * @param session      An authenticated session to communicate with the device over
+     * @param id           The desired Object ID of the imported RSA key. Set to 0 to have it generated
+     * @param label        The label of the imported RSA key
+     * @param domains      The domains where the imported RSA key will be accessible
+     * @param keyAlgorithm The algorithm used to generate the imported RSA key
+     * @param capabilities The actions that can be performed using the imported RSA key
+     * @param primeP       The secret prime P.
+     * @param primeQ       The secret prime Q.
+     * @return ID of the imported RSA key on the device
      * @throws NoSuchAlgorithmException           If the encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
      * @throws YHInvalidResponseException         If the response from the device cannot be parsed
@@ -60,14 +63,15 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      * @throws UnsupportedAlgorithmException      If the specified key algorithm is not an RSA algorithm
      */
-    public static short importKey(final YHSession session, @NonNull final YHObjectInfo keyinfo, @NonNull final byte[] primeP,
+    public static short importKey(final YHSession session, final short id, final String label, @NonNull final List<Integer> domains,
+                                  @NonNull final Algorithm keyAlgorithm, final List<Capability> capabilities, @NonNull final byte[] primeP,
                                   @NonNull final byte[] primeQ)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, UnsupportedAlgorithmException {
-        verifyObjectInfoForNewKeyRsa(keyinfo);
+        verifyParametersForNewKeyRsa(domains, keyAlgorithm);
 
-        final int componentLength = getBlockSize(keyinfo.getAlgorithm()) / 2;
+        final int componentLength = getBlockSize(keyAlgorithm) / 2;
         if (primeP.length != componentLength) {
             throw new InvalidParameterException(
                     "Invalid parameter. Expected primeP that is " + componentLength + " bytes long, but was " + primeP.length + " bytes");
@@ -78,7 +82,7 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
         }
 
 
-        return putKey(session, keyinfo, primeP, primeQ);
+        return putKey(session, id, label, domains, keyAlgorithm, capabilities, primeP, primeQ);
     }
 
     /**
@@ -332,27 +336,6 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
 
     }
 
-    /**
-     * Converts the input parameters into an ObjectInfo object. This object is meant to be used when generating or importing a new RSA key
-     *
-     * @param id           The object ID of the key. Use 0 to have the ID generated
-     * @param label        The key label
-     * @param domains      The domains where the key will be accessible
-     * @param keyAlgorithm The key generation algorithm
-     * @param capabilities The capabilities of the RSA key
-     * @return An ObjectInfo object
-     */
-    public static YHObjectInfo getObjectInfoForNewKey(final short id, final String label, @NonNull final List<Integer> domains,
-                                                      @NonNull final Algorithm keyAlgorithm, final List<Capability> capabilities) {
-        if (domains.isEmpty()) {
-            throw new IllegalArgumentException("An Asymmetric key must be accessible on at least 1 domain to be useful");
-        }
-        if (!keyAlgorithm.isRsaAlgorithm()) {
-            throw new IllegalArgumentException("Algorithm must be a supported RSA algorithm");
-        }
-        return new YHObjectInfo(id, TYPE, Utils.getLabel(label), domains, keyAlgorithm, capabilities, null);
-    }
-
     // ------------- Help methods ---------------------------------------
 
     /**
@@ -413,9 +396,11 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
         return false;
     }
 
-    private static void verifyObjectInfoForNewKeyRsa(@NonNull final YHObjectInfo keyinfo) {
-        verifyObjectInfoForNewKey(keyinfo);
-        if (!keyinfo.getAlgorithm().isRsaAlgorithm()) {
+    private static void verifyParametersForNewKeyRsa(@NonNull final List<Integer> domains, @NonNull final Algorithm keyAlgorithm) {
+        if (domains.isEmpty()) {
+            throw new IllegalArgumentException("Domains parameter cannot be null or empty");
+        }
+        if (!isRsaKeyAlgorithm(keyAlgorithm)) {
             throw new IllegalArgumentException("Key algorithm must be a supported RSA algorithm");
         }
     }

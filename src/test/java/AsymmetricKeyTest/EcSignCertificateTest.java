@@ -69,9 +69,8 @@ public class EcSignCertificateTest {
                                                     Arrays.asList(Capability.SIGN_ATTESTATION_CERTIFICATE), Algorithm.EC_P224, "secp224r1", 28);
             AsymmetricKey attestingKey = new AsymmetricKey(attestingKeyid, Algorithm.EC_P224);
 
-            YHObjectInfo genKeyinfo = AsymmetricKeyEc.getObjectInfoForNewKey(attestedKeyid, "", Arrays.asList(2, 5, 8), Algorithm.EC_P224,
-                                                                             Arrays.asList(Capability.SIGN_ECDSA));
-            AsymmetricKey.generateAsymmetricKey(session, genKeyinfo);
+            AsymmetricKey.generateAsymmetricKey(session, attestedKeyid, "", Arrays.asList(2, 5, 8), Algorithm.EC_P224,
+                                                Arrays.asList(Capability.SIGN_ECDSA));
 
             boolean exceptionThrown = false;
             try {
