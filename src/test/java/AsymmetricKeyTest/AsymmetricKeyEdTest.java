@@ -4,7 +4,8 @@ import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
-import com.yubico.exceptions.*;
+import com.yubico.exceptions.YHDeviceException;
+import com.yubico.exceptions.YHError;
 import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.ObjectOrigin;
@@ -24,12 +25,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import java.net.MalformedURLException;
-import java.security.*;
-import java.security.spec.InvalidKeySpecException;
+import java.security.SecureRandom;
+import java.security.Security;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
@@ -37,15 +34,13 @@ import java.util.logging.Logger;
 import static org.junit.Assert.*;
 
 public class AsymmetricKeyEdTest {
-    Logger logger = Logger.getLogger(AsymmetricKeyEdTest.class.getName());
+    Logger log = Logger.getLogger(AsymmetricKeyEdTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;
 
     @BeforeClass
-    public static void init()
-            throws MalformedURLException, InvalidKeySpecException, NoSuchAlgorithmException, YHConnectionException, YHDeviceException,
-                   YHAuthenticationException, YHInvalidResponseException {
+    public static void init() throws Exception {
         if (session == null) {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
@@ -55,10 +50,7 @@ public class AsymmetricKeyEdTest {
     }
 
     @AfterClass
-    public static void destroy()
-            throws YHDeviceException, YHAuthenticationException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
-                   NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, BadPaddingException,
-                   IllegalBlockSizeException {
+    public static void destroy() throws Exception {
         session.closeSession();
         yubihsm.close();
     }
@@ -68,11 +60,8 @@ public class AsymmetricKeyEdTest {
     // ---------------------------------------------------------
 
     @Test
-    public void testGenerateKey()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException {
-        logger.info("TEST START: testGenerateKey()");
+    public void testGenerateKey() throws Exception {
+        log.info("TEST START: testGenerateKey()");
 
         final List domains = Arrays.asList(2, 5, 8);
         final List capabilities = Arrays.asList(Capability.SIGN_PKCS, Capability.SIGN_ECDSA, Capability.SIGN_EDDSA);
@@ -104,7 +93,7 @@ public class AsymmetricKeyEdTest {
             }
         }
 
-        logger.info("TEST END: testGenerateKey()");
+        log.info("TEST END: testGenerateKey()");
     }
 
     // -------------------------------------------------------------------------------
@@ -112,11 +101,8 @@ public class AsymmetricKeyEdTest {
     // -------------------------------------------------------------------------------
 
     @Test
-    public void testImportKeyWithWrongParameters()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, UnsupportedAlgorithmException {
-        logger.info("TEST START: testImportKeyWithWrongParameters()");
+    public void testImportKeyWithWrongParameters() throws Exception {
+        log.info("TEST START: testImportKeyWithWrongParameters()");
 
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
         Ed25519KeyPairGenerator keyPairGenerator = new Ed25519KeyPairGenerator();
@@ -152,15 +138,21 @@ public class AsymmetricKeyEdTest {
         }
         assertTrue("Succeeded in importing an ED key in spite of missing private key", exceptionThrown);
 
-        logger.info("TEST END: testImportKeyWithWrongParameters()");
+        // Test importing an ED key without specifying the private key
+        exceptionThrown = false;
+        try {
+            AsymmetricKeyEd.importKey(session, (short) 0, "", Arrays.asList(2), Algorithm.EC_P256, Arrays.asList(Capability.SIGN_EDDSA), new byte[0]);
+        } catch (IllegalArgumentException e) {
+            exceptionThrown = true;
+        }
+        assertTrue("Succeeded in importing an ED key in spite of missing private key", exceptionThrown);
+
+        log.info("TEST END: testImportKeyWithWrongParameters()");
     }
 
     @Test
-    public void testNonEcKey()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, UnsupportedAlgorithmException {
-        logger.info("TEST START: testNonEcKey()");
+    public void testNonEdKey() throws Exception {
+        log.info("TEST START: testNonEdKey()");
 
         // Test creating an AsymmetricKeyEd object without algorithm
         boolean exceptionThrown = false;
@@ -191,15 +183,12 @@ public class AsymmetricKeyEdTest {
         }
         assertTrue("Succeeded in retrieving a public key of an ED key that does not exist on the device", exceptionThrown);
 
-        logger.info("TEST END: testNonEcKey()");
+        log.info("TEST END: testNonEdKey()");
     }
 
     @Test
-    public void testImportKey()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, UnsupportedAlgorithmException {
-        logger.info("TEST START: testImportKey()");
+    public void testImportKey() throws Exception {
+        log.info("TEST START: testImportKey()");
 
         final List domains = Arrays.asList(2, 5, 8);
         final List capabilities = Arrays.asList(Capability.SIGN_EDDSA);
@@ -230,13 +219,10 @@ public class AsymmetricKeyEdTest {
             }
         }
 
-        logger.info("TEST END: testImportKey()");
+        log.info("TEST END: testImportKey()");
     }
 
-    private Ed25519PublicKeyParameters importEdKey(short id, String label, List<Integer> domains, List<Capability> capabilities)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, UnsupportedAlgorithmException {
+    private Ed25519PublicKeyParameters importEdKey(short id, String label, List<Integer> domains, List<Capability> capabilities) throws Exception {
 
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
         Ed25519KeyPairGenerator keyPairGenerator = new Ed25519KeyPairGenerator();
@@ -254,12 +240,8 @@ public class AsymmetricKeyEdTest {
     // ----------------------------------------------------------------------------
 
     @Test
-    public void testPublicKey()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, UnsupportedAlgorithmException {
-
-        logger.info("TEST START: testPublicKey()");
+    public void testPublicKey() throws Exception {
+        log.info("TEST START: testPublicKey()");
 
         final short id = 0x1234;
         Ed25519PublicKeyParameters pubKey = importEdKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_EDDSA));
@@ -273,8 +255,7 @@ public class AsymmetricKeyEdTest {
             YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
 
-        logger.info("TEST END: testPublicKey()");
-
+        log.info("TEST END: testPublicKey()");
     }
 
     // ----------------------------------------------------------------------------------------------------
@@ -282,10 +263,8 @@ public class AsymmetricKeyEdTest {
     // ----------------------------------------------------------------------------------------------------
 
     @Test
-    public void testSignDataWithInsufficientPermissions()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, UnsupportedAlgorithmException {
+    public void testSignDataWithInsufficientPermissions() throws Exception {
+        log.info("TEST START: testSignDataWithInsufficientPermissions()");
         short id = 0x1234;
         importEdKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.GET_OPAQUE));
         try {
@@ -304,14 +283,12 @@ public class AsymmetricKeyEdTest {
         } finally {
             YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
+        log.info("TEST END: testSignDataWithInsufficientPermissions()");
     }
 
     @Test
-    public void testSignData()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, UnsupportedAlgorithmException {
-        logger.info("TEST START: testSignData()");
+    public void testSignData() throws Exception {
+        log.info("TEST START: testSignData()");
 
         final short id = 0x1234;
         Ed25519PublicKeyParameters pubKey = importEdKey(id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_EDDSA));
@@ -326,13 +303,10 @@ public class AsymmetricKeyEdTest {
             YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
 
-        logger.info("TEST END: testSignData()");
+        log.info("TEST END: testSignData()");
     }
 
-    private void signDataTest(AsymmetricKeyEd key, Ed25519PublicKeyParameters pubKey, byte[] data)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException {
+    private void signDataTest(AsymmetricKeyEd key, Ed25519PublicKeyParameters pubKey, byte[] data) throws Exception {
 
         byte[] signature = key.signEddsa(session, data);
         assertEquals(64, signature.length);

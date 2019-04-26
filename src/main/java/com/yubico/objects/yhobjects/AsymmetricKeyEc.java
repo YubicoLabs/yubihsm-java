@@ -66,11 +66,7 @@ public class AsymmetricKeyEc extends AsymmetricKey {
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, UnsupportedAlgorithmException {
-        verifyParametersForNewEcKey(domains, keyAlgorithm);
-        if (d.length != getEcComponentLength(keyAlgorithm)) {
-            throw new InvalidParameterException("Invalid parameter: d");
-        }
-
+        verifyParametersForNewEcKey(domains, keyAlgorithm, d);
         return putKey(session, id, label, domains, keyAlgorithm, capabilities, d, null);
     }
 
@@ -311,12 +307,19 @@ public class AsymmetricKeyEc extends AsymmetricKey {
         return algorithm.equals(Algorithm.EC_BP256) || algorithm.equals(Algorithm.EC_BP384) || algorithm.equals(Algorithm.EC_BP512);
     }
 
-    private static void verifyParametersForNewEcKey(@NonNull final List<Integer> domains, @NonNull final Algorithm keyAlgorithm) {
+    private static void verifyParametersForNewEcKey(@NonNull final List<Integer> domains, @NonNull final Algorithm keyAlgorithm,
+                                                    @NonNull final byte[] d) throws UnsupportedAlgorithmException {
         if (domains.isEmpty()) {
             throw new IllegalArgumentException("Domains parameter cannot be null or empty");
         }
         if (!isEcAlgorithm(keyAlgorithm)) {
             throw new IllegalArgumentException("Key algorithm must be a supported EC algorithm");
+        }
+
+        int componentLength = getEcComponentLength(keyAlgorithm);
+        if (d.length != componentLength) {
+            throw new IllegalArgumentException("Invalid parameter. Expected private key integer d that is " + componentLength + " bytes long, but" +
+                                               " was " + d.length + " bytes");
         }
     }
 }

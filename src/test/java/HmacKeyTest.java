@@ -71,6 +71,7 @@ public class HmacKeyTest {
     }
 
     private void generateHmacKey(Algorithm keyAlgorithm) throws Exception {
+        log.info("Test generating an HMAC key with algorithm " + keyAlgorithm.getName());
         List domains = Arrays.asList(2, 5, 8);
         List capabilities = Capability.ALL_CAPABILITIES;
         String label = "test_wrap_key";
@@ -104,6 +105,7 @@ public class HmacKeyTest {
     }
 
     private void importHmacKey(Algorithm keyAlgorithm, int keyLength) throws Exception {
+        log.info("Test importing an HMAC key with algorithm " + keyAlgorithm.getName());
         List domains = Arrays.asList(2, 5, 8);
         List capabilities = Capability.ALL_CAPABILITIES;
         String label = "test_wrap_key";
@@ -132,7 +134,6 @@ public class HmacKeyTest {
     @Test
     public void testImportHmacKeyDifferentLengths() throws Exception {
         log.info("TEST START: testImportHmacKey()");
-
         importHmacKey(Algorithm.HMAC_SHA1, 0, false);
         importHmacKey(Algorithm.HMAC_SHA1, 1, true);
         importHmacKey(Algorithm.HMAC_SHA1, 64, true);
@@ -295,6 +296,7 @@ public class HmacKeyTest {
     }
 
     private void verifyHmacDifferentAlgorithm(Algorithm keyAlgorithm, int keyLength, String hmacAlgorithm) throws Exception {
+        log.info("Test verifying HMAC created with algorithm " + hmacAlgorithm + " with HMAC key of algorithm " + keyAlgorithm.getName());
         byte[] key = new byte[keyLength];
         new SecureRandom().nextBytes(key);
 
@@ -323,6 +325,7 @@ public class HmacKeyTest {
     }
 
     private void verifyHmacDifferentKey(Algorithm keyAlgorithm, int keyLength, String hmacAlgorithm) throws Exception {
+        log.info("Test verifying HMAC created with algorithm " + keyAlgorithm.getName() + " but with a different HMAC key");
         byte[] data = "test signing data".getBytes();
 
         byte[] key = new byte[keyLength];

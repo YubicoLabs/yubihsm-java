@@ -4,7 +4,8 @@ import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
-import com.yubico.exceptions.*;
+import com.yubico.exceptions.YHDeviceException;
+import com.yubico.exceptions.YHError;
 import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.ObjectType;
@@ -15,29 +16,23 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import java.net.MalformedURLException;
-import java.security.*;
-import java.security.spec.InvalidKeySpecException;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.Security;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertArrayEquals;
 
 public class RsaDecryptTest {
-    Logger logger = Logger.getLogger(RsaDecryptTest.class.getName());
+    Logger log = Logger.getLogger(RsaDecryptTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;
 
     @BeforeClass
-    public static void init()
-            throws MalformedURLException, InvalidKeySpecException, NoSuchAlgorithmException, YHConnectionException, YHDeviceException,
-                   YHAuthenticationException, YHInvalidResponseException {
+    public static void init() throws Exception {
         if (session == null) {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
@@ -47,23 +42,18 @@ public class RsaDecryptTest {
     }
 
     @AfterClass
-    public static void destroy()
-            throws YHDeviceException, YHAuthenticationException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
-                   NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, BadPaddingException,
-                   IllegalBlockSizeException {
+    public static void destroy() throws Exception {
         session.closeSession();
         yubihsm.close();
     }
 
     @Test
-    public void testDecryptDataWithInsufficientPermissions()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidKeySpecException, SignatureException, NoSuchProviderException,
-                   UnsupportedAlgorithmException {
+    public void testDecryptDataWithInsufficientPermissions() throws Exception {
+        log.info("TEST START: testDecryptDataWithInsufficientPermissions()");
         final short id = 0x1234;
         PublicKey pubKey = AsymmetricKeyTestHelper.importRsaKey(session, id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_PKCS,
-                                                                Capability.SIGN_PSS), Algorithm.RSA_2048, 2048, 128);
+                                                                                                                       Capability.SIGN_PSS),
+                                                                Algorithm.RSA_2048, 2048, 128);
         try {
             AsymmetricKeyRsa key = new AsymmetricKeyRsa(id, Algorithm.RSA_2048);
 
@@ -91,15 +81,12 @@ public class RsaDecryptTest {
         } finally {
             YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
+        log.info("TEST END: testDecryptDataWithInsufficientPermissions()");
     }
 
     @Test
-    public void testDecryptPkcs1()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidKeySpecException, SignatureException, UnsupportedAlgorithmException,
-                   NoSuchProviderException {
-        logger.info("TEST START: testDecryptPkcs1()");
+    public void testDecryptPkcs1() throws Exception {
+        log.info("TEST START: testDecryptPkcs1()");
 
         byte[] data = new byte[0];
         decryptPkcs1Test(Algorithm.RSA_2048, 2048, 128, data);
@@ -111,30 +98,28 @@ public class RsaDecryptTest {
         decryptPkcs1Test(Algorithm.RSA_3072, 3072, 192, data);
         decryptPkcs1Test(Algorithm.RSA_4096, 4096, 256, data);
 
-        logger.info("TEST END: testDecryptPkcs1()");
+        //data = new byte[245]; // The maximum number of bytes that can be encrypted using javax.crypto
+        //new Random().nextBytes(data);
+        //decryptPkcs1Test(Algorithm.RSA_2048, 2048, 128, data);
+        //decryptPkcs1Test(Algorithm.RSA_3072, 3072, 192, data);
+        //decryptPkcs1Test(Algorithm.RSA_4096, 4096, 256, data);
+
+        log.info("TEST END: testDecryptPkcs1()");
     }
 
     @Test
-    public void testDecryptOaep()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidKeySpecException, SignatureException, UnsupportedAlgorithmException,
-                   NoSuchProviderException {
-        logger.info("TEST START: testDecryptOaep()");
-
+    public void testDecryptOaep() throws Exception {
+        log.info("TEST START: testDecryptOaep()");
         decryptOaepTest(Algorithm.RSA_2048, 2048, 128);
         decryptOaepTest(Algorithm.RSA_3072, 3072, 192);
         decryptOaepTest(Algorithm.RSA_4096, 4096, 256);
-
-        logger.info("TEST END: testDecryptOaep()");
+        log.info("TEST END: testDecryptOaep()");
     }
 
     // --------------------------------------------------------------------------------------------------
 
-    private void decryptPkcs1Test(Algorithm keyAlgorithm, int keysize, int componentLength, byte[] data)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidKeySpecException, UnsupportedAlgorithmException {
+    private void decryptPkcs1Test(Algorithm keyAlgorithm, int keysize, int componentLength, byte[] data) throws Exception {
+        log.info("Test decrypting data of length " + data.length + " with RSA key of algorithm " + keyAlgorithm.getName() + " using RSA-PKCS#1v1.5");
 
         final short id = 0x1234;
         PublicKey publicKey =
@@ -155,11 +140,7 @@ public class RsaDecryptTest {
         }
     }
 
-    private void decryptOaepTest(Algorithm keyAlgorithm, int keysize, int componentLength)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidKeySpecException, SignatureException, UnsupportedAlgorithmException,
-                   NoSuchProviderException {
+    private void decryptOaepTest(Algorithm keyAlgorithm, int keysize, int componentLength) throws Exception {
 
         final short id = 0x1234;
         PublicKey publicKey =
@@ -179,17 +160,14 @@ public class RsaDecryptTest {
             decryptOaepBc(key, publicKey, Algorithm.RSA_MGF1_SHA384, Algorithm.RSA_OAEP_SHA384, "RSA/ECB/OAEPWithSHA-384AndMGF1Padding");
             decryptOaepBc(key, publicKey, Algorithm.RSA_MGF1_SHA512, Algorithm.RSA_OAEP_SHA512, "RSA/ECB/OAEPWithSHA-512AndMGF1Padding");
 
-
         } finally {
             YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 
     private void decryptOaep(AsymmetricKeyRsa key, PublicKey pubKey, Algorithm mgf1Algorithm, Algorithm hashAlgorithm, String cipherAlgorithm)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, UnsupportedAlgorithmException {
-
+            throws Exception {
+        log.info("Test decrypting with RSA key of algorithm " + key.getKeyAlgorithm().getName() + " using RSA-OAEP");
 
         byte[] data = "This is test data for decryption".getBytes();
 
@@ -200,14 +178,11 @@ public class RsaDecryptTest {
         byte[] dec = key.decryptOaep(session, enc, "", mgf1Algorithm, hashAlgorithm);
 
         assertArrayEquals(data, dec);
-
     }
 
     private void decryptOaepBc(AsymmetricKeyRsa key, PublicKey pubKey, Algorithm mgf1Algorithm, Algorithm hashAlgorithm, String cipherAlgorithm)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, UnsupportedAlgorithmException, NoSuchProviderException {
-
+            throws Exception {
+        log.info("Test decrypting with RSA key of algorithm " + key.getKeyAlgorithm().getName() + " using RSA-OAEP");
 
         byte[] data = "This is test data for decryption".getBytes();
 
@@ -219,7 +194,6 @@ public class RsaDecryptTest {
         byte[] dec = key.decryptOaep(session, enc, "", mgf1Algorithm, hashAlgorithm);
 
         assertArrayEquals(data, dec);
-
     }
 
 }

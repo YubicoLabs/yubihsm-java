@@ -3,7 +3,8 @@ import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
-import com.yubico.exceptions.*;
+import com.yubico.exceptions.YHAuthenticationException;
+import com.yubico.exceptions.YHError;
 import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.ObjectOrigin;
@@ -15,14 +16,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import java.net.MalformedURLException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,15 +26,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class AuthenticationKeyTest {
-    Logger logger = Logger.getLogger(AuthenticationKeyTest.class.getName());
+    Logger log = Logger.getLogger(AuthenticationKeyTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;
 
     @BeforeClass
-    public static void init()
-            throws MalformedURLException, InvalidKeySpecException, NoSuchAlgorithmException, YHConnectionException, YHDeviceException,
-                   YHAuthenticationException, YHInvalidResponseException {
+    public static void init() throws Exception {
         if (session == null) {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
@@ -51,20 +42,14 @@ public class AuthenticationKeyTest {
     }
 
     @AfterClass
-    public static void destroy()
-            throws YHDeviceException, YHAuthenticationException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
-                   NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, BadPaddingException,
-                   IllegalBlockSizeException {
+    public static void destroy() throws Exception {
         session.closeSession();
         yubihsm.close();
     }
 
     @Test
-    public void testGetAuthenticationKey()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   InvalidKeySpecException, IllegalBlockSizeException {
-        logger.info("TEST START: testGetAuthenticationKey()");
+    public void testImportAuthenticationKey() throws Exception {
+        log.info("TEST START: testGetAuthenticationKey()");
         List domains = Arrays.asList(2, 5, 8);
         List capabilities = Arrays.asList(Capability.SIGN_ECDSA, Capability.GET_OPAQUE);
         String label = "test_auth_key";
@@ -87,16 +72,95 @@ public class AuthenticationKeyTest {
         } finally {
             YHObject.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
         }
-        logger.info("TEST END: testGetAuthenticationKey()");
+        log.info("TEST END: testGetAuthenticationKey()");
     }
 
     @Test
-    public void testChangeAuthenticationKey()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   InvalidKeySpecException, IllegalBlockSizeException {
+    public void testImportAuthenticationKeyWithWrongParameters() throws Exception {
+        log.info("TEST START: testImportAuthenticationKeyWithWrongParameters()");
 
-        logger.info("TEST START: testChangeAuthenticationKey()");
+        log.info("Test importing authentication key with null password");
+        boolean exceptionThrown = false;
+        try {
+            AuthenticationKey.importAuthenticationKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_AUTHENTICATION,
+                                                      Capability.ALL_CAPABILITIES, null, null);
+        } catch (IllegalArgumentException e) {
+            exceptionThrown = true;
+        }
+        assertTrue(exceptionThrown);
+
+        log.info("Test importing authentication key with empty password");
+        exceptionThrown = false;
+        try {
+            AuthenticationKey.importAuthenticationKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_AUTHENTICATION,
+                                                      Capability.ALL_CAPABILITIES, null, new char[0]);
+        } catch (IllegalArgumentException e) {
+            exceptionThrown = true;
+        }
+        assertTrue(exceptionThrown);
+
+        log.info("Test importing authentication key with an encryption key that is too short");
+        byte[] enc = new byte[8];
+        byte[] mac = new byte[16];
+        new Random().nextBytes(enc);
+        new Random().nextBytes(mac);
+        exceptionThrown = false;
+        try {
+            AuthenticationKey.importAuthenticationKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_AUTHENTICATION,
+                                                      Capability.ALL_CAPABILITIES, null, enc, mac);
+        } catch (IllegalArgumentException e) {
+            exceptionThrown = true;
+        }
+        assertTrue(exceptionThrown);
+
+        log.info("Test importing authentication key with a MAC key that is too short");
+        exceptionThrown = false;
+        try {
+            AuthenticationKey.importAuthenticationKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_AUTHENTICATION,
+                                                      Capability.ALL_CAPABILITIES, null, mac, enc);
+        } catch (IllegalArgumentException e) {
+            exceptionThrown = true;
+        }
+        assertTrue(exceptionThrown);
+
+        log.info("Test importing authentication key with an encryption key that is too long");
+        enc = new byte[32];
+        new Random().nextBytes(enc);
+        exceptionThrown = false;
+        try {
+            AuthenticationKey.importAuthenticationKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_AUTHENTICATION,
+                                                      Capability.ALL_CAPABILITIES, null, enc, mac);
+        } catch (IllegalArgumentException e) {
+            exceptionThrown = true;
+        }
+        assertTrue(exceptionThrown);
+
+        log.info("Test importing authentication key with a MAC key that is too long");
+        exceptionThrown = false;
+        try {
+            AuthenticationKey.importAuthenticationKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_AUTHENTICATION,
+                                                      Capability.ALL_CAPABILITIES, null, mac, enc);
+        } catch (IllegalArgumentException e) {
+            exceptionThrown = true;
+        }
+        assertTrue(exceptionThrown);
+
+        log.info("Test importing authentication key with null encryption key and null MAC key ");
+        exceptionThrown = false;
+        try {
+            AuthenticationKey.importAuthenticationKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_AUTHENTICATION,
+                                                      Capability.ALL_CAPABILITIES, null, null, null);
+        } catch (IllegalArgumentException e) {
+            exceptionThrown = true;
+        }
+        assertTrue(exceptionThrown);
+
+        log.info("TEST END: testImportAuthenticationKeyWithWrongParameters()");
+    }
+
+    @Test
+    public void testChangeAuthenticationKey() throws Exception {
+        log.info("TEST START: testChangeAuthenticationKey()");
 
         ArrayList domains = new ArrayList(Arrays.asList(2, 5, 8));
         ArrayList capabilities = new ArrayList(Arrays.asList(Capability.SIGN_ECDSA, Capability.GET_OPAQUE, Capability.CHANGE_AUTHENTICATION_KEY));
@@ -144,7 +208,6 @@ public class AuthenticationKeyTest {
             // Delete the authentication key
             YHObject.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
         }
-        logger.info("TEST END: testChangeAuthenticationKey()");
-
+        log.info("TEST END: testChangeAuthenticationKey()");
     }
 }

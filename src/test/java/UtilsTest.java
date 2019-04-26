@@ -12,20 +12,18 @@ import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
 public class UtilsTest {
-
-    Logger logger = Logger.getLogger(YHSessionTest.class.getName());
-
+    Logger log = Logger.getLogger(YHSessionTest.class.getName());
 
     @Test
     public void testPadding() {
-        logger.info("TEST START: testAddPadding()");
+        log.info("TEST START: testAddPadding()");
         byte[] pad = new byte[16];
         pad[0] = (byte) 0x80;
 
         for (int i = 0; i < 20; i++) {
             testPadding(i, pad);
         }
-        logger.info("TEST END: testAddPadding()");
+        log.info("TEST END: testAddPadding()");
     }
 
     private void testPadding(final int dataLength, final byte[] pad) {
@@ -43,7 +41,7 @@ public class UtilsTest {
 
     @Test
     public void testGetShortFromList() {
-        logger.info("TEST START: testGetShortFromList()");
+        log.info("TEST START: testGetShortFromList()");
 
         List<Integer> values = new ArrayList(Arrays.asList(2, 5, 8));
         short expectedResult = 0x0092;
@@ -61,13 +59,12 @@ public class UtilsTest {
 
         assertEquals(0, Utils.getShortFromList(null));
 
-
-        logger.info("TEST END: testGetShortFromList()");
+        log.info("TEST END: testGetShortFromList()");
     }
 
     @Test
     public void testGetListFromShort() {
-        logger.info("TEST START: testGetListFromShort()");
+        log.info("TEST START: testGetListFromShort()");
 
         short s = (short) 0x0092;
         List<Integer> expectedResult = new ArrayList(Arrays.asList(2, 5, 8));
@@ -92,8 +89,7 @@ public class UtilsTest {
         assertNotNull(actualResult);
         assertEquals(0, actualResult.size());
 
-
-        logger.info("TEST END: testGetListFromShort()");
+        log.info("TEST END: testGetListFromShort()");
     }
 
 }

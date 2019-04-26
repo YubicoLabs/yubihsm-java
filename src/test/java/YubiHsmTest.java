@@ -3,10 +3,6 @@ import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
-import com.yubico.exceptions.YHAuthenticationException;
-import com.yubico.exceptions.YHConnectionException;
-import com.yubico.exceptions.YHDeviceException;
-import com.yubico.exceptions.YHInvalidResponseException;
 import com.yubico.objects.DeviceInfo;
 import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
@@ -19,24 +15,14 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import java.io.IOException;
 import java.net.MalformedURLException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
 public class YubiHsmTest {
-
-
-    Logger logger = Logger.getLogger(YubiHsmTest.class.getName());
+    Logger log = Logger.getLogger(YubiHsmTest.class.getName());
 
     private static YubiHsm yubihsm;
 
@@ -55,8 +41,8 @@ public class YubiHsmTest {
 
 
     @Test
-    public void testPlainEcho() throws YHDeviceException, YHInvalidResponseException, YHConnectionException, MalformedURLException {
-        logger.info("TEST START: testPlainEcho()");
+    public void testPlainEcho() throws Exception {
+        log.info("TEST START: testPlainEcho()");
         for (int i = 0; i < 5; i++) {
             byte[] data = new byte[32];
             new Random().nextBytes(data);
@@ -64,15 +50,12 @@ public class YubiHsmTest {
             byte[] response = yubihsm.echo(data);
             assertTrue(Arrays.equals(response, data));
         }
-        logger.info("TEST END: testPlainEcho()");
+        log.info("TEST END: testPlainEcho()");
     }
 
     @Test
-    public void testSecureEcho()
-            throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
-                   NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
-                   YHInvalidResponseException, InvalidKeySpecException, IllegalBlockSizeException {
-        logger.info("TEST START: testAuthenticatedEcho()");
+    public void testSecureEcho() throws Exception {
+        log.info("TEST START: testAuthenticatedEcho()");
         YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
         for (int i = 0; i < 5; i++) {
             byte[] data = new byte[32];
@@ -81,57 +64,46 @@ public class YubiHsmTest {
             assertTrue(Arrays.equals(response, data));
         }
         session.closeSession();
-        logger.info("TEST END: testAuthenticatedEcho()");
+        log.info("TEST END: testAuthenticatedEcho()");
     }
 
     @Test
-    public void testGetDeviceInfo() throws YHDeviceException, YHInvalidResponseException, YHConnectionException {
-        logger.info("TEST START: testGetDeviceInfo()");
+    public void testGetDeviceInfo() throws Exception {
+        log.info("TEST START: testGetDeviceInfo()");
         DeviceInfo info = yubihsm.getDeviceInfo();
         assertNotNull(info);
         assertNotNull(info.getVersion());
         //assertNotEquals(0, info.getSerialnumber());
         assertNotNull(info.getSupportedAlgorithms());
-        logger.info("TEST END: testGetDeviceInfo()");
+        log.info("TEST END: testGetDeviceInfo()");
     }
 
     //@Test
-    public void testResetDevice()
-            throws InvalidKeySpecException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException,
-                   YHDeviceException, NoSuchPaddingException, BadPaddingException, YHAuthenticationException,
-                   InvalidAlgorithmParameterException, YHInvalidResponseException, IllegalBlockSizeException, MalformedURLException {
-        logger.info("TEST START: testResetDevice()");
-
+    public void testResetDevice() throws Exception {
+        log.info("TEST START: testResetDevice()");
         YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
         assertNotNull("Failed to create an authenticated session", session);
 
         YHCore.resetDevice(session);
         session.closeSession();
-
-        logger.info("TEST END: testResetDevice()");
+        log.info("TEST END: testResetDevice()");
     }
 
     @Test
-    public void testGetPseudoRandom()
-            throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
-                   NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
-                   YHInvalidResponseException, InvalidKeySpecException, IllegalBlockSizeException {
-        logger.info("TEST START: testGetPseudoRandom()");
+    public void testGetPseudoRandom() throws Exception {
+        log.info("TEST START: testGetPseudoRandom()");
         YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
         for (int i = 1; i < 20; i++) {
             byte[] response = YHCore.getRandom(session, i);
             assertEquals(i, response.length);
         }
         session.closeSession();
-        logger.info("TEST END: testGetPseudoRandom()");
+        log.info("TEST END: testGetPseudoRandom()");
     }
 
     @Test
-    public void testAuthenticationKeyObject()
-            throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
-                   NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
-                   YHInvalidResponseException, InvalidKeySpecException, IllegalBlockSizeException, IOException {
-        logger.info("TEST START: testAuthenticationKeyObject()");
+    public void testAuthenticationKeyObject() throws Exception {
+        log.info("TEST START: testAuthenticationKeyObject()");
         YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
 
         // New authentication key details
@@ -169,13 +141,10 @@ public class YubiHsmTest {
         listObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY, false);
 
         session.closeSession();
-        logger.info("TEST END: testAuthenticationKeyObject()");
+        log.info("TEST END: testAuthenticationKeyObject()");
     }
 
-    private void listObject(final YHSession session, final short id, final ObjectType type, final boolean exists)
-            throws IOException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   NoSuchPaddingException, IllegalBlockSizeException {
+    private void listObject(final YHSession session, final short id, final ObjectType type, final boolean exists) throws Exception {
 
         HashMap filters = new HashMap();
         filters.put(YHObject.ListFilter.ID, id);
@@ -193,10 +162,7 @@ public class YubiHsmTest {
 
     private void verifyObjectInfo(final YHSession session, final short id, final ObjectType type, final List<Capability> capabilities,
                                   final List domains, final Algorithm algorithm, final ObjectOrigin origin, final String label,
-                                  final List<Capability> delegatedCapabilities)
-            throws NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   NoSuchPaddingException, IllegalBlockSizeException {
+                                  final List<Capability> delegatedCapabilities) throws Exception {
         YHObjectInfo object = YHObject.getObjectInfo(session, id, type);
         assertNotNull(object);
         assertEquals(capabilities, object.getCapabilities());

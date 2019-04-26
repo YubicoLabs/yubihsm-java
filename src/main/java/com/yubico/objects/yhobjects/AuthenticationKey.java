@@ -151,11 +151,7 @@ public class AuthenticationKey extends YHObject {
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
-        verifyParametersForNewKey(domains, keyAlgorithm);
-        if (encryptionKey.length != KEY_SIZE || macKey.length != KEY_SIZE) {
-            throw new IllegalArgumentException("Each of the long term encryption key and MAC key have to be of size " + KEY_SIZE + ". Instead, " +
-                                               "found " + encryptionKey.length + " bytes encryption key and " + macKey.length + " bytes MAC key");
-        }
+        verifyParametersForNewKey(domains, keyAlgorithm, encryptionKey, macKey);
 
         ByteBuffer bb = ByteBuffer.allocate(93); // 2 bytes objectID + 40 bytes label + 2 bytes domains + 8 bytes capabilities + 1 byte algorithm +
         // 8 bytes delegated capabilities + 16 bytes encryption key + 16 bytes MAC key
@@ -293,13 +289,18 @@ public class AuthenticationKey extends YHObject {
         Arrays.fill(password, 'c');
     }
 
-    private static void verifyParametersForNewKey(@NonNull final List<Integer> domains, @NonNull final Algorithm keyAlgorithm) {
+    private static void verifyParametersForNewKey(@NonNull final List<Integer> domains, @NonNull final Algorithm keyAlgorithm,
+                                                  @NonNull final byte[] encryptionKey, @NonNull final byte[] macKey) {
         if (domains.isEmpty()) {
             throw new IllegalArgumentException("Domains parameter cannot be null or empty");
         }
         if (keyAlgorithm != null && !keyAlgorithm.equals(Algorithm.AES128_YUBICO_AUTHENTICATION)) {
             throw new IllegalArgumentException(
                     "Currently, the only supported Authentication Key parameter is " + Algorithm.AES128_YUBICO_AUTHENTICATION.toString());
+        }
+        if (encryptionKey.length != KEY_SIZE || macKey.length != KEY_SIZE) {
+            throw new IllegalArgumentException("Each of the long term encryption key and MAC key have to be of size " + KEY_SIZE + ". Instead, " +
+                                               "found " + encryptionKey.length + " bytes encryption key and " + macKey.length + " bytes MAC key");
         }
     }
 

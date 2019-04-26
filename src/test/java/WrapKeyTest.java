@@ -3,7 +3,9 @@ import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
-import com.yubico.exceptions.*;
+import com.yubico.exceptions.UnsupportedAlgorithmException;
+import com.yubico.exceptions.YHDeviceException;
+import com.yubico.exceptions.YHError;
 import com.yubico.objects.WrapData;
 import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
@@ -17,25 +19,17 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.io.ByteArrayInputStream;
-import java.net.MalformedURLException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.logging.Logger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class WrapKeyTest {
     Logger log = Logger.getLogger(WrapKeyTest.class.getName());
@@ -44,9 +38,7 @@ public class WrapKeyTest {
     private static YHSession session;
 
     @BeforeClass
-    public static void init()
-            throws MalformedURLException, InvalidKeySpecException, NoSuchAlgorithmException, YHConnectionException, YHDeviceException,
-                   YHAuthenticationException, YHInvalidResponseException {
+    public static void init() throws Exception {
         if (session == null) {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
@@ -56,10 +48,7 @@ public class WrapKeyTest {
     }
 
     @AfterClass
-    public static void destroy()
-            throws YHDeviceException, YHAuthenticationException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
-                   NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, BadPaddingException,
-                   IllegalBlockSizeException {
+    public static void destroy() throws Exception {
         session.closeSession();
         yubihsm.close();
     }
@@ -74,6 +63,7 @@ public class WrapKeyTest {
     }
 
     private void generateWrapKey(Algorithm keyAlgorithm, int keyLength) throws Exception {
+        log.info("Test generating wrap key with algorithm " + keyAlgorithm.getName());
         List domains = Arrays.asList(2, 5, 8);
         List capabilities = Arrays.asList(Capability.EXPORT_WRAPPED, Capability.IMPORT_WRAPPED);
         String label = "test_wrap_key";
@@ -108,6 +98,7 @@ public class WrapKeyTest {
     }
 
     private void importWrapKey(Algorithm keyAlgorithm, int keyLength) throws Exception {
+        log.info("Test importing " + keyLength + " bytes long wrap key with algorithm " + keyAlgorithm.getName());
         byte[] data = new byte[keyLength];
         new SecureRandom().nextBytes(data);
 
@@ -142,6 +133,7 @@ public class WrapKeyTest {
         byte[] data = new byte[32];
         new SecureRandom().nextBytes(data);
 
+        log.info("Test importing wrap key with wrong key length");
         boolean exceptionThrown = false;
         try {
             WrapKey.importWrapKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES192_CCM_WRAP, null, null, data);
@@ -150,6 +142,7 @@ public class WrapKeyTest {
         }
         assertTrue(exceptionThrown);
 
+        log.info("Test importing wrap key with non-wrap key algorithm");
         exceptionThrown = false;
         try {
             WrapKey.importWrapKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.RSA_2048, null, null, data);
@@ -157,34 +150,139 @@ public class WrapKeyTest {
             exceptionThrown = true;
         }
         assertTrue(exceptionThrown);
+
+        log.info("Test importing null wrap key");
+        exceptionThrown = false;
+        try {
+            WrapKey.importWrapKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES192_CCM_WRAP, null, null, null);
+        } catch (IllegalArgumentException e) {
+            exceptionThrown = true;
+        }
+        assertTrue(exceptionThrown);
+
         log.info("TEST START: testInvalidWrapKey()");
     }
 
     @Test
     public void testDataWrap() throws Exception {
         log.info("TEST START: testDataWrap()");
-        dataWrap(Algorithm.AES128_CCM_WRAP);
-        dataWrap(Algorithm.AES192_CCM_WRAP);
-        dataWrap(Algorithm.AES256_CCM_WRAP);
+        dataWrapDifferentLengths(Algorithm.AES128_CCM_WRAP);
+        dataWrapDifferentLengths(Algorithm.AES192_CCM_WRAP);
+        dataWrapDifferentLengths(Algorithm.AES256_CCM_WRAP);
         log.info("TEST END: testDataWrap()");
     }
 
-    private void dataWrap(Algorithm algorithm) throws Exception {
-        String data = "Hello world!";
-
+    private void dataWrapDifferentLengths(Algorithm algorithm) throws Exception {
         short id = WrapKey.generateWrapKey(session, (short) 0, "test_wrap_key", Arrays.asList(2, 5, 8), algorithm,
                                            Arrays.asList(Capability.WRAP_DATA, Capability.UNWRAP_DATA), null);
-
         try {
-            WrapKey key = new WrapKey(id);
-            WrapData wd = key.wrapData(session, data.getBytes());
+            WrapKey wrapKey = new WrapKey(id);
 
-            byte[] unwrapped = key.unwrapData(session, wd);
-            assertEquals(data, new String(unwrapped));
+            log.info("Test wrapping normal length data with wrap key of algorithm " + algorithm.getName());
+            dataWrap(wrapKey, "Hello world!".getBytes(), true);
 
+            log.info("Test wrapping null data with wrap key of algorithm " + algorithm.getName());
+            dataWrap(wrapKey, null, false);
+
+            log.info("Test wrapping empty data with wrap key of algorithm " + algorithm.getName());
+            dataWrap(wrapKey, new byte[0], false);
+
+            log.info("Test wrapping 1 byte long data with wrap key of algorithm " + algorithm.getName());
+            byte[] data = new byte[1];
+            new Random().nextBytes(data);
+            dataWrap(wrapKey, data, true);
+
+            log.info("Test wrapping too long data with wrap key of algorithm " + algorithm.getName());
+            data = new byte[2048];
+            new Random().nextBytes(data);
+            dataWrap(wrapKey, data, false);
+
+            unwrapInvalidData(wrapKey, algorithm.getName());
         } finally {
             YHObject.deleteObject(session, id, ObjectType.TYPE_WRAP_KEY);
         }
+    }
+
+    private void dataWrap(WrapKey key, byte[] data, boolean success) throws Exception {
+
+        if (success) {
+            WrapData wd = key.wrapData(session, data);
+            assertNotNull(wd);
+            assertNotNull(wd.getNonce());
+            assertEquals(WrapData.NONCE_LENGTH, wd.getNonce().length);
+            assertNotNull(wd.getWrappedData());
+            assertTrue(wd.getWrappedData().length > 0);
+            assertNotEquals(data, wd.getWrappedData());
+            assertNotNull(wd.getMac());
+            assertEquals(WrapData.MAC_LENGTH, wd.getMac().length);
+
+            byte[] unwrapped = key.unwrapData(session, wd);
+            assertArrayEquals(data, unwrapped);
+        } else {
+            boolean exceptionThrown = false;
+            try {
+                key.wrapData(session, data);
+            } catch (IllegalArgumentException | IndexOutOfBoundsException e) {
+                exceptionThrown = true;
+            }
+            assertTrue(exceptionThrown);
+        }
+    }
+
+    private void unwrapInvalidData(WrapKey wrapKey, String keyAlgorithm) throws Exception {
+        byte[] nonce = new byte[13];
+        new Random().nextBytes(nonce);
+        byte[] mac = new byte[16];
+        new Random().nextBytes(mac);
+
+        log.info("Test unwrapping null data using wrap key of algorithm " + keyAlgorithm);
+        boolean exceptionThrown = false;
+        try {
+            wrapKey.unwrapData(session, null);
+        } catch (IllegalArgumentException e) {
+            exceptionThrown = true;
+        }
+        assertTrue(exceptionThrown);
+
+        log.info("Test unwrapping data with null nonce using wrap key of algorithm " + keyAlgorithm);
+        unwrapInvalidData(wrapKey, null, "wrapped data".getBytes(), mac);
+
+        log.info("Test unwrapping data with empty nonce using wrap key of algorithm " + keyAlgorithm);
+        unwrapInvalidData(wrapKey, new byte[0], "wrapped data".getBytes(), mac);
+
+        log.info("Test unwrapping data with a too long nonce using wrap key of algorithm " + keyAlgorithm);
+        unwrapInvalidData(wrapKey, "Nonce that is longer than 13 bytes".getBytes(), "wrapped data".getBytes(), mac);
+
+        log.info("Test unwrapping data with a too short nonce using wrap key of algorithm " + keyAlgorithm);
+        unwrapInvalidData(wrapKey, "nonce".getBytes(), "wrapped data".getBytes(), mac);
+
+        log.info("Test unwrapping data with null MAC using wrap key of algorithm " + keyAlgorithm);
+        unwrapInvalidData(wrapKey, nonce, "wrapped data".getBytes(), null);
+
+        log.info("Test unwrapping data with empty MAC using wrap key of algorithm " + keyAlgorithm);
+        unwrapInvalidData(wrapKey, nonce, "wrapped data".getBytes(), new byte[0]);
+
+        log.info("Test unwrapping data with too long MAC using wrap key of algorithm " + keyAlgorithm);
+        unwrapInvalidData(wrapKey, nonce, "wrapped data".getBytes(), "Mac that is longer than 16 bytes".getBytes());
+
+        log.info("Test unwrapping data with too short MAC using wrap key of algorithm " + keyAlgorithm);
+        unwrapInvalidData(wrapKey, nonce, "wrapped data".getBytes(), "mac".getBytes());
+
+        log.info("Test unwrapping data with null wrappedData using wrap key of algorithm " + keyAlgorithm);
+        unwrapInvalidData(wrapKey, nonce, null, mac);
+
+        log.info("Test unwrapping data with empty wrappedData using wrap key of algorithm " + keyAlgorithm);
+        unwrapInvalidData(wrapKey, nonce, new byte[0], mac);
+    }
+
+    private void unwrapInvalidData(WrapKey wrapKey, byte[] nonce, byte[] wrappedData, byte[] mac) throws Exception {
+        boolean exceptionThrown = false;
+        try {
+            wrapKey.unwrapData(session, new WrapData(nonce, wrappedData, mac));
+        } catch (IllegalArgumentException e) {
+            exceptionThrown = true;
+        }
+        assertTrue(exceptionThrown);
     }
 
     @Test
@@ -208,39 +306,62 @@ public class WrapKeyTest {
     }
 
     private void objectWrap(Algorithm algorithm, short certId, X509Certificate cert) throws Exception {
+        log.info("Test wrapping certificate with ID 0x" + Integer.toHexString(certId) + " using wrap key of algorithm " + algorithm.getName());
         short id = WrapKey.generateWrapKey(session, (short) 0, "", Arrays.asList(2, 5, 8), algorithm,
                                            Arrays.asList(Capability.IMPORT_WRAPPED, Capability.EXPORT_WRAPPED),
                                            Arrays.asList(Capability.EXPORTABLE_UNDER_WRAP));
         try {
-            // Export certificate under wrap
-            WrapKey key = new WrapKey(id);
-            WrapData exportedCert = key.exportWrapped(session, certId, ObjectType.TYPE_OPAQUE);
-
-            // Delete it from the HSM and make sure that it is no longer there
-            YHObject.deleteObject(session, certId, ObjectType.TYPE_OPAQUE);
-            HashMap filters = new HashMap();
-            filters.put(YHObject.ListFilter.ID, certId);
-            filters.put(YHObject.ListFilter.TYPE, ObjectType.TYPE_OPAQUE);
-            List<YHObjectInfo> objects = YHObject.getObjectList(session, filters);
-            assertEquals(0, objects.size());
-
-            // Import the certificate under wrap
-            YHObject importedCert = key.importWrapped(session, exportedCert.getNonce(), exportedCert.getWrappedData());
-
-            // Verify that the certificate exists
-            objects = YHObject.getObjectList(session, filters);
-            assertEquals(1, objects.size());
-
-            // Verify that it is the same certificate as the test certificate
-            Opaque opaque = new Opaque(certId, Algorithm.OPAQUE_DATA);
-            byte[] certBytes = opaque.getOpaque(session);
-            ByteArrayInputStream in = new ByteArrayInputStream(certBytes);
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            X509Certificate certInHsm = (X509Certificate) cf.generateCertificate(in);
-            assertEquals(cert, certInHsm);
-
+            WrapKey wrapKey = new WrapKey(id);
+            certWrap(wrapKey, certId, cert);
+            nonExistingObjectWrap(wrapKey, certId, algorithm.getName());
         } finally {
             YHObject.deleteObject(session, id, ObjectType.TYPE_WRAP_KEY);
         }
+    }
+
+    private void certWrap(WrapKey wrapKey, short certId, X509Certificate cert) throws Exception {
+        // Export certificate under wrap
+        WrapData exportedCert = wrapKey.exportWrapped(session, certId, ObjectType.TYPE_OPAQUE);
+
+        // Delete it from the HSM and make sure that it is no longer there
+        YHObject.deleteObject(session, certId, ObjectType.TYPE_OPAQUE);
+        HashMap filters = new HashMap();
+        filters.put(YHObject.ListFilter.ID, certId);
+        filters.put(YHObject.ListFilter.TYPE, ObjectType.TYPE_OPAQUE);
+        List<YHObjectInfo> objects = YHObject.getObjectList(session, filters);
+        assertEquals(0, objects.size());
+
+        // Import the certificate under wrap
+        YHObject importedCert = wrapKey.importWrapped(session, exportedCert.getNonce(), exportedCert.getWrappedData());
+
+        // Verify that the certificate exists
+        objects = YHObject.getObjectList(session, filters);
+        assertEquals(1, objects.size());
+
+        // Verify that it is the same certificate as the test certificate
+        Opaque opaque = new Opaque(certId, Algorithm.OPAQUE_DATA);
+        byte[] certBytes = opaque.getOpaque(session);
+        ByteArrayInputStream in = new ByteArrayInputStream(certBytes);
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        X509Certificate certInHsm = (X509Certificate) cf.generateCertificate(in);
+        assertEquals(cert, certInHsm);
+    }
+
+    private void nonExistingObjectWrap(WrapKey wrapKey, short certId, String wrapKeyAlgorithm) throws Exception {
+        log.info("Test wrapping a non existing object using wrap key of algorithm " + wrapKeyAlgorithm);
+        HashMap filters = new HashMap();
+        filters.put(YHObject.ListFilter.ID, certId);
+        filters.put(YHObject.ListFilter.TYPE, ObjectType.TYPE_ASYMMETRIC_KEY);
+        List<YHObjectInfo> objects = YHObject.getObjectList(session, filters);
+        assertEquals(0, objects.size());
+
+        boolean exceptionThrown = false;
+        try {
+            wrapKey.exportWrapped(session, certId, ObjectType.TYPE_ASYMMETRIC_KEY);
+        } catch (YHDeviceException e) {
+            exceptionThrown = true;
+            assertEquals(YHError.OBJECT_NOT_FOUND, e.getErrorCode());
+        }
+        assertTrue(exceptionThrown);
     }
 }

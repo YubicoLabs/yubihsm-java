@@ -30,7 +30,7 @@ public class Opaque extends YHObject {
     private static Logger log = Logger.getLogger(Opaque.class.getName());
 
     public static final ObjectType TYPE = ObjectType.TYPE_OPAQUE;
-    private static final int MAX_OPAQUE_DATA_LENGTH = 1968;
+    public static final int MAX_OPAQUE_DATA_LENGTH = 1968;
 
     private Algorithm algorithm;
 
@@ -87,7 +87,6 @@ public class Opaque extends YHObject {
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, CertificateEncodingException {
         Utils.checkEmptyList(domains, "For an object to be useful, it must be accessible in at least one domain");
-
         return putOpaque(session, id, label, domains, null, Algorithm.OPAQUE_X509_CERTIFICATE, certificate.getEncoded());
     }
 

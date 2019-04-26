@@ -4,7 +4,8 @@ import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
-import com.yubico.exceptions.*;
+import com.yubico.exceptions.YHDeviceException;
+import com.yubico.exceptions.YHError;
 import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.ObjectOrigin;
@@ -17,33 +18,24 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import java.net.MalformedURLException;
-import java.security.*;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.ECGenParameterSpec;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.InvalidParameterSpecException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 public class EcNewKeyTest {
-
-    Logger logger = Logger.getLogger(EcNewKeyTest.class.getName());
+    Logger log = Logger.getLogger(EcNewKeyTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;
 
     @BeforeClass
-    public static void init()
-            throws MalformedURLException, InvalidKeySpecException, NoSuchAlgorithmException, YHConnectionException, YHDeviceException,
-                   YHAuthenticationException, YHInvalidResponseException {
+    public static void init() throws Exception {
         if (session == null) {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
@@ -53,21 +45,14 @@ public class EcNewKeyTest {
     }
 
     @AfterClass
-    public static void destroy()
-            throws YHDeviceException, YHAuthenticationException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
-                   NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, BadPaddingException,
-                   IllegalBlockSizeException {
+    public static void destroy() throws Exception {
         session.closeSession();
         yubihsm.close();
     }
 
     @Test
-    public void testGenerateKey()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException {
-        logger.info("TEST START: testGenerateKey()");
-
+    public void testGenerateKey() throws Exception {
+        log.info("TEST START: testGenerateKey()");
         generateKey(Algorithm.EC_P224);
         generateKey(Algorithm.EC_P256);
         generateKey(Algorithm.EC_P384);
@@ -76,15 +61,11 @@ public class EcNewKeyTest {
         generateKey(Algorithm.EC_BP256);
         generateKey(Algorithm.EC_BP384);
         generateKey(Algorithm.EC_BP512);
-
-        logger.info("TEST END: testGenerateKey()");
+        log.info("TEST END: testGenerateKey()");
     }
 
-    private void generateKey(Algorithm algorithm)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException {
-
+    private void generateKey(Algorithm algorithm) throws Exception {
+        log.info("Test generating EC key with algorithm " + algorithm.getName());
         final List domains = Arrays.asList(2, 5, 8);
         final List capabilities = Arrays.asList(Capability.SIGN_PKCS, Capability.SIGN_ECDSA, Capability.SIGN_EDDSA);
         final String label = "asym_key";
@@ -94,7 +75,7 @@ public class EcNewKeyTest {
 
         try {
             // Verify key properties
-            final YHObjectInfo key= YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final YHObjectInfo key = YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             assertNotEquals(0, key.getId());
             assertEquals(id, key.getId());
             assertEquals(ObjectType.TYPE_ASYMMETRIC_KEY, key.getType());
@@ -121,11 +102,8 @@ public class EcNewKeyTest {
     // -------------------------------------------------------------------------------
 
     @Test
-    public void testImportKeyWithWrongParameters()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, UnsupportedAlgorithmException {
-        logger.info("TEST START: testImportKeyWithWrongParameters()");
+    public void testImportKeyWithWrongParameters() throws Exception {
+        log.info("TEST START: testImportKeyWithWrongParameters()");
 
         KeyPairGenerator generator = KeyPairGenerator.getInstance("EC");
         generator.initialize(new ECGenParameterSpec("secp256r1"));
@@ -133,7 +111,7 @@ public class EcNewKeyTest {
         ECPrivateKey privateKey = (ECPrivateKey) keyPair.getPrivate();
         byte[] d = privateKey.getS().toByteArray();
 
-        // Test importing the key with a non Asymmetric key algorithm
+        log.info("Test importing an EC key with a non Asymmetric key algorithm");
         boolean exceptionThrown = false;
         try {
             AsymmetricKeyEc.importKey(session, (short) 0, "", Arrays.asList(2), Algorithm.AES128_CCM_WRAP, Arrays.asList(Capability.SIGN_ECDSA), d);
@@ -142,7 +120,7 @@ public class EcNewKeyTest {
         }
         assertTrue("Succeeded in importing an EC key even though the specified algorithm is a non asymmetric key algorithm", exceptionThrown);
 
-        // Test importing an RSA key as an EC key
+        log.info("Test importing and RSA key as an EC key");
         exceptionThrown = false;
         try {
             AsymmetricKeyEc.importKey(session, (short) 0, "", Arrays.asList(2), Algorithm.RSA_3072, Arrays.asList(Capability.SIGN_ECDSA), d);
@@ -151,16 +129,16 @@ public class EcNewKeyTest {
         }
         assertTrue("Succeeded in importing an RSA key as an EC key", exceptionThrown);
 
-        // Test importing an EC key whose parameter does not match the specified EC algorithm
+        log.info("Test importing an EC key whose parameter does not match the specified EC algorithm");
         exceptionThrown = false;
         try {
             AsymmetricKeyEc.importKey(session, (short) 0, "", Arrays.asList(2, 5), Algorithm.EC_P224, Arrays.asList(Capability.SIGN_ECDSA), d);
-        } catch (InvalidParameterException e) {
+        } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
         assertTrue("Succeeded in importing an EC key whose parameters do not match the specified algorithm", exceptionThrown);
 
-        // Test importing an EC key without specifying the private key
+        log.info("Test importing an EC key with null private key");
         exceptionThrown = false;
         try {
             AsymmetricKeyEc.importKey(session, (short) 0, "", Arrays.asList(2), Algorithm.EC_P256, Arrays.asList(Capability.SIGN_ECDSA), null);
@@ -169,17 +147,23 @@ public class EcNewKeyTest {
         }
         assertTrue("Succeeded in importing an EC key in spite of missing private key", exceptionThrown);
 
-        logger.info("TEST END: testImportKeyWithWrongParameters()");
+        log.info("Test importing an EC key with an empty private key");
+        exceptionThrown = false;
+        try {
+            AsymmetricKeyEc.importKey(session, (short) 0, "", Arrays.asList(2), Algorithm.EC_P256, Arrays.asList(Capability.SIGN_ECDSA), new byte[0]);
+        } catch (IllegalArgumentException e) {
+            exceptionThrown = true;
+        }
+        assertTrue("Succeeded in importing an EC key in spite of missing private key", exceptionThrown);
+
+        log.info("TEST END: testImportKeyWithWrongParameters()");
     }
 
     @Test
-    public void testNonEcKey()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, InvalidAlgorithmParameterException
-            , YHAuthenticationException, YHInvalidResponseException, BadPaddingException, IllegalBlockSizeException, InvalidKeySpecException,
-                   UnsupportedAlgorithmException, InvalidParameterSpecException, NoSuchProviderException {
-        logger.info("TEST START: testNonEcKey()");
+    public void testNonEcKey() throws Exception {
+        log.info("TEST START: testNonEcKey()");
 
-        // Test creating an AsymmetricKeyEc object without algorithm
+        log.info("Test creating an AsymmetricKeyEc object without specifying an algorithm");
         boolean exceptionThrown = false;
         try {
             new AsymmetricKeyEc((short) 0x1234, null);
@@ -188,7 +172,7 @@ public class EcNewKeyTest {
         }
         assertTrue("Succeeded in creating an AsymmetricKeyEc object in spite of missing algorithm", exceptionThrown);
 
-        // Test creating an AsymmetricKeyEc object with a non EC algorithm
+        log.info("Test creating an AsymmetricKeyEc object with a non EC algorithm");
         exceptionThrown = false;
         try {
             new AsymmetricKeyEc((short) 0x1234, Algorithm.RSA_2048);
@@ -197,7 +181,7 @@ public class EcNewKeyTest {
         }
         assertTrue("Succeeded in creating an AsymmetricKeyEc object with a non EC algorithm", exceptionThrown);
 
-        // Test creating an AsymmetricKeyEc object for a key that does not exist in the device
+        log.info("Test creating an AsymmetricKeyEc object for a key that does not exist in the device");
         AsymmetricKeyEc key = new AsymmetricKeyEc((short) 0x1234, Algorithm.EC_P256);
         exceptionThrown = false;
         try {
@@ -208,18 +192,12 @@ public class EcNewKeyTest {
         }
         assertTrue("Succeeded in retrieving a public key of an EC key that does not exist on the device", exceptionThrown);
 
-        logger.info("TEST END: testNonEcKey()");
-
+        log.info("TEST END: testNonEcKey()");
     }
 
     @Test
-    public void testImportKey()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, NoSuchProviderException,
-                   UnsupportedAlgorithmException {
-        logger.info("TEST START: testImportKey()");
-
+    public void testImportKey() throws Exception {
+        log.info("TEST START: testImportKey()");
         importEcKeyTest(Algorithm.EC_P224, "secp224r1", 28, false);
         importEcKeyTest(Algorithm.EC_P256, "secp256r1", 32, false);
         importEcKeyTest(Algorithm.EC_P384, "secp384r1", 48, false);
@@ -228,14 +206,11 @@ public class EcNewKeyTest {
         importEcKeyTest(Algorithm.EC_BP256, "brainpoolP256r1", 32, true);
         importEcKeyTest(Algorithm.EC_BP384, "brainpoolP384r1", 48, true);
         importEcKeyTest(Algorithm.EC_BP512, "brainpoolP512r1", 64, true);
-
-        logger.info("TEST END: testImportKey()");
+        log.info("TEST END: testImportKey()");
     }
 
-    private void importEcKeyTest(Algorithm algorithm, String curve, int componentLength, boolean brainpool)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, NoSuchProviderException, UnsupportedAlgorithmException {
+    private void importEcKeyTest(Algorithm algorithm, String curve, int componentLength, boolean brainpool) throws Exception {
+        log.info("Test importing EC key with algorithm " + algorithm.getName());
         final List domains = Arrays.asList(2, 5, 8);
         final List capabilities = Arrays.asList(Capability.SIGN_ECDSA);
         final String label = "imported_asym_key";

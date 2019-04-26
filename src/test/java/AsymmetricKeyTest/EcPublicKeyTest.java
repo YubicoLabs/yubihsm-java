@@ -4,7 +4,6 @@ import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
-import com.yubico.exceptions.*;
 import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.ObjectType;
@@ -14,29 +13,21 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import java.net.MalformedURLException;
-import java.security.*;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.InvalidParameterSpecException;
+import java.security.KeyPair;
+import java.security.PublicKey;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 
 public class EcPublicKeyTest {
-
-    Logger logger = Logger.getLogger(EcPublicKeyTest.class.getName());
+    Logger log = Logger.getLogger(EcPublicKeyTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;
 
     @BeforeClass
-    public static void init()
-            throws MalformedURLException, InvalidKeySpecException, NoSuchAlgorithmException, YHConnectionException, YHDeviceException,
-                   YHAuthenticationException, YHInvalidResponseException {
+    public static void init() throws Exception {
         if (session == null) {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
@@ -46,23 +37,14 @@ public class EcPublicKeyTest {
     }
 
     @AfterClass
-    public static void destroy()
-            throws YHDeviceException, YHAuthenticationException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
-                   NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, BadPaddingException,
-                   IllegalBlockSizeException {
+    public static void destroy() throws Exception {
         session.closeSession();
         yubihsm.close();
     }
 
     @Test
-    public void testPublicKey()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidKeySpecException, InvalidParameterSpecException,
-                   UnsupportedAlgorithmException, NoSuchProviderException {
-
-        logger.info("TEST START: testPublicKey()");
-
+    public void testPublicKey() throws Exception {
+        log.info("TEST START: testPublicKey()");
         getEcPublicKeyTest(Algorithm.EC_P224, "secp224r1", 28, false);
         getEcPublicKeyTest(Algorithm.EC_P256, "secp256r1", 32, false);
         getEcPublicKeyTest(Algorithm.EC_P384, "secp384r1", 48, false);
@@ -71,17 +53,12 @@ public class EcPublicKeyTest {
         getEcPublicKeyTest(Algorithm.EC_BP256, "brainpoolP256r1", 32, true);
         getEcPublicKeyTest(Algorithm.EC_BP384, "brainpoolP384r1", 48, true);
         getEcPublicKeyTest(Algorithm.EC_BP512, "brainpoolP512r1", 64, true);
-
-        logger.info("TEST END: testPublicKey()");
-
+        log.info("TEST END: testPublicKey()");
     }
 
 
-    private void getEcPublicKeyTest(Algorithm algorithm, String curve, int componentLength, boolean brainpool)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidKeySpecException, UnsupportedAlgorithmException,
-                   InvalidParameterSpecException, NoSuchProviderException {
+    private void getEcPublicKeyTest(Algorithm algorithm, String curve, int componentLength, boolean brainpool) throws Exception {
+        log.info("Test retrieving the public key of an EC key with algorithm " + algorithm.getName());
         final short id = 0x1234;
         KeyPair keypair;
         if (brainpool) {

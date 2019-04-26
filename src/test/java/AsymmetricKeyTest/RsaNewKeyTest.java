@@ -4,7 +4,8 @@ import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
-import com.yubico.exceptions.*;
+import com.yubico.exceptions.YHDeviceException;
+import com.yubico.exceptions.YHError;
 import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.ObjectOrigin;
@@ -17,12 +18,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import java.net.MalformedURLException;
-import java.security.*;
-import java.security.spec.InvalidKeySpecException;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.spec.RSAPrivateCrtKeySpec;
 import java.util.Arrays;
 import java.util.List;
@@ -31,15 +29,13 @@ import java.util.logging.Logger;
 import static org.junit.Assert.*;
 
 public class RsaNewKeyTest {
-    Logger logger = Logger.getLogger(RsaNewKeyTest.class.getName());
+    Logger log = Logger.getLogger(RsaNewKeyTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;
 
     @BeforeClass
-    public static void init()
-            throws MalformedURLException, InvalidKeySpecException, NoSuchAlgorithmException, YHConnectionException, YHDeviceException,
-                   YHAuthenticationException, YHInvalidResponseException {
+    public static void init() throws Exception {
         if (session == null) {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
@@ -49,34 +45,23 @@ public class RsaNewKeyTest {
     }
 
     @AfterClass
-    public static void destroy()
-            throws YHDeviceException, YHAuthenticationException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
-                   NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, BadPaddingException,
-                   IllegalBlockSizeException {
+    public static void destroy() throws Exception {
         session.closeSession();
         yubihsm.close();
     }
 
     @Test
-    public void testGenerateKey()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException {
-        logger.info("TEST START: testGenerateKey()");
-
+    public void testGenerateKey() throws Exception {
+        log.info("TEST START: testGenerateKey()");
         generateKey(Algorithm.RSA_2048);
         generateKey(Algorithm.RSA_3072);
         generateKey(Algorithm.RSA_4096);
-
-        logger.info("TEST END: testGenerateKey()");
+        log.info("TEST END: testGenerateKey()");
     }
 
     @Test
-    public void testImportKeyWithWrongParameters()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidKeySpecException, UnsupportedAlgorithmException {
-        logger.info("TEST START: testImportKeyWithWrongParameters()");
+    public void testImportKeyWithWrongParameters() throws Exception {
+        log.info("TEST START: testImportKeyWithWrongParameters()");
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
         kpg.initialize(2048);
@@ -88,7 +73,7 @@ public class RsaNewKeyTest {
         byte[] p = ks.getPrimeP().toByteArray();
         byte[] q = ks.getPrimeQ().toByteArray();
 
-        // Test importing the key with a non Asymmetric key algorithm
+        log.info("Test importing an RSA key with a non Asymmetric key algorithm");
         boolean exceptionThrown = false;
         try {
             AsymmetricKeyRsa.importKey(session, (short) 0, "", Arrays.asList(2, 5), Algorithm.AES128_CCM_WRAP, Arrays.asList(Capability.SIGN_PKCS),
@@ -98,7 +83,7 @@ public class RsaNewKeyTest {
         }
         assertTrue("Succeeded in importing an RSA key even though the specified algorithm is not an asymmetric key algorithm", exceptionThrown);
 
-        // Test importing an EC key as an RSA key
+        log.info("Test importing an EC key as an RSA key");
         exceptionThrown = false;
         try {
             AsymmetricKeyRsa.importKey(session, (short) 0, "", Arrays.asList(2, 5), Algorithm.EC_P224, Arrays.asList(Capability.SIGN_PKCS), p, q);
@@ -107,16 +92,16 @@ public class RsaNewKeyTest {
         }
         assertTrue("Succeeded in importing an EC key as an RSA key", exceptionThrown);
 
-        // Test importing an RSA key whose parameter does not match the specified RSA algorithm
+        log.info("Test importing an RSA key whose parameter does not match the specified RSA algorithm");
         exceptionThrown = false;
         try {
             AsymmetricKeyRsa.importKey(session, (short) 0, "", Arrays.asList(2, 5), Algorithm.RSA_3072, Arrays.asList(Capability.SIGN_PKCS), p, q);
-        } catch (InvalidParameterException e) {
+        } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
         assertTrue("Succeeded in importing an RSA key whose parameters do not match the specified algorithm", exceptionThrown);
 
-        // Test importing an RSA key without specifying one of the required private key primes
+        log.info("Test importing an RSA key without specifying one of the required private key primes");
         exceptionThrown = false;
         try {
             AsymmetricKeyRsa.importKey(session, (short) 0, "", Arrays.asList(2, 5), Algorithm.RSA_2048, Arrays.asList(Capability.SIGN_PKCS), p,
@@ -126,18 +111,24 @@ public class RsaNewKeyTest {
         }
         assertTrue("Succeeded in importing an RSA key in spite of missing private key", exceptionThrown);
 
-        logger.info("TEST END: testImportKeyWithWrongParameters()");
+        log.info("Test importing an RSA key with empty private key primes");
+        exceptionThrown = false;
+        try {
+            AsymmetricKeyRsa.importKey(session, (short) 0, "", Arrays.asList(2, 5), Algorithm.RSA_2048, Arrays.asList(Capability.SIGN_PKCS),
+                                       new byte[0], new byte[0]);
+        } catch (IllegalArgumentException e) {
+            exceptionThrown = true;
+        }
+        assertTrue("Succeeded in importing an RSA key in spite of missing private key", exceptionThrown);
 
+        log.info("TEST END: testImportKeyWithWrongParameters()");
     }
 
     @Test
-    public void testNonRsaKey()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, InvalidAlgorithmParameterException
-            , YHAuthenticationException, YHInvalidResponseException, BadPaddingException, IllegalBlockSizeException, InvalidKeySpecException,
-                   UnsupportedAlgorithmException {
-        logger.info("TEST START: testNonRsaKey()");
+    public void testNonRsaKey() throws Exception {
+        log.info("TEST START: testNonRsaKey()");
 
-        // Test creating an AsymmetricKeyRsa object without algorithm
+        log.info("Test creating an AsymmetricKeyRsa object without specifying an algorithm");
         boolean exceptionThrown = false;
         try {
             new AsymmetricKeyRsa((short) 0x1234, null);
@@ -146,7 +137,7 @@ public class RsaNewKeyTest {
         }
         assertTrue("Succeeded in creating an AsymmetricKeyRsa object in spite of missing algorithm", exceptionThrown);
 
-        // Test creating an AsymmetricKeyRsa object with a non RSA algorithm
+        log.info("Test creating an AsymmetricKeyRsa object with a non RSA algorithm");
         exceptionThrown = false;
         try {
             new AsymmetricKeyRsa((short) 0x1234, Algorithm.EC_P256);
@@ -155,7 +146,7 @@ public class RsaNewKeyTest {
         }
         assertTrue("Succeeded in creating an AsymmetricKeyRsa object with a non RSA algorithm", exceptionThrown);
 
-        // Test creating an AsymmetricKeyRsa object for a key that does not exist in the device
+        log.info("Test creating an AsymmetricKeyRsa object for a key that does not exist in the device");
         AsymmetricKeyRsa key = new AsymmetricKeyRsa((short) 0x1234, Algorithm.RSA_2048);
         exceptionThrown = false;
         try {
@@ -166,30 +157,22 @@ public class RsaNewKeyTest {
         }
         assertTrue("Succeeded in in retrieving a public key for an RSA key that does not exist on the device", exceptionThrown);
 
-        logger.info("TEST END: testNonRsaKey()");
+        log.info("TEST END: testNonRsaKey()");
     }
 
     @Test
-    public void testImportKey()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidKeySpecException,
-                   UnsupportedAlgorithmException {
-        logger.info("TEST START: testImportKey()");
-
+    public void testImportKey() throws Exception {
+        log.info("TEST START: testImportKey()");
         importRsaKeyTest(Algorithm.RSA_2048, 2048, 128);
         importRsaKeyTest(Algorithm.RSA_3072, 3072, 192);
         importRsaKeyTest(Algorithm.RSA_4096, 4096, 256);
-
-        logger.info("TEST END: testImportKey()");
+        log.info("TEST END: testImportKey()");
     }
 
     // -----------------------------------------------------------------------------------------
 
-    private void generateKey(Algorithm algorithm)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException {
+    private void generateKey(Algorithm algorithm) throws Exception {
+        log.info("Test generating an RSA key using algorithm " + algorithm.getName());
 
         List domains = Arrays.asList(2, 5, 8);
         List capabilities = Arrays.asList(Capability.SIGN_PKCS, Capability.SIGN_ECDSA, Capability.SIGN_EDDSA);
@@ -222,10 +205,8 @@ public class RsaNewKeyTest {
         }
     }
 
-    private void importRsaKeyTest(Algorithm algorithm, int keysize, int componentLength)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidKeySpecException, UnsupportedAlgorithmException {
+    private void importRsaKeyTest(Algorithm algorithm, int keysize, int componentLength) throws Exception {
+        log.info("Test importing an RSA key with algorithm " + algorithm.getName());
 
         final List domains = Arrays.asList(2, 5, 8);
         final List capabilities = Arrays.asList(Capability.SIGN_PKCS);

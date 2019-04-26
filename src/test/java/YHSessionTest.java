@@ -3,19 +3,13 @@ import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
-import com.yubico.exceptions.*;
+import com.yubico.exceptions.YHAuthenticationException;
+import com.yubico.exceptions.YHError;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.net.MalformedURLException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -23,8 +17,7 @@ import java.util.logging.Logger;
 import static org.junit.Assert.*;
 
 public class YHSessionTest {
-
-    Logger logger = Logger.getLogger(YHSessionTest.class.getName());
+    Logger log = Logger.getLogger(YHSessionTest.class.getName());
 
     private static YubiHsm yubihsm;
 
@@ -42,11 +35,8 @@ public class YHSessionTest {
     }
 
     @Test
-    public void testSessionCreation()
-            throws InvalidKeySpecException, NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
-                   YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException,
-                   IllegalBlockSizeException {
-        logger.info("TEST START: testSessionCreation()");
+    public void testSessionCreation() throws Exception {
+        log.info("TEST START: testSessionCreation()");
 
         YHSession session1 = new YHSession(yubihsm, (short) 1, "password".toCharArray());
         assertNotNull(session1);
@@ -100,7 +90,6 @@ public class YHSessionTest {
         session1.closeSession();
         assertEquals(YHSession.SessionStatus.CLOSED, session1.getStatus());
 
-
-        logger.info("TEST END: testSessionCreation()");
+        log.info("TEST END: testSessionCreation()");
     }
 }

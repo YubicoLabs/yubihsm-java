@@ -69,19 +69,7 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, UnsupportedAlgorithmException {
-        verifyParametersForNewKeyRsa(domains, keyAlgorithm);
-
-        final int componentLength = getBlockSize(keyAlgorithm) / 2;
-        if (primeP.length != componentLength) {
-            throw new InvalidParameterException(
-                    "Invalid parameter. Expected primeP that is " + componentLength + " bytes long, but was " + primeP.length + " bytes");
-        }
-        if (primeQ.length != componentLength) {
-            throw new InvalidParameterException(
-                    "Invalid parameter. Expected primeQ that is " + componentLength + " bytes long, but was " + primeQ.length + " bytes");
-        }
-
-
+        verifyParametersForNewKeyRsa(domains, keyAlgorithm, primeP, primeQ);
         return putKey(session, id, label, domains, keyAlgorithm, capabilities, primeP, primeQ);
     }
 
@@ -262,7 +250,6 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException, UnsupportedAlgorithmException {
-
         if (enc.length != getBlockSize(getKeyAlgorithm())) {
             throw new IllegalArgumentException("Length of encrypted data must be 256, 384 or 512");
         }
@@ -396,12 +383,24 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
         return false;
     }
 
-    private static void verifyParametersForNewKeyRsa(@NonNull final List<Integer> domains, @NonNull final Algorithm keyAlgorithm) {
+    private static void verifyParametersForNewKeyRsa(@NonNull final List<Integer> domains, @NonNull final Algorithm keyAlgorithm,
+                                                     @NonNull final byte[] primeP, @NonNull final byte[] primeQ)
+            throws UnsupportedAlgorithmException {
         if (domains.isEmpty()) {
             throw new IllegalArgumentException("Domains parameter cannot be null or empty");
         }
         if (!isRsaKeyAlgorithm(keyAlgorithm)) {
             throw new IllegalArgumentException("Key algorithm must be a supported RSA algorithm");
+        }
+
+        final int componentLength = getBlockSize(keyAlgorithm) / 2;
+        if (primeP.length != componentLength) {
+            throw new IllegalArgumentException(
+                    "Invalid parameter. Expected primeP that is " + componentLength + " bytes long, but was " + primeP.length + " bytes");
+        }
+        if (primeQ.length != componentLength) {
+            throw new IllegalArgumentException(
+                    "Invalid parameter. Expected primeQ that is " + componentLength + " bytes long, but was " + primeQ.length + " bytes");
         }
     }
 

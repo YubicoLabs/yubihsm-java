@@ -74,7 +74,7 @@ public class WrapKey extends YHObject {
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, UnsupportedAlgorithmException {
-        verifyParametersForNewKey(domains, wrapKeyAlgorithm);
+        verifyParametersForNewKey(domains, wrapKeyAlgorithm, null);
 
         ByteBuffer bb = ByteBuffer.allocate(61); // 2 bytes object ID + 40 bytes label + 2 bytes domains + 8 bytes capabilities + 1 byte algorithm
         // + 8 bytes delegated capabilities
@@ -122,11 +122,7 @@ public class WrapKey extends YHObject {
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, UnsupportedAlgorithmException {
-        verifyParametersForNewKey(domains, wrapKeyAlgorithm);
-        final int keylen = getWrapKeyLength(wrapKeyAlgorithm);
-        if (wrapKey.length != keylen) {
-            throw new IllegalArgumentException("Wrap key is expected to be " + keylen + " bytes long but was " + wrapKey.length + " bytes");
-        }
+        verifyParametersForNewKey(domains, wrapKeyAlgorithm, wrapKey);
 
         ByteBuffer bb =
                 ByteBuffer.allocate(61 + wrapKey.length); // 2 bytes object ID + 40 bytes label + 2 bytes domains + 8 bytes capabilities + 1 byte
@@ -168,6 +164,7 @@ public class WrapKey extends YHObject {
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException {
+        Utils.checkEmptyByteArray(data, "The data to wrap must be at least 1 byte long");
         log.finer("Wrapping the data: " + Utils.getPrintableBytes(data) + " with Wrap key 0x" + Integer.toHexString(getId()));
 
         ByteBuffer bb = ByteBuffer.allocate(2 + data.length);
@@ -234,6 +231,7 @@ public class WrapKey extends YHObject {
         if (mac.length != WrapData.MAC_LENGTH) {
             throw new IllegalArgumentException("Mac must be " + WrapData.MAC_LENGTH + " bytes long");
         }
+        Utils.checkEmptyByteArray(wrappedData, "The wrapped data must be at least 1 byte long");
 
         log.finer("Unwrapping the data: [nonce] " + Utils.getPrintableBytes(nonce) + " - [wrapped data] " + Utils.getPrintableBytes(wrappedData) +
                   " - [mac] " + Utils.getPrintableBytes(mac) + " using Wrap key 0x" + Integer.toHexString(getId()));
@@ -353,13 +351,21 @@ public class WrapKey extends YHObject {
         return imported;
     }
 
-    private static void verifyParametersForNewKey(@NonNull final List<Integer> domains, @NonNull final Algorithm wrapKeyAlgorithm)
+    private static void verifyParametersForNewKey(@NonNull final List<Integer> domains, @NonNull final Algorithm wrapKeyAlgorithm,
+                                                  final byte[] wrapKey)
             throws UnsupportedAlgorithmException {
         if (domains.isEmpty()) {
             throw new IllegalArgumentException("Domains parameter cannot be null or empty");
         }
         if (!isWrapKeyAlgorithm(wrapKeyAlgorithm)) {
             throw new UnsupportedAlgorithmException("Algorithm " + wrapKeyAlgorithm.toString() + " is not a supported Wrap key algorithm");
+        }
+
+        if(wrapKey != null) {
+            final int keylen = getWrapKeyLength(wrapKeyAlgorithm);
+            if (wrapKey.length != keylen) {
+                throw new IllegalArgumentException("Wrap key is expected to be " + keylen + " bytes long but was " + wrapKey.length + " bytes");
+            }
         }
     }
 

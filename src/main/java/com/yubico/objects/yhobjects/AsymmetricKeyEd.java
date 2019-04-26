@@ -16,7 +16,6 @@ import javax.crypto.NoSuchPaddingException;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.InvalidParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.logging.Logger;
@@ -66,10 +65,7 @@ public class AsymmetricKeyEd extends AsymmetricKey {
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
-        verifyParametersForNewKeyEd(domains, keyAlgorithm);
-        if (k.length != 32) {
-            throw new InvalidParameterException("Invalid parameter: k");
-        }
+        verifyParametersForNewKeyEd(domains, keyAlgorithm, k);
         return putKey(session, id, label, domains, keyAlgorithm, capabilities, k, null);
     }
 
@@ -128,12 +124,18 @@ public class AsymmetricKeyEd extends AsymmetricKey {
         return signature;
     }
 
-    private static void verifyParametersForNewKeyEd(@NonNull final List<Integer> domains, @NonNull final Algorithm keyAlgorithms) {
+    private static void verifyParametersForNewKeyEd(@NonNull final List<Integer> domains, @NonNull final Algorithm keyAlgorithms,
+                                                    @NonNull final byte[] k) {
         if (domains.isEmpty()) {
             throw new IllegalArgumentException("Domains parameter cannot be null or empty");
         }
         if (!isEdAlgorithm(keyAlgorithms)) {
             throw new IllegalArgumentException("Key algorithm must be a supported ED algorithm");
+        }
+
+        if (k.length != 32) {
+            throw new IllegalArgumentException("Invalid parameter. Expected private key integer k that is " + 32 + " bytes long, but" +
+                                               " was " + k.length + " bytes");
         }
     }
 }

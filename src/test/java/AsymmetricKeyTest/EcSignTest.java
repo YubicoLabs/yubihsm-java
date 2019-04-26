@@ -4,7 +4,8 @@ import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
-import com.yubico.exceptions.*;
+import com.yubico.exceptions.YHDeviceException;
+import com.yubico.exceptions.YHError;
 import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.ObjectType;
@@ -14,28 +15,25 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import java.net.MalformedURLException;
-import java.security.*;
-import java.security.spec.InvalidKeySpecException;
+import java.security.KeyPair;
+import java.security.PublicKey;
+import java.security.Security;
+import java.security.Signature;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class EcSignTest {
-    Logger logger = Logger.getLogger(EcSignTest.class.getName());
+    Logger log = Logger.getLogger(EcSignTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;
 
     @BeforeClass
-    public static void init()
-            throws MalformedURLException, InvalidKeySpecException, NoSuchAlgorithmException, YHConnectionException, YHDeviceException,
-                   YHAuthenticationException, YHInvalidResponseException {
+    public static void init() throws Exception {
         if (session == null) {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
@@ -45,20 +43,15 @@ public class EcSignTest {
     }
 
     @AfterClass
-    public static void destroy()
-            throws YHDeviceException, YHAuthenticationException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
-                   NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, BadPaddingException,
-                   IllegalBlockSizeException {
+    public static void destroy() throws Exception {
         session.closeSession();
         yubihsm.close();
     }
 
 
     @Test
-    public void testSignDataWithInsufficientPermissions()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, SignatureException, UnsupportedAlgorithmException {
+    public void testSignDataWithInsufficientPermissions() throws Exception {
+        log.info("TEST START: testSignDataWithInsufficientPermissions()");
         final short id = 0x1234;
         KeyPair keypair = AsymmetricKeyTestHelper.importEcKey(session, id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.DERIVE_ECDH),
                                                               Algorithm.EC_P224, "secp224r1", 28);
@@ -77,14 +70,12 @@ public class EcSignTest {
         } finally {
             YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
+        log.info("TEST END: testSignDataWithInsufficientPermissions()");
     }
 
     @Test
-    public void testSignData()
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, SignatureException, NoSuchProviderException, UnsupportedAlgorithmException {
-        logger.info("TEST START: testSignData()");
+    public void testSignData() throws Exception {
+        log.info("TEST START: testSignData()");
 
         signEcdsaTest(Algorithm.EC_P224, "secp224r1", 28);
         signEcdsaTest(Algorithm.EC_P256, "secp256r1", 32);
@@ -96,14 +87,11 @@ public class EcSignTest {
         signEcdsaBrainpoolTest(Algorithm.EC_BP384, "brainpoolP384r1", 48);
         signEcdsaBrainpoolTest(Algorithm.EC_BP512, "brainpoolP512r1", 64);
 
-        logger.info("TEST END: testSignData()");
+        log.info("TEST END: testSignData()");
     }
 
 
-    private void signEcdsaTest(Algorithm keyAlgorithm, String curve, int componentLength)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, SignatureException, UnsupportedAlgorithmException {
+    private void signEcdsaTest(Algorithm keyAlgorithm, String curve, int componentLength) throws Exception {
         final short id = 0x1234;
         KeyPair keypair = AsymmetricKeyTestHelper.importEcKey(session, id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_ECDSA),
                                                               keyAlgorithm, curve, componentLength);
@@ -123,15 +111,21 @@ public class EcSignTest {
             signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA384, "SHA384withECDSA", data);
             signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA512, "SHA512withECDSA", data);
 
+            data = new byte[2048];
+            new Random().nextBytes(data);
+            signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA1, "SHA1withECDSA", data);
+            signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA256, "SHA256withECDSA", data);
+            signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA384, "SHA384withECDSA", data);
+            signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA512, "SHA512withECDSA", data);
+
         } finally {
             YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 
-    private void signEcdsa(PublicKey pubKey, AsymmetricKeyEc key, Algorithm signAlgorithm, String signAlgorithmStr, byte[] data)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, SignatureException {
+    private void signEcdsa(PublicKey pubKey, AsymmetricKeyEc key, Algorithm signAlgorithm, String signAlgorithmStr, byte[] data) throws Exception {
+        log.info("Test performing ECDSA signing on data of length " + data.length + " with EC key of algorithm " + key.getKeyAlgorithm().getName() +
+                 " using algorithm " + signAlgorithm.getName());
 
         byte[] signature = key.signEcdsa(session, data, signAlgorithm);
 
@@ -141,10 +135,7 @@ public class EcSignTest {
         assertTrue(sig.verify(signature));
     }
 
-    private void signEcdsaBrainpoolTest(Algorithm keyAlgorithm, String curve, int componentLength)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, SignatureException, NoSuchProviderException, UnsupportedAlgorithmException {
+    private void signEcdsaBrainpoolTest(Algorithm keyAlgorithm, String curve, int componentLength) throws Exception {
         final short id = 0x1234;
         KeyPair keyPair =
                 AsymmetricKeyTestHelper.importEcBrainpoolKey(session, id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_ECDSA),
@@ -163,10 +154,9 @@ public class EcSignTest {
         }
     }
 
-    private void signEcdsaBrainpool(PublicKey pubKey, AsymmetricKeyEc key, Algorithm signAlgorithm, String signAlgorithmStr)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, SignatureException, NoSuchProviderException {
+    private void signEcdsaBrainpool(PublicKey pubKey, AsymmetricKeyEc key, Algorithm signAlgorithm, String signAlgorithmStr) throws Exception {
+        log.info("Test performing ECDSA signing with EC key of algorithm " + key.getKeyAlgorithm().getName() + " using algorithm " +
+                 signAlgorithm.getName());
         final byte[] data = "This is a signing test data".getBytes();
         final byte[] signature = key.signEcdsa(session, data, signAlgorithm);
 
