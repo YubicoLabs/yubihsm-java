@@ -342,11 +342,15 @@ public class WrapKey extends YHObject {
         bb.put(wrappedObject);
 
         byte[] resp = session.sendSecureCmd(Command.IMPORT_WRAPPED, bb.array());
+
         bb = ByteBuffer.wrap(resp);
         ObjectType type = ObjectType.getObjectType(bb.get());
+        if(type==null) {
+            throw new YHInvalidResponseException("Unwrapped object was of an unknown type");
+        }
         short id = bb.getShort();
-        YHObject imported = new YHObject(id, type);
 
+        YHObject imported = new YHObject(id, type);
         log.info("Imported " + type.getName() + " with ID 0x" + Integer.toHexString(id));
         return imported;
     }
