@@ -224,7 +224,7 @@ public class AsymmetricKey extends YHObject {
         try {
             getObjectInfo(session, attestingKey, ObjectType.TYPE_OPAQUE);
         } catch (YHDeviceException e) {
-            if (e.getErrorCode().equals(YHError.OBJECT_NOT_FOUND)) {
+            if (e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
                 throw new UnsupportedOperationException("To sign attestation certificates, there has to exist a template X509Certificate with ID " +
                                                         "0x" + Integer.toHexString(attestingKey) + ". Please use the Opaque class to import such a " +
                                                         "template certificate and try again");

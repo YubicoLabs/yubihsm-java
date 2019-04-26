@@ -1,22 +1,14 @@
 package com.yubico.exceptions;
 
-public class YHDeviceException extends Exception {
-
-    private YHError errorCode;
+public class YHDeviceException extends YHException {
 
     public YHDeviceException(final YHError errorCode) {
-        super("The YubiHsm returned error code " + errorCode.toString());
-        this.errorCode = errorCode;
+        super(errorCode, "The YubiHsm returned error code " + errorCode.toString());
     }
 
 
     public YHDeviceException(final YHError errorCode, final Throwable cause) {
-        super("The YubiHsm returned error code " + errorCode.toString(), cause);
-        this.errorCode = errorCode;
-    }
-
-    public YHError getErrorCode() {
-        return errorCode;
+        super(errorCode, "The YubiHsm returned error code " + errorCode.toString(), cause);
     }
 
 }

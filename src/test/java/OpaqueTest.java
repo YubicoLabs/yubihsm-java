@@ -105,7 +105,7 @@ public class OpaqueTest {
             try {
                 YHObject.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
             } catch (YHDeviceException e1) {
-                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
+                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getYhError());
             }
         }
 
@@ -144,7 +144,7 @@ public class OpaqueTest {
             try {
                 YHObject.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
             } catch (YHDeviceException e1) {
-                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
+                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getYhError());
             }
         }
 

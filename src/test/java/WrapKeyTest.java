@@ -360,7 +360,7 @@ public class WrapKeyTest {
             wrapKey.exportWrapped(session, certId, ObjectType.TYPE_ASYMMETRIC_KEY);
         } catch (YHDeviceException e) {
             exceptionThrown = true;
-            assertEquals(YHError.OBJECT_NOT_FOUND, e.getErrorCode());
+            assertEquals(YHError.OBJECT_NOT_FOUND, e.getYhError());
         }
         assertTrue(exceptionThrown);
     }

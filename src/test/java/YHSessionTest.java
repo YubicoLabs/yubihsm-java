@@ -70,7 +70,7 @@ public class YHSessionTest {
             assertTrue("Expected YHAuthenticationException. Instead got " + e.getClass().getName(),
                        (e instanceof YHAuthenticationException));
             YHAuthenticationException exp = (YHAuthenticationException) e;
-            assertEquals(YHError.AUTHENTICATION_FAILED, exp.getErrorCode());
+            assertEquals(YHError.AUTHENTICATION_FAILED, exp.getYhError());
         }
 
         session2.closeSession();

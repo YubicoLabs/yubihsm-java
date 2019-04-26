@@ -1,8 +1,6 @@
 package com.yubico.exceptions;
 
-public class YHAuthenticationException extends Exception {
-
-    private YHError errorCode;
+public class YHAuthenticationException extends YHException {
 
     public YHAuthenticationException(final String message) {
         super(message);
@@ -13,27 +11,10 @@ public class YHAuthenticationException extends Exception {
     }
 
     public YHAuthenticationException(final YHError errorCode) {
-        super("Authentication failed. Error code: " + errorCode.toString());
-        this.errorCode = errorCode;
+        super(errorCode, "Authentication failed. Error code: " + errorCode.toString());
     }
 
     public YHAuthenticationException(final YHError errorCode, final Throwable cause) {
-        super("Authentication failed. Error code: " + errorCode.toString(), cause);
-        this.errorCode = errorCode;
+        super(errorCode, "Authentication failed. Error code: " + errorCode.toString(), cause);
     }
-
-    public YHAuthenticationException(final String message, final YHError errorCode) {
-        super(message + ". Error code: " + errorCode.toString());
-        this.errorCode = errorCode;
-    }
-
-    public YHAuthenticationException(final String message, final YHError errorCode, final Throwable cause) {
-        super(message + ". Error code: " + errorCode.toString(), cause);
-        this.errorCode = errorCode;
-    }
-
-    public YHError getErrorCode() {
-        return errorCode;
-    }
-
 }

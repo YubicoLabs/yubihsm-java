@@ -63,7 +63,7 @@ public class EcSignTest {
                 signEcdsa(keypair.getPublic(), key, Algorithm.EC_ECDSA_SHA256, "SHA256withECDSA", new byte[0]);
             } catch (YHDeviceException e) {
                 exceptionThrown = true;
-                assertEquals("Device returned incorrect error", YHError.INSUFFICIENT_PERMISSIONS, e.getErrorCode());
+                assertEquals("Device returned incorrect error", YHError.INSUFFICIENT_PERMISSIONS, e.getYhError());
             }
             assertTrue("Succeeded to sign in spite of insufficient permissions", exceptionThrown);
 

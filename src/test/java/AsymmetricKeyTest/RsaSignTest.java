@@ -66,7 +66,7 @@ public class RsaSignTest {
                 signPss(pubKey, key, Algorithm.RSA_MGF1_SHA256, "SHA256withRSA/PSS", "SHA-256", (short) 32, new byte[0]);
             } catch (YHDeviceException e) {
                 exceptionThrown = true;
-                assertEquals("Device returned incorrect error", YHError.INSUFFICIENT_PERMISSIONS, e.getErrorCode());
+                assertEquals("Device returned incorrect error", YHError.INSUFFICIENT_PERMISSIONS, e.getYhError());
             }
             assertTrue("Succeeded to sign in spite of insufficient permissions", exceptionThrown);
 

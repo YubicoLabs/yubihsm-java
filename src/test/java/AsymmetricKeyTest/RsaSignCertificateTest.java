@@ -84,7 +84,7 @@ public class RsaSignCertificateTest {
             try {
                 YHObject.deleteObject(session, attestingKeyid, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e) {
-                if (!e.getErrorCode().equals(YHError.OBJECT_NOT_FOUND)) {
+                if (!e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
                     throw e;
                 }
             }
@@ -92,7 +92,7 @@ public class RsaSignCertificateTest {
             try {
                 YHObject.deleteObject(session, attestedKeyid, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e) {
-                if (!e.getErrorCode().equals(YHError.OBJECT_NOT_FOUND)) {
+                if (!e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
                     throw e;
                 }
             }
@@ -100,7 +100,7 @@ public class RsaSignCertificateTest {
             try {
                 YHObject.deleteObject(session, attestingKeyid, ObjectType.TYPE_OPAQUE);
             } catch (YHDeviceException e) {
-                if (!e.getErrorCode().equals(YHError.OBJECT_NOT_FOUND)) {
+                if (!e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
                     throw e;
                 }
             }

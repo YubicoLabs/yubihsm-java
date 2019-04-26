@@ -66,7 +66,7 @@ public class RsaDecryptTest {
                 key.decryptPkcs1(session, enc);
             } catch (YHDeviceException e) {
                 exceptionThrown = true;
-                assertEquals("Device returned incorrect error", YHError.INSUFFICIENT_PERMISSIONS, e.getErrorCode());
+                assertEquals("Device returned incorrect error", YHError.INSUFFICIENT_PERMISSIONS, e.getYhError());
             }
             assertTrue("Succeeded to sign in spite of insufficient permissions", exceptionThrown);
 
@@ -75,7 +75,7 @@ public class RsaDecryptTest {
                 decryptOaep(key, pubKey, Algorithm.RSA_MGF1_SHA1, Algorithm.RSA_OAEP_SHA1, "RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
             } catch (YHDeviceException e) {
                 exceptionThrown = true;
-                assertEquals("Device returned incorrect error", YHError.INSUFFICIENT_PERMISSIONS, e.getErrorCode());
+                assertEquals("Device returned incorrect error", YHError.INSUFFICIENT_PERMISSIONS, e.getYhError());
             }
             assertTrue("Succeeded to sign in spite of insufficient permissions", exceptionThrown);
         } finally {

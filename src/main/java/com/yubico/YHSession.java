@@ -248,7 +248,7 @@ public class YHSession {
             }
 
         } catch (YHDeviceException e) {
-            if (e.getErrorCode().equals(YHError.INVALID_SESSION)) {
+            if (e.getYhError().equals(YHError.INVALID_SESSION)) {
                 log.info("Session " + sessionID + " no longer valid");
             } else {
                 throw e;

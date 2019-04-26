@@ -1,6 +1,6 @@
 package com.yubico.exceptions;
 
-public class UnsupportedAlgorithmException extends Exception {
+public class UnsupportedAlgorithmException extends YHException {
 
     public UnsupportedAlgorithmException() {
         super();

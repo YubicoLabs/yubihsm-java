@@ -192,7 +192,7 @@ public class AuthenticationKeyTest {
                 assertTrue("Expected YHAuthenticationException. Instead got " + e.getClass().getName(),
                            (e instanceof YHAuthenticationException));
                 YHAuthenticationException exp = (YHAuthenticationException) e;
-                assertEquals(YHError.AUTHENTICATION_FAILED, exp.getErrorCode());
+                assertEquals(YHError.AUTHENTICATION_FAILED, exp.getYhError());
             }
 
             // Open a new authenticated session with the new password, verify that communication works then close the session

@@ -187,7 +187,7 @@ public class HmacKeyTest {
             try {
                 YHObject.deleteObject(session, id, ObjectType.TYPE_HMAC_KEY);
             } catch (YHDeviceException e) {
-                if (!e.getErrorCode().equals(YHError.OBJECT_NOT_FOUND)) {
+                if (!e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
                     throw e;
                 }
             }

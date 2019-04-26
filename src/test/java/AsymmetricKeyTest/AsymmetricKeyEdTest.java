@@ -89,7 +89,7 @@ public class AsymmetricKeyEdTest {
             try {
                 YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {
-                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
+                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getYhError());
             }
         }
 
@@ -179,7 +179,7 @@ public class AsymmetricKeyEdTest {
             key.getPublicKey(session);
         } catch (YHDeviceException e) {
             exceptionThrown = true;
-            assertEquals(YHError.OBJECT_NOT_FOUND, e.getErrorCode());
+            assertEquals(YHError.OBJECT_NOT_FOUND, e.getYhError());
         }
         assertTrue("Succeeded in retrieving a public key of an ED key that does not exist on the device", exceptionThrown);
 
@@ -215,7 +215,7 @@ public class AsymmetricKeyEdTest {
             try {
                 YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {
-                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
+                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getYhError());
             }
         }
 
@@ -276,7 +276,7 @@ public class AsymmetricKeyEdTest {
                 key.signEddsa(session, data);
             } catch (YHDeviceException e) {
                 exceptionThrown = true;
-                assertEquals("Device returned incorrect error", YHError.INSUFFICIENT_PERMISSIONS, e.getErrorCode());
+                assertEquals("Device returned incorrect error", YHError.INSUFFICIENT_PERMISSIONS, e.getYhError());
             }
             assertTrue("Succeeded in signing in spite of insufficient permissions", exceptionThrown);
 

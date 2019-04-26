@@ -92,7 +92,7 @@ public class EcNewKeyTest {
             try {
                 YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {
-                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
+                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getYhError());
             }
         }
     }
@@ -188,7 +188,7 @@ public class EcNewKeyTest {
             key.getPublicKey(session);
         } catch (YHDeviceException e) {
             exceptionThrown = true;
-            assertEquals(YHError.OBJECT_NOT_FOUND, e.getErrorCode());
+            assertEquals(YHError.OBJECT_NOT_FOUND, e.getYhError());
         }
         assertTrue("Succeeded in retrieving a public key of an EC key that does not exist on the device", exceptionThrown);
 
@@ -240,7 +240,7 @@ public class EcNewKeyTest {
             try {
                 YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {
-                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getErrorCode());
+                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getYhError());
             }
         }
     }
