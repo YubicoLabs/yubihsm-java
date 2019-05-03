@@ -26,6 +26,8 @@ public class WrapKey extends YHObject {
 
     public static final ObjectType TYPE = ObjectType.TYPE_WRAP_KEY;
 
+    private final int IMPORT_WRAPPED_RESPONSE_LENGTH = 3;
+
     /**
      * Creates a WrapKey object
      *
@@ -76,16 +78,23 @@ public class WrapKey extends YHObject {
                    IllegalBlockSizeException, UnsupportedAlgorithmException {
         verifyParametersForNewKey(domains, wrapKeyAlgorithm, null);
 
-        ByteBuffer bb = ByteBuffer.allocate(61); // 2 bytes object ID + 40 bytes label + 2 bytes domains + 8 bytes capabilities + 1 byte algorithm
-        // + 8 bytes delegated capabilities
+        ByteBuffer bb = ByteBuffer.allocate(
+                OBJECT_ID_SIZE + OBJECT_LABEL_SIZE + OBJECT_DOMAINS_SIZE + OBJECT_CAPABILITIES_SIZE + OBJECT_ALGORITHM_SIZE +
+                OBJECT_DELEGATED_CAPABILITIES_SIZE);
         bb.putShort(id);
-        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), YHObjectInfo.LABEL_LENGTH));
+        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
         bb.putLong(Capability.getCapabilities(capabilities));
         bb.put(wrapKeyAlgorithm.getAlgorithmId());
         bb.putLong(Capability.getCapabilities(delegatedCapabilities));
 
         byte[] resp = session.sendSecureCmd(Command.GENERATE_WRAP_KEY, bb.array());
+        if (resp.length != OBJECT_ID_SIZE) {
+            throw new YHInvalidResponseException(
+                    "Response to " + Command.GENERATE_WRAP_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE + " bytes, but was " +
+                    resp.length + " bytes instead");
+        }
+
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
 
@@ -94,7 +103,7 @@ public class WrapKey extends YHObject {
     }
 
     /**
-     * Generates a Wrap key on the YubiHSM
+     * Imports a Wrap key into the YubiHSM
      *
      * @param session               An authenticated session to communicate with the device over
      * @param id                    The desired ID for the imported Wrap key. Set to 0 to have it generated
@@ -104,6 +113,7 @@ public class WrapKey extends YHObject {
      *                              {@link Algorithm.AES192_CCM_WRAP}} or {{@link Algorithm.AES256_CCM_WRAP}}
      * @param capabilities          The actions that can be performed by the imported Wrap key
      * @param delegatedCapabilities The capabilities of the object that the imported Wrap key will be able to perform actions on
+     * @param wrapKey               The Wrap key. 16, 24 or 32 bytes depending on the key algorithm
      * @return ID of the imported Wrap key
      * @throws NoSuchAlgorithmException           If the encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
@@ -125,10 +135,10 @@ public class WrapKey extends YHObject {
         verifyParametersForNewKey(domains, wrapKeyAlgorithm, wrapKey);
 
         ByteBuffer bb =
-                ByteBuffer.allocate(61 + wrapKey.length); // 2 bytes object ID + 40 bytes label + 2 bytes domains + 8 bytes capabilities + 1 byte
-        // algorithm + 8 bytes delegated capabilities + wrapkey
+                ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_LABEL_SIZE + OBJECT_DOMAINS_SIZE + OBJECT_CAPABILITIES_SIZE + OBJECT_ALGORITHM_SIZE +
+                                    OBJECT_DELEGATED_CAPABILITIES_SIZE + wrapKey.length);
         bb.putShort(id);
-        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), YHObjectInfo.LABEL_LENGTH));
+        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
         bb.putLong(Capability.getCapabilities(capabilities));
         bb.put(wrapKeyAlgorithm.getAlgorithmId());
@@ -136,6 +146,12 @@ public class WrapKey extends YHObject {
         bb.put(wrapKey);
 
         byte[] resp = session.sendSecureCmd(Command.PUT_WRAP_KEY, bb.array());
+        if (resp.length != OBJECT_ID_SIZE) {
+            throw new YHInvalidResponseException(
+                    "Response to " + Command.PUT_WRAP_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE + " bytes, but was " +
+                    resp.length + " bytes instead");
+        }
+
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
 
@@ -167,7 +183,7 @@ public class WrapKey extends YHObject {
         Utils.checkEmptyByteArray(data, "The data to wrap must be at least 1 byte long");
         log.finer("Wrapping the data: " + Utils.getPrintableBytes(data) + " with Wrap key 0x" + Integer.toHexString(getId()));
 
-        ByteBuffer bb = ByteBuffer.allocate(2 + data.length);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + data.length);
         bb.putShort(getId());
         bb.put(data);
 
@@ -236,7 +252,7 @@ public class WrapKey extends YHObject {
         log.finer("Unwrapping the data: [nonce] " + Utils.getPrintableBytes(nonce) + " - [wrapped data] " + Utils.getPrintableBytes(wrappedData) +
                   " - [mac] " + Utils.getPrintableBytes(mac) + " using Wrap key 0x" + Integer.toHexString(getId()));
 
-        ByteBuffer bb = ByteBuffer.allocate(2 + WrapData.NONCE_LENGTH + wrappedData.length + WrapData.MAC_LENGTH);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + WrapData.NONCE_LENGTH + wrappedData.length + WrapData.MAC_LENGTH);
         bb.putShort(getId());
         bb.put(nonce);
         bb.put(wrappedData);
@@ -272,7 +288,7 @@ public class WrapKey extends YHObject {
         log.info("Exporting " + typeToExport.getName() + " with ID 0x" + Integer.toHexString(idToExport) + " using the wrap key 0x" +
                  Integer.toHexString(getId()));
 
-        ByteBuffer bb = ByteBuffer.allocate(5);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_TYPE_SIZE + OBJECT_ID_SIZE);
         bb.putShort(getId());
         bb.put(typeToExport.getTypeId());
         bb.putShort(idToExport);
@@ -336,16 +352,21 @@ public class WrapKey extends YHObject {
 
         log.info("Importing a wrapped object using wrap key with ID 0x" + Integer.toHexString(getId()));
 
-        ByteBuffer bb = ByteBuffer.allocate(2 + WrapData.NONCE_LENGTH + wrappedObject.length);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + WrapData.NONCE_LENGTH + wrappedObject.length);
         bb.putShort(getId());
         bb.put(nonce);
         bb.put(wrappedObject);
 
         byte[] resp = session.sendSecureCmd(Command.IMPORT_WRAPPED, bb.array());
+        if (resp.length != IMPORT_WRAPPED_RESPONSE_LENGTH) {
+            throw new YHInvalidResponseException(
+                    "Response to " + Command.IMPORT_WRAPPED.getName() + " command expected to contains " + IMPORT_WRAPPED_RESPONSE_LENGTH + " " +
+                    "bytes, but was " + resp.length + " bytes instead");
+        }
 
         bb = ByteBuffer.wrap(resp);
         ObjectType type = ObjectType.getObjectType(bb.get());
-        if(type==null) {
+        if (type == null) {
             throw new YHInvalidResponseException("Unwrapped object was of an unknown type");
         }
         short id = bb.getShort();
@@ -365,7 +386,7 @@ public class WrapKey extends YHObject {
             throw new UnsupportedAlgorithmException("Algorithm " + wrapKeyAlgorithm.toString() + " is not a supported Wrap key algorithm");
         }
 
-        if(wrapKey != null) {
+        if (wrapKey != null) {
             final int keylen = getWrapKeyLength(wrapKeyAlgorithm);
             if (wrapKey.length != keylen) {
                 throw new IllegalArgumentException("Wrap key is expected to be " + keylen + " bytes long but was " + wrapKey.length + " bytes");

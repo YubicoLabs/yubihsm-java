@@ -80,14 +80,21 @@ public class HmacKey extends YHObject {
                    IllegalBlockSizeException, UnsupportedAlgorithmException {
         verifyParametersForNewKey(domains, keyAlgorithm, null);
 
-        ByteBuffer bb = ByteBuffer.allocate(53); // 2 bytes object ID + 40 bytes label + 2 bytes domains + 8 bytes capabilities + 1 byte algorithm
+        ByteBuffer bb =
+                ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_LABEL_SIZE + OBJECT_DOMAINS_SIZE + OBJECT_CAPABILITIES_SIZE + OBJECT_ALGORITHM_SIZE);
         bb.putShort(id);
-        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), YHObjectInfo.LABEL_LENGTH));
+        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
         bb.putLong(Capability.getCapabilities(capabilities));
         bb.put(keyAlgorithm.getAlgorithmId());
 
         byte[] resp = session.sendSecureCmd(Command.GENERATE_HMAC_KEY, bb.array());
+        if (resp.length != OBJECT_ID_SIZE) {
+            throw new YHInvalidResponseException(
+                    "Response to " + Command.GENERATE_HMAC_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE + " bytes, but was " +
+                    resp.length + " bytes instead");
+        }
+
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
 
@@ -127,16 +134,22 @@ public class HmacKey extends YHObject {
         verifyParametersForNewKey(domains, keyAlgorithm, hmacKey);
 
         ByteBuffer bb =
-                ByteBuffer.allocate(53 + hmacKey.length); // 2 bytes object ID + 40 bytes label + 2 bytes domains + 8 bytes capabilities + 1 byte
-        // algorithm
+                ByteBuffer.allocate(
+                        OBJECT_ID_SIZE + OBJECT_LABEL_SIZE + OBJECT_DOMAINS_SIZE + OBJECT_CAPABILITIES_SIZE + OBJECT_ALGORITHM_SIZE + hmacKey.length);
         bb.putShort(id);
-        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), YHObjectInfo.LABEL_LENGTH));
+        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
         bb.putLong(Capability.getCapabilities(capabilities));
         bb.put(keyAlgorithm.getAlgorithmId());
         bb.put(hmacKey);
 
         byte[] resp = session.sendSecureCmd(Command.PUT_HMAC_KEY, bb.array());
+        if (resp.length != OBJECT_ID_SIZE) {
+            throw new YHInvalidResponseException(
+                    "Response to " + Command.PUT_HMAC_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE + " bytes, but was " +
+                    resp.length + " bytes instead");
+        }
+
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
 
@@ -170,7 +183,7 @@ public class HmacKey extends YHObject {
         log.info("Performing HMAC signing using HMAC key 0x" + Integer.toHexString(getId()));
         log.fine("HMAC data: " + Utils.getPrintableBytes(data));
 
-        ByteBuffer bb = ByteBuffer.allocate(2 + data.length);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + data.length);
         bb.putShort(getId());
         bb.put(data);
 
@@ -178,8 +191,8 @@ public class HmacKey extends YHObject {
         int expectedSigLength = getSignatureLength(getKeyAlgorithm());
         if (hmac.length != expectedSigLength) {
             throw new YHInvalidResponseException(
-                    "Expecting a " + expectedSigLength + " bytes HMAC from the device, but HMAC was " + hmac.length +
-                    " bytes long instead");
+                    "Response to " + Command.SIGN_HMAC.getName() + " command expected to contain " + expectedSigLength + " bytes but was " +
+                    hmac.length + " bytes long instead");
         }
         log.fine("HMAC from YubiHSM: " + Utils.getPrintableBytes(hmac));
         return hmac;
@@ -217,13 +230,13 @@ public class HmacKey extends YHObject {
         log.info("Verifying HMAC signature using HMAC key 0x" + Integer.toHexString(getId()));
         log.fine("[HMAC]" + Utils.getPrintableBytes(sig) + " - [HMAC data]" + Utils.getPrintableBytes(data));
 
-        ByteBuffer bb = ByteBuffer.allocate(2 + sig.length + data.length);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + sig.length + data.length);
         bb.putShort(getId());
         bb.put(sig);
         bb.put(data);
         byte[] resp = session.sendSecureCmd(Command.VERIFY_HMAC, bb.array());
         if (resp.length != 1) {
-            throw new YHInvalidResponseException("Expecting 1 byte response for " + Command.VERIFY_HMAC.getName() + " command. But received " +
+            throw new YHInvalidResponseException("Expecting 1 byte response to " + Command.VERIFY_HMAC.getName() + " command. But received " +
                                                  "response was: " + Utils.getPrintableBytes(resp));
         }
 

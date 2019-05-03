@@ -112,14 +112,22 @@ public class AsymmetricKey extends YHObject {
                    IllegalBlockSizeException {
         verifyParametersForNewKey(domains, keyAlgorithm);
 
-        ByteBuffer bb = ByteBuffer.allocate(53); // 2 bytes object ID + 40 bytes label + 2 bytes domains + 8 bytes capabilities + 1 byte algorithm
+        ByteBuffer bb =
+                ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_LABEL_SIZE + OBJECT_DOMAINS_SIZE + OBJECT_CAPABILITIES_SIZE + OBJECT_ALGORITHM_SIZE);
         bb.putShort(id);
-        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), YHObjectInfo.LABEL_LENGTH));
+        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
         bb.putLong(Capability.getCapabilities(capabilities));
         bb.put(keyAlgorithm.getAlgorithmId());
 
         byte[] resp = session.sendSecureCmd(Command.GENERATE_ASYMMETRIC_KEY, bb.array());
+        if (resp.length != OBJECT_ID_SIZE) {
+            throw new YHInvalidResponseException(
+                    "Response to " + Command.GENERATE_ASYMMETRIC_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE +
+                    " bytes, but was " +
+                    resp.length + " bytes instead");
+        }
+
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
 
@@ -147,7 +155,7 @@ public class AsymmetricKey extends YHObject {
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException {
-        ByteBuffer bb = ByteBuffer.allocate(2);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE);
         bb.putShort(getId());
 
         byte[] resp = session.sendSecureCmd(Command.GET_PUBLIC_KEY, bb.array());
@@ -233,7 +241,7 @@ public class AsymmetricKey extends YHObject {
             }
         }
 
-        ByteBuffer bb = ByteBuffer.allocate(4);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_ID_SIZE);
         bb.putShort(keyToAttest);
         bb.putShort(attestingKey);
 
@@ -258,14 +266,14 @@ public class AsymmetricKey extends YHObject {
                    IllegalBlockSizeException {
         verifyParametersForNewKey(domains, keyAlgorithm);
 
-        int length = 53 + p1.length; // 2 bytes ID + 40 bytes label + 2 bytes domains + 8 bytes capabilities + 1 byte algorithm + p1 length
+        int length = OBJECT_ID_SIZE + OBJECT_LABEL_SIZE + OBJECT_DOMAINS_SIZE + OBJECT_CAPABILITIES_SIZE + OBJECT_ALGORITHM_SIZE + p1.length;
         if (p2 != null) {
             length += p2.length;
         }
 
         ByteBuffer bb = ByteBuffer.allocate(length);
         bb.putShort(id);
-        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), YHObjectInfo.LABEL_LENGTH));
+        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
         bb.putLong(Capability.getCapabilities(capabilities));
         bb.put(keyAlgorithm.getAlgorithmId());
@@ -275,6 +283,11 @@ public class AsymmetricKey extends YHObject {
         }
 
         byte[] resp = session.sendSecureCmd(Command.PUT_ASYMMETRIC_KEY, bb.array());
+        if (resp.length != OBJECT_ID_SIZE) {
+            throw new YHInvalidResponseException(
+                    "Response to " + Command.PUT_ASYMMETRIC_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE + " bytes, but " +
+                    "was " + resp.length + " bytes instead");
+        }
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
 

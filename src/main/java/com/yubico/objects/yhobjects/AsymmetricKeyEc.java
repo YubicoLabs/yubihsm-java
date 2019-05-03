@@ -156,7 +156,7 @@ public class AsymmetricKeyEc extends AsymmetricKey {
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException {
-        ByteBuffer bb = ByteBuffer.allocate(2 + dataDigest.length);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + dataDigest.length);
         bb.putShort(getId());
         bb.put(dataDigest);
 
@@ -186,7 +186,7 @@ public class AsymmetricKeyEc extends AsymmetricKey {
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException {
-        ByteBuffer bb = ByteBuffer.allocate(2 + publicKey.length);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + publicKey.length);
         bb.putShort(getId());
         bb.put(publicKey);
 

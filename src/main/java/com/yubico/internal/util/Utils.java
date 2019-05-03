@@ -1,6 +1,6 @@
 package com.yubico.internal.util;
 
-import com.yubico.objects.yhobjects.YHObjectInfo;
+import com.yubico.objects.yhobjects.YHObject;
 import lombok.NonNull;
 
 import java.security.InvalidParameterException;
@@ -142,7 +142,7 @@ public class Utils {
         if (label == null) {
             return "";
         }
-        if (label.length() > YHObjectInfo.LABEL_LENGTH) {
+        if (label.length() > YHObject.OBJECT_LABEL_SIZE) {
             throw new IllegalArgumentException("Label is too long");
         }
         return label;

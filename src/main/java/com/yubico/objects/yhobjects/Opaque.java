@@ -42,7 +42,7 @@ public class Opaque extends YHObject {
      */
     public Opaque(final short id, @NonNull final Algorithm algorithm) {
         if (!isOpaqueAlgorithm(algorithm)) {
-            throw new IllegalArgumentException("An Asymmetric key algorithm must be a supported RSA algorithm");
+            throw new IllegalArgumentException("An Asymmetric key algorithm must be a supported Opaque object algorithm");
         }
         setId(id);
         setType(TYPE);
@@ -144,15 +144,22 @@ public class Opaque extends YHObject {
                    IllegalBlockSizeException {
         Utils.checkEmptyList(domains, "An object has to be accessible in at least one domain to be useful");
 
-        ByteBuffer bb = ByteBuffer.allocate(53 + opaqueData.length); // 2 + 40 + 2 + 8 + 1 + opaque data
+        ByteBuffer bb = ByteBuffer.allocate(
+                OBJECT_ID_SIZE + OBJECT_LABEL_SIZE + OBJECT_DOMAINS_SIZE + OBJECT_CAPABILITIES_SIZE + OBJECT_ALGORITHM_SIZE + opaqueData.length);
         bb.putShort(id);
-        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), YHObjectInfo.LABEL_LENGTH));
+        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
         bb.putLong(Capability.getCapabilities(capabilities));
         bb.put(algorithm.getAlgorithmId());
         bb.put(opaqueData);
 
         byte[] resp = session.sendSecureCmd(Command.PUT_OPAQUE, bb.array());
+        if (resp.length != OBJECT_ID_SIZE) {
+            throw new YHInvalidResponseException(
+                    "Response to " + Command.PUT_OPAQUE.getName() + " command expected to contains " + OBJECT_ID_SIZE + " bytes, but was " +
+                    resp.length + " bytes instead");
+        }
+
         bb = ByteBuffer.wrap(resp);
         id = bb.getShort();
 
@@ -180,7 +187,7 @@ public class Opaque extends YHObject {
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException {
-        ByteBuffer bb = ByteBuffer.allocate(2);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE);
         bb.putShort(getId());
 
         byte[] resp = session.sendSecureCmd(Command.GET_OPAQUE, bb.array());

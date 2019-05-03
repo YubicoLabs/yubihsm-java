@@ -1,7 +1,10 @@
 package com.yubico.objects.yhobjects;
 
 import com.yubico.internal.util.Utils;
-import com.yubico.objects.yhconcepts.*;
+import com.yubico.objects.yhconcepts.Algorithm;
+import com.yubico.objects.yhconcepts.Capability;
+import com.yubico.objects.yhconcepts.ObjectOrigin;
+import com.yubico.objects.yhconcepts.ObjectType;
 import lombok.NonNull;
 
 import java.nio.ByteBuffer;
@@ -9,9 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class YHObjectInfo {
-
-    /** The maximum length of an object's label */
-    public static final int LABEL_LENGTH = 40;
 
     private short id = 0;
     private short objectSize = 0;
@@ -72,8 +72,8 @@ public class YHObjectInfo {
         algorithm = Algorithm.getAlgorithm(bb.get());
         sequence = bb.get();
         origin = ObjectOrigin.getObjectOrigin(bb.get());
-        byte[] l = new byte[LABEL_LENGTH];
-        bb.get(l, 0, LABEL_LENGTH);
+        byte[] l = new byte[YHObject.OBJECT_LABEL_SIZE];
+        bb.get(l, 0, YHObject.OBJECT_LABEL_SIZE);
         label = new String(l);
         label = label.trim();
         delegatedCapabilities = Capability.getCapabilities(bb.getLong());

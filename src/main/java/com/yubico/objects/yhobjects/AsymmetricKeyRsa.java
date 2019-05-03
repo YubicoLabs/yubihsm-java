@@ -23,6 +23,7 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
     private static Logger log = Logger.getLogger(AsymmetricKeyRsa.class.getName());
 
     private final int RSA_PUBKEY_EXPONENT = 65537;
+    private final int SIGN_PSS_SALT_LENGTH = 2;
 
     /**
      * Creates an AsymmetriKeyRsa object
@@ -168,7 +169,7 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException {
 
-        ByteBuffer bb = ByteBuffer.allocate(2 + dataDigest.length);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + dataDigest.length);
         bb.putShort(getId());
         bb.put(dataDigest);
 
@@ -214,7 +215,7 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
             throw new InvalidParameterException("Length of hashed data must be 20, 32, 48 or 64");
         }
 
-        ByteBuffer bb = ByteBuffer.allocate(5 + hashedData.length); // 2 + 1 + 2 + datalength
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_ALGORITHM_SIZE + SIGN_PSS_SALT_LENGTH + hashedData.length);
         bb.putShort(getId());
         bb.put(mgf1Algorithm.getAlgorithmId());
         bb.putShort(saltLength);
@@ -254,7 +255,7 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
             throw new IllegalArgumentException("Length of encrypted data must be 256, 384 or 512");
         }
 
-        ByteBuffer bb = ByteBuffer.allocate(2 + enc.length);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + enc.length);
         bb.putShort(getId());
         bb.put(enc);
 
@@ -311,7 +312,7 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
         byte[] hashedLabel = getHashedData(label != null ? label.getBytes() : new byte[0], hashAlgorithm);
 
 
-        ByteBuffer bb = ByteBuffer.allocate(3 + enc.length + hashedLabel.length); // 2 + 1 + enc.length + hashedLabel.length
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_ALGORITHM_SIZE + enc.length + hashedLabel.length);
         bb.putShort(getId());
         bb.put(mgf1Algorithm.getAlgorithmId());
         bb.put(enc);

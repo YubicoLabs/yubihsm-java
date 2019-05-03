@@ -29,6 +29,15 @@ import java.util.logging.Logger;
 public class YHObject {
     private static Logger log = Logger.getLogger(YHObject.class.getName());
 
+    public static final int OBJECT_ID_SIZE = 2;
+    public static final int OBJECT_TYPE_SIZE = 1;
+    public static final int OBJECT_LABEL_SIZE = 40;
+    public static final int OBJECT_DOMAINS_SIZE = 2;
+    public static final int OBJECT_ALGORITHM_SIZE = 1;
+    public static final int OBJECT_CAPABILITIES_SIZE = 8;
+    public static final int OBJECT_DELEGATED_CAPABILITIES_SIZE = 8;
+
+
     private short id;
     private ObjectType type;
 

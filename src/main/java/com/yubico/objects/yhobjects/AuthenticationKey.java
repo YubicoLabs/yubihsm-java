@@ -153,10 +153,11 @@ public class AuthenticationKey extends YHObject {
                    IllegalBlockSizeException {
         verifyParametersForNewKey(domains, keyAlgorithm, encryptionKey, macKey);
 
-        ByteBuffer bb = ByteBuffer.allocate(93); // 2 bytes objectID + 40 bytes label + 2 bytes domains + 8 bytes capabilities + 1 byte algorithm +
-        // 8 bytes delegated capabilities + 16 bytes encryption key + 16 bytes MAC key
+        ByteBuffer bb = ByteBuffer.allocate(
+                OBJECT_ID_SIZE + OBJECT_LABEL_SIZE + OBJECT_DOMAINS_SIZE + OBJECT_CAPABILITIES_SIZE + OBJECT_ALGORITHM_SIZE +
+                OBJECT_DELEGATED_CAPABILITIES_SIZE + KEY_SIZE + KEY_SIZE);
         bb.putShort(id);
-        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), YHObjectInfo.LABEL_LENGTH));
+        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
         bb.putLong(Capability.getCapabilities(capabilities));
         bb.put(keyAlgorithm == null ? Algorithm.AES128_YUBICO_AUTHENTICATION.getAlgorithmId() : keyAlgorithm.getAlgorithmId());
@@ -165,12 +166,18 @@ public class AuthenticationKey extends YHObject {
         bb.put(macKey);
 
         byte[] resp = session.sendSecureCmd(Command.PUT_AUTHENTICATION_KEY, bb.array());
+        if (resp.length != OBJECT_ID_SIZE) {
+            throw new YHInvalidResponseException(
+                    "Response to " + Command.PUT_AUTHENTICATION_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE +
+                    " bytes, but was " + resp.length + " bytes instead");
+        }
+
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
 
         destroysKeys(encryptionKey, macKey);
 
-        log.info("Created an Authentication key with ID 0x" + Integer.toHexString(newid));
+        log.info("Created Authentication key with ID 0x" + Integer.toHexString(newid));
 
         return newid;
     }
@@ -247,12 +254,25 @@ public class AuthenticationKey extends YHObject {
 
         YHObjectInfo keyinfo = getObjectInfo(session, id, TYPE);
 
-        ByteBuffer bb = ByteBuffer.allocate(35);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_ALGORITHM_SIZE + KEY_SIZE + KEY_SIZE);
         bb.putShort(id);
         bb.put(keyinfo.getAlgorithm().getAlgorithmId());
         bb.put(encryptionKey);
         bb.put(macKey);
-        session.sendSecureCmd(Command.CHANGE_AUTHENTICATION_KEY, bb.array());
+        byte[] resp = session.sendSecureCmd(Command.CHANGE_AUTHENTICATION_KEY, bb.array());
+        if (resp.length != OBJECT_ID_SIZE) {
+            throw new YHInvalidResponseException(
+                    "Response to " + Command.PUT_AUTHENTICATION_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE +
+                    " bytes, but was " + resp.length + " bytes instead");
+        }
+
+        bb = ByteBuffer.wrap(resp);
+        short changedId = bb.getShort();
+        if (changedId != id) {
+            throw new YHInvalidResponseException(
+                    "Object ID of the changed Authentication key is incorrect. Expected ID is 0x" + Integer.toHexString(id) + " but was 0x" +
+                    Integer.toHexString(changedId));
+        }
 
         destroysKeys(encryptionKey, macKey);
 
@@ -282,8 +302,8 @@ public class AuthenticationKey extends YHObject {
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, InvalidKeySpecException {
         List secretKey = deriveSecretKey(password);
-        byte[] encKey = (byte[]) secretKey.get(0); // Arrays.copyOfRange(secretKey, 0, KEY_SIZE);
-        byte[] macKey = (byte[]) secretKey.get(1); // Arrays.copyOfRange(secretKey, KEY_SIZE, secretKey.length);
+        byte[] encKey = (byte[]) secretKey.get(0);
+        byte[] macKey = (byte[]) secretKey.get(1);
         changeAuthenticationKey(session, id, encKey, macKey);
 
         Arrays.fill(password, 'c');
