@@ -124,6 +124,7 @@ public class OtpAeadKeyTest {
 
     @Test
     public void testRandomizeOtpAead() throws Exception {
+        log.info("TEST START: testRandomizeOtpAead()");
         byte[] keyBytes = new byte[16];
         new SecureRandom().nextBytes(keyBytes);
         byte[] nonceId = new BigInteger("01234567", 16).toByteArray();
@@ -145,12 +146,12 @@ public class OtpAeadKeyTest {
         } finally {
             YHObject.deleteObject(session, id, ObjectType.TYPE_OTP_AEAD_KEY);
         }
-
-
+        log.info("TEST END: testRandomizeOtpAead()");
     }
 
     @Test
     public void testDecryptInvalidOtp() throws Exception {
+        log.info("TEST START: testDecryptInvalidOtp()");
 
         short keyId = OtpAeadKey.generateOtpAeadKey(session, (short) 0, "Test OTP invalid", Arrays.asList(1), Algorithm.AES128_YUBICO_OTP,
                                                     Arrays.asList(Capability.RANDOMIZE_OTP_AEAD, Capability.DECRYPT_OTP), 0x12345678);
@@ -181,11 +182,14 @@ public class OtpAeadKeyTest {
         } finally {
             YHObject.deleteObject(session, keyId, ObjectType.TYPE_OTP_AEAD_KEY);
         }
+        log.info("TEST END: testDecryptInvalidOtp()");
     }
 
 
     @Test
-    public void testOtpTestVectors() throws Exception {
+    public void testKnownOtpTestVectors() throws Exception {
+        log.info("TEST START: testKnownOtpTestVectors()");
+
         short key1Id = 0x100;
         short key2Id = 0x200;
         short key3Id = 0x300;
@@ -256,10 +260,8 @@ public class OtpAeadKeyTest {
                     throw e;
                 }
             }
-
         }
-
-
+        log.info("TEST END: testKnownOtpTestVectors()");
     }
 
 

@@ -42,7 +42,7 @@ public class Opaque extends YHObject {
      */
     public Opaque(final short id, @NonNull final Algorithm algorithm) {
         if (!isOpaqueAlgorithm(algorithm)) {
-            throw new IllegalArgumentException("An Asymmetric key algorithm must be a supported Opaque object algorithm");
+            throw new IllegalArgumentException(algorithm.getName() + " is not a supported Opaque object algorithm");
         }
         setId(id);
         setType(TYPE);

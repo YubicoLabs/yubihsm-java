@@ -301,31 +301,6 @@ public class OtpAeadKey extends YHObject {
     }
 
     /**
-     * Re-encrypt a Yubico OTP AEAD using this OTP AEAD Key
-     *
-     * @param session   An authenticated session to communicate with the device over
-     * @param keyIdFrom Object ID of the OTP AEAD key that performed the first encryption
-     * @param nonceAead 36 bytes nonce concatenated with AEAD
-     * @return New 36 bytes nonce concatenated with AEAD
-     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
-     * @throws YHDeviceException                  If the device returns an error
-     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
-     * @throws YHConnectionException              If the connection to the device fails
-     * @throws InvalidKeyException                If the encryption/decryption fails
-     * @throws YHAuthenticationException          If the session authentication fails
-     * @throws NoSuchPaddingException             If the encryption/decryption fails
-     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
-     * @throws BadPaddingException                If the encryption/decryption fails
-     * @throws IllegalBlockSizeException          If the encryption/decryption fails
-     * /
-    public byte[] rewrapOtpAead(@NonNull final YHSession session, final short keyIdFrom, @NonNull final byte[] nonceAead)
-            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
-                   YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
-                   IllegalBlockSizeException {
-        return rewrapOtpAead(session, keyIdFrom, getId(), nonceAead);
-    }
-    */
-    /**
      * Re-encrypt a Yubico OTP AEAD from one OTP AEAD Key to another OTP AEAD Key
      *
      * @param session   An authenticated session to communicate with the device over
