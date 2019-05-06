@@ -150,6 +150,12 @@ public class Utils {
         return label;
     }
 
+    /**
+     * Converts a map containing Command-OptionValue pairs into byte array
+     *
+     * @param commandOptionValueMap
+     * @return Byte array where each pair in the map is represented as 2 bytes: commandID byte and OptionValue value byte, in that order
+     */
     public static byte[] geOptionTlvValue(@Nonnull Map<Command, YHCore.OptionValue> commandOptionValueMap) {
         ByteBuffer bb = ByteBuffer.allocate(commandOptionValueMap.size()*2);
         for(Command c : commandOptionValueMap.keySet()) {
@@ -160,6 +166,15 @@ public class Utils {
         return bb.array();
     }
 
+    /**
+     * Converts a byte array into a map containing Command-OptionValue pairs.
+     *
+     * The byte array is expected to contain an even number of bytes, where each bytes represent a commandID byte and an OptionValue value byte, in
+     * that order
+     *
+     * @param commandOptionValue
+     * @return A map containing Command-OptionValue pairs
+     */
     public static Map<Command, YHCore.OptionValue> geOptionTlvValue(@Nonnull byte[] commandOptionValue) {
         Map<Command, YHCore.OptionValue> ret = new HashMap<Command, YHCore.OptionValue>();
         for(int i=0; i<commandOptionValue.length; i+=2) {

@@ -153,6 +153,20 @@ public class YHCore {
         return session.sendSecureCmd(Command.GET_PSEUDO_RANDOM, data.array());
     }
 
+    /**
+     * @param session An authenticated session to communicate with the device over
+     * @return The value of the device setting for 'forceAudit' option
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     */
     public static OptionValue getForceAudit(@Nonnull final YHSession session)
             throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
                    NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
@@ -168,6 +182,21 @@ public class YHCore {
         return ret;
     }
 
+    /**
+     * Sets the value of device setting for 'forceAudit' option
+     * @param session An authenticated session to communicate with the device over
+     * @param forceAuditValue
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     */
     public static void setForceAudit(@Nonnull final YHSession session, @Nonnull final OptionValue forceAuditValue)
             throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
                    NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
@@ -183,6 +212,20 @@ public class YHCore {
         log.info("Set device setting for " + Option.FORCE_AUDIT.getDescription() + " to " + forceAuditValue.getDescription());
     }
 
+    /**
+     * @param session An authenticated session to communicate with the device over
+     * @return The value of the device setting for 'commandAudit' option
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     */
     public static Map<Command, OptionValue> getCommandAudit(@Nonnull final YHSession session)
             throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
                    NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
@@ -197,6 +240,20 @@ public class YHCore {
         return Utils.geOptionTlvValue(resp);
     }
 
+    /**
+     * @param session An authenticated session to communicate with the device over
+     * @param commandValueMap
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     */
     public static void setCommandAudit(@Nonnull final YHSession session, @Nonnull final Map<Command, OptionValue> commandValueMap)
             throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
                    NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
