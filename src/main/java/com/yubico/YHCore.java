@@ -2,6 +2,8 @@ package com.yubico;
 
 import com.yubico.exceptions.*;
 import com.yubico.internal.util.Utils;
+import com.yubico.objects.LogData;
+import com.yubico.objects.LogEntry;
 import com.yubico.objects.yhconcepts.Command;
 import lombok.NonNull;
 
@@ -13,6 +15,7 @@ import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -184,7 +187,8 @@ public class YHCore {
 
     /**
      * Sets the value of device setting for 'forceAudit' option
-     * @param session An authenticated session to communicate with the device over
+     *
+     * @param session         An authenticated session to communicate with the device over
      * @param forceAuditValue
      * @throws YHConnectionException              If the connection to the device fails
      * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
@@ -241,7 +245,7 @@ public class YHCore {
     }
 
     /**
-     * @param session An authenticated session to communicate with the device over
+     * @param session         An authenticated session to communicate with the device over
      * @param commandValueMap
      * @throws YHConnectionException              If the connection to the device fails
      * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
@@ -297,5 +301,76 @@ public class YHCore {
             }
         }
         return ret;
+    }
+
+    /**
+     * Fetch all current entries from the device Log Store.
+     *
+     * @param session An authenticated session to communicate with the device over
+     * @return All current entries from the device Log Store
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     */
+    public static LogData getLogData(@Nonnull final YHSession session)
+            throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+                   NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
+                   YHInvalidResponseException, IllegalBlockSizeException {
+        byte[] resp = session.sendSecureCmd(Command.GET_LOG_ENTRIES, null);
+        ByteBuffer bb = ByteBuffer.wrap(resp);
+        short unloggedBoot = bb.getShort();
+        short unloggedAuth = bb.getShort();
+        int nrOfEntries = (int) bb.get();
+        if (bb.remaining() % LogEntry.LOG_ENTRY_SIZE != 0) {
+            throw new IllegalArgumentException(
+                    "Response to " + Command.GET_LOG_ENTRIES.getName() + " command is expected to be " + (nrOfEntries * LogEntry.LOG_ENTRY_SIZE + 5) +
+                    " bytes long, but was " + resp.length + " bytes instead");
+        }
+
+        Map<Short, LogEntry> logEntries = new HashMap<Short, LogEntry>();
+        for (int i = 0; i < nrOfEntries; i++) {
+            byte[] logEntryBytes = new byte[LogEntry.LOG_ENTRY_SIZE];
+            bb.get(logEntryBytes);
+            LogEntry logEntry = new LogEntry(logEntryBytes);
+            logEntries.put(logEntry.getItemNumber(), logEntry);
+        }
+
+        log.info("Retrieved " + nrOfEntries + " log entries from YubiHSM");
+        return new LogData(unloggedBoot, unloggedAuth, logEntries);
+    }
+
+    /**
+     * Set the last extracted log entry.
+     * <p>
+     * Inform the device what the last extracted log entry is so logs can be reused. Mostly of practical use when forced auditing is enabled
+     *
+     * @param session An authenticated session to communicate with the device over
+     * @param index   The item number of the last extracted log entry
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     */
+    public static void setLogIndex(@Nonnull final YHSession session, final short index)
+            throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+                   NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
+                   YHInvalidResponseException, IllegalBlockSizeException {
+        ByteBuffer data = ByteBuffer.allocate(2);
+        data.putShort(index);
+        session.sendSecureCmd(Command.SET_LOG_INDEX, data.array());
+        log.info("Set log index to " + index);
     }
 }

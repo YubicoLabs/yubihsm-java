@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 import static org.junit.Assert.*;
 
 public class OptionsTest {
-    Logger log = Logger.getLogger(OptionsTest.class.getName());
+    private static Logger log = Logger.getLogger(OptionsTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;
@@ -40,6 +40,7 @@ public class OptionsTest {
 
     @Test
     public void testForceAudit() throws Exception {
+        log.info("TEST START: testForceAudit()");
         YHCore.OptionValue original = YHCore.getForceAudit(session);
 
         YHCore.setForceAudit(session, YHCore.OptionValue.ON);
@@ -49,10 +50,12 @@ public class OptionsTest {
         assertEquals(YHCore.OptionValue.OFF, YHCore.getForceAudit(session));
 
         YHCore.setForceAudit(session, original);
+        log.info("TEST END: testForceAudit()");
     }
 
     @Test
-    public void testCommandOptionValueConversion() throws Exception {
+    public void testCommandOptionValueConversion() {
+        log.info("TEST START: testCommandOptionValueConversion()");
         Map<Command, YHCore.OptionValue> map = new HashMap<Command, YHCore.OptionValue>();
         map.put(Command.SIGN_HMAC, YHCore.OptionValue.ON);
         map.put(Command.VERIFY_HMAC, YHCore.OptionValue.OFF);
@@ -70,10 +73,12 @@ public class OptionsTest {
         }
 
         assertEquals(map, Utils.geOptionTlvValue(byteValue));
+        log.info("TEST END: testCommandOptionValueConversion()");
     }
 
     @Test
     public void testCommandAudit() throws Exception {
+        log.info("TEST START: testCommandAudit()");
         Map<Command, YHCore.OptionValue> original = YHCore.getCommandAudit(session);
 
         Map<Command, YHCore.OptionValue> testOptions = new HashMap<Command, YHCore.OptionValue>();
@@ -92,10 +97,12 @@ public class OptionsTest {
         assertEquals(ret.get(Command.VERIFY_HMAC), YHCore.OptionValue.ON);
 
         YHCore.setCommandAudit(session, original);
+        log.info("TEST END: testCommandAudit()");
     }
 
     // This test will run after all other tests because it needs to reset the device
     public static void testCommandAuditFix() throws Exception {
+        log.info("TEST START: testCommandAuditFix()");
         Map<Command, YHCore.OptionValue> original = YHCore.getCommandAudit(session);
         Map<Command, YHCore.OptionValue> testOptions = new HashMap<Command, YHCore.OptionValue>();
         testOptions.put(Command.GENERATE_HMAC_KEY, YHCore.OptionValue.FIX);
@@ -120,6 +127,7 @@ public class OptionsTest {
 
         session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
         YHCore.setCommandAudit(session, original);
+        log.info("TEST END: testCommandAuditFix()");
     }
 
 

@@ -285,7 +285,7 @@ public class YHSession {
             createAuthenticatedSession();
         }
 
-        byte[] resp = secureTransceive(CommandUtils.getTransceiveMessage(cmd, data));
+        byte[] resp = secureTransceive(CommandUtils.getTransceiveMessage(cmd, data == null ? new byte[0] : data));
         return CommandUtils.getResponseData(cmd, resp);
     }
 

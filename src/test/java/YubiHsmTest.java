@@ -4,6 +4,8 @@ import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
 import com.yubico.objects.DeviceInfo;
+import com.yubico.objects.LogData;
+import com.yubico.objects.LogEntry;
 import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.ObjectOrigin;
@@ -131,6 +133,25 @@ public class YubiHsmTest {
 
         session.closeSession();
         log.info("TEST END: testAuthenticationKeyObject()");
+    }
+
+    @Test
+    public void testLogEntries() throws Exception {
+        log.info("TEST START: testLogEntries()");
+        YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
+        LogData logData = YHCore.getLogData(session);
+
+        assertTrue(logData.getUnloggedBootEvents() >= 0);
+        assertTrue(logData.getUnloggedAuthenticationEvents() >= 0);
+        assertFalse(logData.getLogEntries().isEmpty());
+
+        LogEntry lastEntry = logData.getLastLogEntry();
+        YHCore.setLogIndex(session, lastEntry.getItemNumber());
+        logData = YHCore.getLogData(session);
+        assertEquals(lastEntry.getItemNumber() + 1, logData.getFirstLogEntry().getItemNumber());
+
+        session.closeSession();
+        log.info("TEST END: testLogEntries()");
     }
 
     private void listObject(final YHSession session, final short id, final ObjectType type, final boolean exists) throws Exception {
