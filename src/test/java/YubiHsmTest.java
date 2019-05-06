@@ -22,7 +22,7 @@ import java.util.logging.Logger;
 import static org.junit.Assert.*;
 
 public class YubiHsmTest {
-    Logger log = Logger.getLogger(YubiHsmTest.class.getName());
+    private static Logger log = Logger.getLogger(YubiHsmTest.class.getName());
 
     private static YubiHsm yubihsm;
 
@@ -35,7 +35,7 @@ public class YubiHsmTest {
     }
 
     @AfterClass
-    public static void destroy() {
+    public static void destroy() throws Exception {
         yubihsm.close();
     }
 
@@ -76,17 +76,6 @@ public class YubiHsmTest {
         //assertNotEquals(0, info.getSerialnumber());
         assertNotNull(info.getSupportedAlgorithms());
         log.info("TEST END: testGetDeviceInfo()");
-    }
-
-    //@Test
-    public void testResetDevice() throws Exception {
-        log.info("TEST START: testResetDevice()");
-        YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
-        assertNotNull("Failed to create an authenticated session", session);
-
-        YHCore.resetDevice(session);
-        session.closeSession();
-        log.info("TEST END: testResetDevice()");
     }
 
     @Test

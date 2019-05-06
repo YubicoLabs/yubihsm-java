@@ -1,12 +1,14 @@
 package com.yubico.internal.util;
 
+import com.yubico.YHCore;
+import com.yubico.objects.yhconcepts.Command;
 import com.yubico.objects.yhobjects.YHObject;
 import lombok.NonNull;
 
+import javax.annotation.Nonnull;
+import java.nio.ByteBuffer;
 import java.security.InvalidParameterException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class Utils {
@@ -146,6 +148,27 @@ public class Utils {
             throw new IllegalArgumentException("Label is too long");
         }
         return label;
+    }
+
+    public static byte[] geOptionTlvValue(@Nonnull Map<Command, YHCore.OptionValue> commandOptionValueMap) {
+        ByteBuffer bb = ByteBuffer.allocate(commandOptionValueMap.size()*2);
+        for(Command c : commandOptionValueMap.keySet()) {
+            if(c != null) {
+                bb.put(c.getCommandId()).put(commandOptionValueMap.get(c).getValue());
+            }
+        }
+        return bb.array();
+    }
+
+    public static Map<Command, YHCore.OptionValue> geOptionTlvValue(@Nonnull byte[] commandOptionValue) {
+        Map<Command, YHCore.OptionValue> ret = new HashMap<Command, YHCore.OptionValue>();
+        for(int i=0; i<commandOptionValue.length; i+=2) {
+            Command command = Command.getCommand(commandOptionValue[i]);
+            if(command != null) {
+                ret.put(command, YHCore.OptionValue.forValue(commandOptionValue[i + 1]));
+            }
+        }
+        return ret;
     }
 
 }

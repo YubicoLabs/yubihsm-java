@@ -1,13 +1,11 @@
 package com.yubico;
 
-import com.yubico.exceptions.YHAuthenticationException;
-import com.yubico.exceptions.YHConnectionException;
-import com.yubico.exceptions.YHDeviceException;
-import com.yubico.exceptions.YHInvalidResponseException;
+import com.yubico.exceptions.*;
 import com.yubico.internal.util.Utils;
 import com.yubico.objects.yhconcepts.Command;
 import lombok.NonNull;
 
+import javax.annotation.Nonnull;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
@@ -15,9 +13,67 @@ import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public class YHCore {
+
+    public enum Option {
+        FORCE_AUDIT((byte) 0x01, "Force audit"),
+        COMMAND_AUDIT((byte) 0x03, "Command audit");
+
+        private final byte tag;
+        private final String description;
+
+        Option(byte tag, String description) {
+            this.tag = tag;
+            this.description = description;
+        }
+
+        public byte getTag() {
+            return tag;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+    }
+
+    public enum OptionValue {
+        OFF((byte) 0x00, "Disabled"),
+        ON((byte) 0x01, "Enabled"),
+        FIX((byte) 0x02, "Enabled, not possible to turn off");
+
+        private final byte value;
+        private final String description;
+
+        OptionValue(byte v, String desc) {
+            value = v;
+            description = desc;
+        }
+
+        public byte getValue() {
+            return value;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        private static final Map<Byte, OptionValue> BY_VALUE_MAP = new LinkedHashMap<Byte, OptionValue>();
+
+        static {
+            for (OptionValue v : OptionValue.values()) {
+                BY_VALUE_MAP.put(v.getValue(), v);
+            }
+        }
+
+        public static OptionValue forValue(byte v) {
+            return BY_VALUE_MAP.get(v);
+        }
+    }
+
     private static Logger log = Logger.getLogger(YHCore.class.getName());
 
     /**
@@ -95,5 +151,94 @@ public class YHCore {
         ByteBuffer data = ByteBuffer.allocate(2);
         data.putShort((short) length);
         return session.sendSecureCmd(Command.GET_PSEUDO_RANDOM, data.array());
+    }
+
+    public static OptionValue getForceAudit(@Nonnull final YHSession session)
+            throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+                   NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
+                   YHInvalidResponseException, IllegalBlockSizeException {
+        ByteBuffer data = ByteBuffer.allocate(1);
+        data.put(Option.FORCE_AUDIT.getTag());
+        byte[] resp = session.sendSecureCmd(Command.GET_OPTION, data.array());
+        if (resp.length != 1) {
+            throw new YHInvalidResponseException("Response to GetForceAudit command is expected to be 1 byte long, but was " + resp.length);
+        }
+        OptionValue ret = OptionValue.forValue(resp[0]);
+        log.info("Got device setting for " + Option.FORCE_AUDIT.getDescription() + ": " + ret.getDescription());
+        return ret;
+    }
+
+    public static void setForceAudit(@Nonnull final YHSession session, @Nonnull final OptionValue forceAuditValue)
+            throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+                   NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
+                   YHInvalidResponseException, IllegalBlockSizeException {
+        ByteBuffer data = ByteBuffer.allocate(4);
+        data.put(Option.FORCE_AUDIT.getTag());
+        data.putShort((short) 1);
+        data.put(forceAuditValue.getValue());
+        byte[] resp = session.sendSecureCmd(Command.SET_OPTION, data.array());
+        if (resp.length != 0) {
+            throw new YHInvalidResponseException("Response to SetForceAudit command is expected to be empty, but was " + resp.length);
+        }
+        log.info("Set device setting for " + Option.FORCE_AUDIT.getDescription() + " to " + forceAuditValue.getDescription());
+    }
+
+    public static Map<Command, OptionValue> getCommandAudit(@Nonnull final YHSession session)
+            throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+                   NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
+                   YHInvalidResponseException, IllegalBlockSizeException {
+        ByteBuffer data = ByteBuffer.allocate(1);
+        data.put(Option.COMMAND_AUDIT.getTag());
+        byte[] resp = session.sendSecureCmd(Command.GET_OPTION, data.array());
+        if (resp.length % 2 != 0) {
+            throw new YHInvalidResponseException("Response to GetCommandAudit command is expected to contains an even number of bytes");
+        }
+        log.info("Got device setting for " + Option.COMMAND_AUDIT.getDescription() + ": " + Utils.getPrintableBytes(resp));
+        return Utils.geOptionTlvValue(resp);
+    }
+
+    public static void setCommandAudit(@Nonnull final YHSession session, @Nonnull final Map<Command, OptionValue> commandValueMap)
+            throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+                   NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
+                   YHInvalidResponseException, IllegalBlockSizeException {
+
+        byte[] commandValueBytes = Utils.geOptionTlvValue(commandValueMap);
+
+        ByteBuffer data = ByteBuffer.allocate(3 + commandValueBytes.length);
+        data.put(Option.COMMAND_AUDIT.getTag());
+        data.putShort((short) commandValueBytes.length);
+        data.put(commandValueBytes);
+        try {
+            byte[] resp = session.sendSecureCmd(Command.SET_OPTION, data.array());
+            if (resp.length != 0) {
+                throw new YHInvalidResponseException("Response to SetCommandAudit command is expected to be empty, but was " + resp.length);
+            }
+        } catch (YHDeviceException e) {
+            if (e.getYhError().equals(YHError.INVALID_DATA)) {
+                String fixedCommands = getFixedAuditCommands(session, commandValueMap);
+                if (!fixedCommands.equals("")) {
+                    throw new IllegalArgumentException("Fail. Trying to change the FIX settings for the following commands: " + fixedCommands);
+                } else {
+                    throw e;
+                }
+            } else {
+                throw e;
+            }
+        }
+        log.info("Set device setting for " + Option.COMMAND_AUDIT.getDescription() + " to " + Utils.getPrintableBytes(commandValueBytes));
+    }
+
+    private static String getFixedAuditCommands(@Nonnull final YHSession session, @Nonnull final Map<Command, OptionValue> commandValueMap)
+            throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
+                   NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
+                   YHInvalidResponseException, IllegalBlockSizeException {
+        String ret = "";
+        Map<Command, OptionValue> deviceValues = getCommandAudit(session);
+        for (Command c : commandValueMap.keySet()) {
+            if (deviceValues.get(c).equals(OptionValue.FIX)) {
+                ret += c.getName() + " ";
+            }
+        }
+        return ret;
     }
 }
