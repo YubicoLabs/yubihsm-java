@@ -17,7 +17,6 @@ import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
@@ -34,10 +33,10 @@ public class Template extends YHObject {
     private Algorithm algorithm;
 
     /**
-     * Creates an Opaque object
+     * Creates a Template object
      *
-     * @param id        The object ID of this key
-     * @param algorithm A supported Opaque object algorithm. Currently, only {{@link Algorithm.TEMPLATE_SSH}} is supported
+     * @param id        The object ID of this object
+     * @param algorithm A supported Template object algorithm. Currently, only {{@link Algorithm.TEMPLATE_SSH}} is supported
      */
     public Template(final short id, @NonNull final Algorithm algorithm) {
         if (!isTemplateAlgorithm(algorithm)) {
@@ -81,7 +80,6 @@ public class Template extends YHObject {
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      * @throws UnsupportedAlgorithmException      If the specified key algorithm is not an RSA algorithm
-     * @throws CertificateException               If parsing the data as a certificate fails. Applicable if the algorithm is {{@link Algorithm.OPAQUE_X509_CERTIFICATE}}
      */
     public static short importTemplate(@NonNull final YHSession session, short id, final String label, @NonNull final List<Integer> domains,
                                        final List<Capability> capabilities, @NonNull final Algorithm algorithm, @NonNull final byte[] templateData)

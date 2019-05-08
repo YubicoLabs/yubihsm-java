@@ -9,6 +9,7 @@ import com.yubico.objects.yhconcepts.Command;
 import com.yubico.objects.yhconcepts.ObjectType;
 import lombok.NonNull;
 
+import javax.annotation.Nonnull;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
@@ -26,6 +27,8 @@ public class AsymmetricKey extends YHObject {
     private static Logger log = Logger.getLogger(AsymmetricKey.class.getName());
 
     public static final ObjectType TYPE = ObjectType.TYPE_ASYMMETRIC_KEY;
+    private static final int SSH_CERT_REQUEST_TIMESTAMP_LENGTH = 4;
+    private static final int SSH_CERT_REQUEST_SIGNATURE_LENGTH = 256;
 
     private Algorithm keyAlgorithm;
 
@@ -78,7 +81,7 @@ public class AsymmetricKey extends YHObject {
     /**
      * @return True `algorithm` is a supported algorithm for ED keys. False otherwise
      */
-    public static boolean isEdAlgorithm(final Algorithm algorithm) {
+    public static boolean isEdAlgorithm(@Nonnull final Algorithm algorithm) {
         return algorithm.equals(Algorithm.EC_ED25519);
     }
 
@@ -247,6 +250,158 @@ public class AsymmetricKey extends YHObject {
 
         byte[] cert = session.sendSecureCmd(Command.SIGN_ATTESTATION_CERTIFICATE, bb.array());
         return getCertFromBytes(cert);
+    }
+
+    /**
+     * Signs an SSH Certificate using this Asymmetric Key and the given SSH Template. The certificate can then be used to login to hosts.
+     * <p>
+     * The return value is the only the signature. It will have to be inserted into the actual certificate later
+     *
+     * @param session       An authenticated session to communicate with the device over
+     * @param sshTemplateId The object ID of the SSH Template
+     * @param algorithm
+     * @param timestamp     Timestamp with the definition of `Now`
+     * @param reqSignature  Signature over the request and timestamp
+     * @param req           The SSH request
+     * @return Signature for the SSH certificate
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     */
+    public byte[] signSshCertificate(@Nonnull final YHSession session, final short sshTemplateId, @Nonnull final Algorithm algorithm,
+                                     @Nonnull final byte[] timestamp, @Nonnull final byte[] reqSignature, @Nonnull final byte[] req)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException {
+        return signSshCertificate(session, getId(), sshTemplateId, algorithm, timestamp, reqSignature, req);
+    }
+
+    /**
+     * Signs an SSH Certificate using this Asymmetric Key and the given SSH Template. The certificate can then be used to login to hosts.
+     * <p>
+     * The return value is the only the signature. It will have to be inserted into the actual certificate later
+     *
+     * @param session        An authenticated session to communicate with the device over
+     * @param sshTemplateId  The object ID of the SSH Template
+     * @param algorithm
+     * @param sshCertRequest The SSH request. The first 4 bytes of the request is expected to contain the time stamp and the next 256 bytes
+     *                       are
+     *                       expected to contain the request signature
+     * @return Signature for the SSH certificate
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     */
+    public byte[] signSshCertificate(@Nonnull final YHSession session, final short sshTemplateId, @Nonnull final Algorithm algorithm,
+                                     @Nonnull final byte[] sshCertRequest)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException {
+        return signSshCertificate(session, getId(), sshTemplateId, algorithm, sshCertRequest);
+    }
+
+    /**
+     * Signs an SSH Certificate using the given Asymmetric Key and SSH Template. The certificate can then be used to login to hosts.
+     * <p>
+     * The return value is the only the signature. It will have to be inserted into the actual certificate later
+     *
+     * @param session       An authenticated session to communicate with the device over
+     * @param asymKeyId     The object ID of the Asymmetric key
+     * @param sshTemplateId The object ID of the SSH Template
+     * @param algorithm
+     * @param timestamp     Timestamp with the definition of `Now`
+     * @param reqSignature  Signature over the request and timestamp
+     * @param req           The SSH request
+     * @return Signature for the SSH certificate
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     */
+    public static byte[] signSshCertificate(@Nonnull final YHSession session, final short asymKeyId, final short sshTemplateId,
+                                            @Nonnull final Algorithm algorithm, @Nonnull final byte[] timestamp, @Nonnull final byte[] reqSignature,
+                                            @Nonnull final byte[] req)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException {
+        if (timestamp.length != SSH_CERT_REQUEST_TIMESTAMP_LENGTH) {
+            throw new IllegalArgumentException(
+                    "The timestamp is expected to be " + SSH_CERT_REQUEST_TIMESTAMP_LENGTH + " bytes long, but was " + timestamp.length);
+        }
+
+        if (reqSignature.length != SSH_CERT_REQUEST_SIGNATURE_LENGTH) {
+            throw new IllegalArgumentException("The request signature is expected to be " + SSH_CERT_REQUEST_SIGNATURE_LENGTH + " bytes long, but " +
+                                               "was " + timestamp.length);
+        }
+
+        ByteBuffer bb = ByteBuffer.allocate(SSH_CERT_REQUEST_TIMESTAMP_LENGTH + SSH_CERT_REQUEST_SIGNATURE_LENGTH + req.length);
+        bb.put(timestamp);
+        bb.put(reqSignature);
+        bb.put(req);
+
+        return signSshCertificate(session, asymKeyId, sshTemplateId, algorithm, bb.array());
+    }
+
+    /**
+     * Signs an SSH Certificate using the given Asymmetric Key and SSH Template. The certificate can then be used to login to hosts.
+     * <p>
+     * The return value is the only the signature. It will have to be inserted into the actual certificate later
+     *
+     * @param session        An authenticated session to communicate with the device over
+     * @param asymKeyId      The object ID of the Asymmetric key
+     * @param sshTemplateId  The object ID of the SSH Template
+     * @param algorithm
+     * @param sshCertrequest The SSH request. The first 4 bytes of the request is expected to contain the time stamp and the next 256 bytes are
+     *                       expected to contain the request signature
+     * @return Signature for the SSH certificate
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     */
+    public static byte[] signSshCertificate(@Nonnull final YHSession session, final short asymKeyId, final short sshTemplateId,
+                                            @Nonnull final Algorithm algorithm, @Nonnull final byte[] sshCertrequest)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException {
+
+        ByteBuffer bb = ByteBuffer.allocate(
+                OBJECT_ID_SIZE + OBJECT_ID_SIZE + OBJECT_ALGORITHM_SIZE + sshCertrequest.length);
+        bb.putShort(asymKeyId);
+        bb.putShort(sshTemplateId);
+        bb.put(algorithm.getAlgorithmId());
+        bb.put(sshCertrequest);
+
+        byte[] sig = session.sendSecureCmd(Command.SIGN_SSH_CERTIFICATE, bb.array());
+        log.info("Signed SSH certificate with Asymmetric key " + String.format("0x%02X", asymKeyId) + ", SSH template " + String.format("0x%02X"
+                , sshTemplateId) + " and algorithm " + algorithm.getName());
+        return sig;
     }
 
     private static X509Certificate getCertFromBytes(@NonNull final byte[] certBytes) throws CertificateException {
