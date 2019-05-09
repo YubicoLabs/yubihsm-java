@@ -3,6 +3,7 @@ import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
+import com.yubico.internal.util.Utils;
 import com.yubico.objects.DeviceInfo;
 import com.yubico.objects.LogData;
 import com.yubico.objects.LogEntry;
@@ -10,9 +11,7 @@ import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.ObjectOrigin;
 import com.yubico.objects.yhconcepts.ObjectType;
-import com.yubico.objects.yhobjects.AuthenticationKey;
-import com.yubico.objects.yhobjects.YHObject;
-import com.yubico.objects.yhobjects.YHObjectInfo;
+import com.yubico.objects.yhobjects.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -152,6 +151,91 @@ public class YubiHsmTest {
 
         session.closeSession();
         log.info("TEST END: testLogEntries()");
+    }
+
+    @Test
+    public void testListObjects() throws Exception {
+        log.info("TEST START: testListObjects()");
+        YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
+
+        // Generate 2 Asymmetric keys, 1 HMAC key and 1 Wrapkey
+        short asymid1 = AsymmetricKey.generateAsymmetricKey(session, (short) 0, "ec_sign_ssh", Arrays.asList(1), Algorithm.EC_P224,
+                                                            Arrays.asList(Capability.SIGN_SSH_CERTIFICATE, Capability.EXPORT_WRAPPED));
+        YHObjectInfo asym1 = new YHObjectInfo(asymid1, AsymmetricKey.TYPE, (byte) 0);
+
+        short asymid2 = AsymmetricKey.generateAsymmetricKey(session, (short) 0, "ec_sign_ecdsa", Arrays.asList(2), Algorithm.EC_P224,
+                                                            Arrays.asList(Capability.SIGN_ECDSA));
+        YHObjectInfo asym2 = new YHObjectInfo(asymid1, AsymmetricKey.TYPE, (byte) 0);
+
+        short hmacid = HmacKey.generateHmacKey(session, (short) 0, "hmac", Arrays.asList(3, 4), Algorithm.HMAC_SHA256,
+                                               Arrays.asList(Capability.VERIFY_HMAC));
+        YHObjectInfo hmackey = new YHObjectInfo(hmacid, HmacKey.TYPE, (byte) 0);
+
+        short wrapid = WrapKey.generateWrapKey(session, (short) 0, "wrap", Arrays.asList(2, 4), Algorithm.AES192_CCM_WRAP,
+                                               Arrays.asList(Capability.EXPORT_WRAPPED), null);
+        YHObjectInfo wrapkey = new YHObjectInfo(wrapid, WrapKey.TYPE, (byte) 0);
+
+        try {
+            HashMap filters = new HashMap();
+            List<YHObjectInfo> objects;
+
+            // List AsymmetricKey objects
+            filters.put(YHObject.ListFilter.TYPE, AsymmetricKey.TYPE.getTypeId());
+            objects = YHObject.getObjectList(session, filters);
+            assertEquals(2, objects.size());
+            assertTrue(objects.contains(asym1));
+            assertTrue(objects.contains(asym2));
+
+            // List object with label "hmac"
+            filters.clear();
+            filters.put(YHObject.ListFilter.LABEL, "hmac");
+            objects = YHObject.getObjectList(session, filters);
+            assertEquals(1, objects.size());
+            assertEquals(hmackey, objects.get(0));
+
+            // List object with domains 5 and type HMAC key
+            filters.clear();
+            filters.put(YHObject.ListFilter.DOMAINS, Utils.getShortFromList(Arrays.asList(5)));
+            filters.put(YHObject.ListFilter.TYPE, HmacKey.TYPE);
+            objects = YHObject.getObjectList(session, filters);
+            assertTrue(objects.isEmpty());
+
+            // List object with domain 2
+            filters.clear();
+            filters.put(YHObject.ListFilter.DOMAINS, Utils.getShortFromList(Arrays.asList(2)));
+            objects = YHObject.getObjectList(session, filters);
+            assertEquals(3, objects.size()); // The third object is the default authentication key
+            assertTrue(objects.contains(wrapkey));
+            assertTrue(objects.contains(wrapkey));
+
+            // List object with Capability.EXPORT_WRAPPED
+            filters.clear();
+            filters.put(YHObject.ListFilter.CAPABILITIES, Capability.getCapabilities(Arrays.asList(Capability.EXPORT_WRAPPED)));
+            objects = YHObject.getObjectList(session, filters);
+            assertEquals(3, objects.size()); // The third object is the default authentication key
+            assertTrue(objects.contains(wrapkey));
+            assertTrue(objects.contains(asym1));
+
+        } finally {
+            if (YHObject.exists(session, asymid1, AsymmetricKey.TYPE)) {
+                YHObject.delete(session, asymid1, AsymmetricKey.TYPE);
+            }
+
+            if (YHObject.exists(session, asymid2, AsymmetricKey.TYPE)) {
+                YHObject.delete(session, asymid2, AsymmetricKey.TYPE);
+            }
+
+            if (YHObject.exists(session, hmacid, HmacKey.TYPE)) {
+                YHObject.delete(session, hmacid, HmacKey.TYPE);
+            }
+
+            if (YHObject.exists(session, wrapid, WrapKey.TYPE)) {
+                YHObject.delete(session, wrapid, WrapKey.TYPE);
+            }
+
+        }
+        session.closeSession();
+        log.info("TEST END: testListObjects()");
     }
 
     private void listObject(final YHSession session, final short id, final ObjectType type, final boolean exists) throws Exception {

@@ -162,6 +162,16 @@ public class YHObjectInfo {
         this.delegatedCapabilities = delegatedCapabilities;
     }
 
+    @Override
+    public boolean equals(final Object other) {
+        if(other == null) {
+            return false;
+        }
+
+        YHObjectInfo otherInfo = (YHObjectInfo) other;
+        return getId()==otherInfo.getId() && getType().equals(otherInfo.getType());
+    }
+
     /**
      * @return A String representation of the object
      */
