@@ -1,15 +1,15 @@
 package AsymmetricKeyTest;
 
-import com.yubico.YHSession;
-import com.yubico.YubiHsm;
-import com.yubico.backend.Backend;
-import com.yubico.backend.HttpBackend;
-import com.yubico.objects.yhconcepts.Algorithm;
-import com.yubico.objects.yhconcepts.Capability;
-import com.yubico.objects.yhobjects.AsymmetricKey;
-import com.yubico.objects.yhobjects.AsymmetricKeyRsa;
-import com.yubico.objects.yhobjects.Opaque;
-import com.yubico.objects.yhobjects.Template;
+import com.yubico.hsm.YHSession;
+import com.yubico.hsm.YubiHsm;
+import com.yubico.hsm.backend.Backend;
+import com.yubico.hsm.backend.HttpBackend;
+import com.yubico.hsm.yhconcepts.Algorithm;
+import com.yubico.hsm.yhconcepts.Capability;
+import com.yubico.hsm.yhobjects.AsymmetricKey;
+import com.yubico.hsm.yhobjects.AsymmetricKeyRsa;
+import com.yubico.hsm.yhobjects.Opaque;
+import com.yubico.hsm.yhobjects.Template;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;

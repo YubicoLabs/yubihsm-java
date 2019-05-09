@@ -1,10 +1,10 @@
-import com.yubico.YHCore;
-import com.yubico.YHSession;
-import com.yubico.YubiHsm;
-import com.yubico.backend.Backend;
-import com.yubico.backend.HttpBackend;
-import com.yubico.internal.util.Utils;
-import com.yubico.objects.yhconcepts.Command;
+import com.yubico.hsm.YHCore;
+import com.yubico.hsm.YHSession;
+import com.yubico.hsm.YubiHsm;
+import com.yubico.hsm.backend.Backend;
+import com.yubico.hsm.backend.HttpBackend;
+import com.yubico.hsm.internal.util.Utils;
+import com.yubico.hsm.yhconcepts.Command;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -103,7 +103,6 @@ public class OptionsTest {
     // This test will run after all other tests because it needs to reset the device
     public static void testCommandAuditFix() throws Exception {
         log.info("TEST START: testCommandAuditFix()");
-        Map<Command, YHCore.OptionValue> original = YHCore.getCommandAudit(session);
         Map<Command, YHCore.OptionValue> testOptions = new HashMap<Command, YHCore.OptionValue>();
         testOptions.put(Command.GENERATE_HMAC_KEY, YHCore.OptionValue.FIX);
         YHCore.setCommandAudit(session, testOptions);
@@ -119,14 +118,6 @@ public class OptionsTest {
         assertTrue(exceptionThrown);
 
         YHCore.resetDevice(session);
-        yubihsm.close();
-        session = null;
-
-        Thread.sleep(1000);
-        init();
-
-        session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
-        YHCore.setCommandAudit(session, original);
         log.info("TEST END: testCommandAuditFix()");
     }
 

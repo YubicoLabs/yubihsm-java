@@ -1,19 +1,19 @@
-import com.yubico.YHCore;
-import com.yubico.YHSession;
-import com.yubico.YubiHsm;
-import com.yubico.backend.Backend;
-import com.yubico.backend.HttpBackend;
-import com.yubico.exceptions.YHDeviceException;
-import com.yubico.exceptions.YHError;
-import com.yubico.internal.util.Utils;
-import com.yubico.objects.DeviceInfo;
-import com.yubico.objects.LogData;
-import com.yubico.objects.LogEntry;
-import com.yubico.objects.yhconcepts.Algorithm;
-import com.yubico.objects.yhconcepts.Capability;
-import com.yubico.objects.yhconcepts.ObjectOrigin;
-import com.yubico.objects.yhconcepts.ObjectType;
-import com.yubico.objects.yhobjects.*;
+import com.yubico.hsm.YHCore;
+import com.yubico.hsm.YHSession;
+import com.yubico.hsm.YubiHsm;
+import com.yubico.hsm.backend.Backend;
+import com.yubico.hsm.backend.HttpBackend;
+import com.yubico.hsm.exceptions.YHDeviceException;
+import com.yubico.hsm.exceptions.YHError;
+import com.yubico.hsm.internal.util.Utils;
+import com.yubico.hsm.yhdata.DeviceInfo;
+import com.yubico.hsm.yhdata.LogData;
+import com.yubico.hsm.yhdata.LogEntry;
+import com.yubico.hsm.yhconcepts.Algorithm;
+import com.yubico.hsm.yhconcepts.Capability;
+import com.yubico.hsm.yhconcepts.ObjectOrigin;
+import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhobjects.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -181,7 +181,7 @@ public class YubiHsmTest {
             HashMap filters = new HashMap();
             List<YHObjectInfo> objects;
 
-            // List AsymmetricKey objects
+            // List AsymmetricKey yhdata
             filters.put(YHObject.ListFilter.TYPE, AsymmetricKey.TYPE.getTypeId());
             objects = YHObject.getObjectList(session, filters);
             assertEquals(2, objects.size());

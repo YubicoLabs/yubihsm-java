@@ -1,4 +1,4 @@
-import com.yubico.internal.util.Utils;
+import com.yubico.hsm.internal.util.Utils;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;

@@ -1,14 +1,14 @@
 package AsymmetricKeyTest;
 
-import com.yubico.YHSession;
-import com.yubico.YubiHsm;
-import com.yubico.backend.Backend;
-import com.yubico.backend.HttpBackend;
-import com.yubico.objects.yhconcepts.Algorithm;
-import com.yubico.objects.yhconcepts.Capability;
-import com.yubico.objects.yhconcepts.ObjectType;
-import com.yubico.objects.yhobjects.AsymmetricKeyEc;
-import com.yubico.objects.yhobjects.YHObject;
+import com.yubico.hsm.YHSession;
+import com.yubico.hsm.YubiHsm;
+import com.yubico.hsm.backend.Backend;
+import com.yubico.hsm.backend.HttpBackend;
+import com.yubico.hsm.yhconcepts.Algorithm;
+import com.yubico.hsm.yhconcepts.Capability;
+import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhobjects.AsymmetricKeyEc;
+import com.yubico.hsm.yhobjects.YHObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

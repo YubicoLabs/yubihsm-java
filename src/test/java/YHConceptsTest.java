@@ -1,7 +1,7 @@
-import com.yubico.objects.yhconcepts.Algorithm;
-import com.yubico.objects.yhconcepts.Capability;
-import com.yubico.objects.yhconcepts.Command;
-import com.yubico.objects.yhconcepts.YHConcept;
+import com.yubico.hsm.yhconcepts.Algorithm;
+import com.yubico.hsm.yhconcepts.Capability;
+import com.yubico.hsm.yhconcepts.Command;
+import com.yubico.hsm.yhconcepts.YHConcept;
 import org.junit.Test;
 
 import java.util.ArrayList;

@@ -1,12 +1,12 @@
 package AsymmetricKeyTest;
 
-import com.yubico.YHSession;
-import com.yubico.exceptions.*;
-import com.yubico.objects.yhconcepts.Algorithm;
-import com.yubico.objects.yhconcepts.Capability;
-import com.yubico.objects.yhobjects.AsymmetricKeyEc;
-import com.yubico.objects.yhobjects.AsymmetricKeyRsa;
-import com.yubico.objects.yhobjects.YHObject;
+import com.yubico.hsm.YHSession;
+import com.yubico.hsm.exceptions.*;
+import com.yubico.hsm.yhconcepts.Algorithm;
+import com.yubico.hsm.yhconcepts.Capability;
+import com.yubico.hsm.yhobjects.AsymmetricKeyEc;
+import com.yubico.hsm.yhobjects.AsymmetricKeyRsa;
+import com.yubico.hsm.yhobjects.YHObject;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
