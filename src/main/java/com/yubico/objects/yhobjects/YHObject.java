@@ -246,12 +246,20 @@ public class YHObject {
                    InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
 
-        log.finer("Deleting " + objectType.getName() + " " + String.format("0x%02X", objectID));
+        log.finer("Deleting " + objectType.getName() + " " + String.format("0x%02", objectID));
 
         ByteBuffer bb = ByteBuffer.allocate(3);
         bb.putShort(objectID);
         bb.put(objectType.getTypeId());
-        session.sendSecureCmd(Command.DELETE_OBJECT, bb.array());
+        try {
+            session.sendSecureCmd(Command.DELETE_OBJECT, bb.array());
+        } catch (YHDeviceException e) {
+            if(!YHError.OBJECT_NOT_FOUND.equals(e.getYhError())) {
+                throw e;
+            } else {
+                log.info(objectType.getName() + " with ID " + String.format("0x%02", objectID) + " does not exist. Doing nothing");
+            }
+        }
     }
 
     /**

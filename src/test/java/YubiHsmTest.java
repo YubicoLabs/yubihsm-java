@@ -3,6 +3,8 @@ import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
+import com.yubico.exceptions.YHDeviceException;
+import com.yubico.exceptions.YHError;
 import com.yubico.internal.util.Utils;
 import com.yubico.objects.DeviceInfo;
 import com.yubico.objects.LogData;
@@ -217,25 +219,43 @@ public class YubiHsmTest {
             assertTrue(objects.contains(asym1));
 
         } finally {
-            if (YHObject.exists(session, asymid1, AsymmetricKey.TYPE)) {
                 YHObject.delete(session, asymid1, AsymmetricKey.TYPE);
-            }
-
-            if (YHObject.exists(session, asymid2, AsymmetricKey.TYPE)) {
                 YHObject.delete(session, asymid2, AsymmetricKey.TYPE);
-            }
-
-            if (YHObject.exists(session, hmacid, HmacKey.TYPE)) {
                 YHObject.delete(session, hmacid, HmacKey.TYPE);
-            }
-
-            if (YHObject.exists(session, wrapid, WrapKey.TYPE)) {
                 YHObject.delete(session, wrapid, WrapKey.TYPE);
-            }
-
         }
         session.closeSession();
         log.info("TEST END: testListObjects()");
+
+    }
+
+    @Test
+    public void testeDeleteObject() throws Exception {
+        log.info("TEST START: testeDeleteObject()");
+        YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
+
+        short asymid1 = AsymmetricKey.generateAsymmetricKey(session, (short) 0, "ec_sign_ssh", Arrays.asList(1), Algorithm.EC_P224,
+                                                            Arrays.asList(Capability.SIGN_SSH_CERTIFICATE, Capability.EXPORT_WRAPPED));
+        AsymmetricKey key = new AsymmetricKey(asymid1, Algorithm.EC_P224);
+        assertTrue(key.exists(session));
+
+        key.delete(session);
+        assertFalse(key.exists(session));
+
+        boolean exceptionThrown = false;
+        try {
+            key.delete(session);
+        } catch (YHDeviceException e) {
+            if(YHError.OBJECT_NOT_FOUND.equals(e.getYhError())) {
+                exceptionThrown = true;
+            } else {
+                throw e;
+            }
+        }
+        assertFalse(exceptionThrown);
+
+        session.closeSession();
+        log.info("TEST END: testeDeleteObject()");
     }
 
     private void listObject(final YHSession session, final short id, final ObjectType type, final boolean exists) throws Exception {
