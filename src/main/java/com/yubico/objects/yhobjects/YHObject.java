@@ -1,10 +1,7 @@
 package com.yubico.objects.yhobjects;
 
 import com.yubico.YHSession;
-import com.yubico.exceptions.YHAuthenticationException;
-import com.yubico.exceptions.YHConnectionException;
-import com.yubico.exceptions.YHDeviceException;
-import com.yubico.exceptions.YHInvalidResponseException;
+import com.yubico.exceptions.*;
 import com.yubico.internal.util.Utils;
 import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.Command;
@@ -12,6 +9,7 @@ import com.yubico.objects.yhconcepts.ObjectType;
 import com.yubico.objects.yhconcepts.YHConcept;
 import lombok.NonNull;
 
+import javax.annotation.Nonnull;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
@@ -219,11 +217,11 @@ public class YHObject {
      * @throws BadPaddingException                If the message encryption/decryption fails
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      */
-    public void deleteObject(YHSession session)
+    public void delete(YHSession session)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
                    InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
-        deleteObject(session, getId(), getType());
+        delete(session, getId(), getType());
     }
 
     /**
@@ -243,7 +241,7 @@ public class YHObject {
      * @throws BadPaddingException                If the message encryption/decryption fails
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      */
-    public static void deleteObject(@NonNull final YHSession session, final short objectID, @NonNull final ObjectType objectType)
+    public static void delete(@NonNull final YHSession session, final short objectID, @NonNull final ObjectType objectType)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
                    InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
@@ -270,7 +268,6 @@ public class YHObject {
      * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
      * @throws BadPaddingException                If the message encryption/decryption fails
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
-     * @throws IllegalBlockSizeException
      */
     public YHObjectInfo getObjectInfo(final YHSession session)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
@@ -283,7 +280,7 @@ public class YHObject {
      * Retrieves details of a specific object in the device
      *
      * @param session    An authenticated session to communicate with the device over
-     * @param objectID   The ID of the subject to delete
+     * @param objectID   The ID of the object to delete
      * @param objectType The type of the object to delete
      * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
@@ -295,7 +292,6 @@ public class YHObject {
      * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
      * @throws BadPaddingException                If the message encryption/decryption fails
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
-     * @throws IllegalBlockSizeException
      */
     public static YHObjectInfo getObjectInfo(@NonNull final YHSession session, final short objectID, @NonNull final ObjectType objectType)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
@@ -315,4 +311,61 @@ public class YHObject {
         return info;
     }
 
+    /**
+     * Checks whether this object exists in the YubiHSM or not
+     *
+     * @param session An authenticated session to communicate with the device over
+     * @return True if there exist and object in the YubiHSM with the same ID and Type as this object. False otherwise
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     */
+    public boolean exists(final YHSession session)
+            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
+                   InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
+                   IllegalBlockSizeException {
+        return exists(session, getId(), getType());
+    }
+
+    /**
+     * Checks whether an object exists in the YubiHSM or not
+     *
+     * @param session    An authenticated session to communicate with the device over
+     * @param objectID   The ID of the subject to check
+     * @param objectType The type of the object to check
+     * @return True if there exist and object in the YubiHSM with the same ID and Type. False otherwise
+     * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the message encryption/decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws NoSuchPaddingException             If the message encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the message encryption/decryption fails
+     * @throws BadPaddingException                If the message encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the message encryption/decryption fails
+     * @throws IllegalBlockSizeException
+     */
+    public static boolean exists(@Nonnull final YHSession session, final short objectID, @NonNull final ObjectType objectType)
+            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
+                   InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
+                   IllegalBlockSizeException {
+        try {
+            YHObject.getObjectInfo(session, objectID, objectType);
+        } catch (YHDeviceException e) {
+            if(YHError.OBJECT_NOT_FOUND.equals(e.getYhError())) {
+                return false;
+            } else {
+                throw e;
+            }
+        }
+        return true;
+    }
 }

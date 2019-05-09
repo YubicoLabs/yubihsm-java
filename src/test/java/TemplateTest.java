@@ -68,11 +68,11 @@ public class TemplateTest {
             assertTrue(tempObj.getCapabilities().containsAll(capabilities));
             assertEquals(0, tempObj.getDelegatedCapabilities().size());
 
-            Template template = new Template(id, Algorithm.TEMPLATE_SSH);
+            Template template = new Template(id);
             byte[] returnedTemplateData = template.getTemplate(session);
             assertArrayEquals(templateData, returnedTemplateData);
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_TEMPLATE);
+            YHObject.delete(session, id, ObjectType.TYPE_TEMPLATE);
         }
 
         log.info("TEST END: testTemplateObject()");

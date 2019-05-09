@@ -30,25 +30,14 @@ public class Template extends YHObject {
     public static final ObjectType TYPE = ObjectType.TYPE_TEMPLATE;
     public static final int MAX_TEMPLATE_DATA_LENGTH = 1968;
 
-    private Algorithm algorithm;
-
     /**
      * Creates a Template object
      *
      * @param id        The object ID of this object
-     * @param algorithm A supported Template object algorithm. Currently, only {{@link Algorithm.TEMPLATE_SSH}} is supported
      */
-    public Template(final short id, @NonNull final Algorithm algorithm) {
-        if (!isTemplateAlgorithm(algorithm)) {
-            throw new IllegalArgumentException(algorithm.getName() + " is not a supported Template algorithm");
-        }
+    public Template(final short id) {
         setId(id);
         setType(TYPE);
-        this.algorithm = algorithm;
-    }
-
-    public Algorithm getAlgorithm() {
-        return algorithm;
     }
 
     public static boolean isTemplateAlgorithm(final Algorithm algorithm) {

@@ -70,7 +70,7 @@ public class AuthenticationKeyTest {
             assertEquals(capabilities.size(), authKey.getDelegatedCapabilities().size());
             assertTrue(authKey.getDelegatedCapabilities().containsAll(capabilities));
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
         }
         log.info("TEST END: testGetAuthenticationKey()");
     }
@@ -206,7 +206,7 @@ public class AuthenticationKeyTest {
             assertEquals(YHSession.SessionStatus.CLOSED, session1.getStatus());
         } finally {
             // Delete the authentication key
-            YHObject.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
         }
         log.info("TEST END: testChangeAuthenticationKey()");
     }

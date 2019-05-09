@@ -84,7 +84,7 @@ public class WrapKeyTest {
             assertEquals(capabilities.size(), wrapkey.getDelegatedCapabilities().size());
             assertTrue(wrapkey.getDelegatedCapabilities().containsAll(capabilities));
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_WRAP_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_WRAP_KEY);
         }
     }
 
@@ -123,7 +123,7 @@ public class WrapKeyTest {
             assertEquals(capabilities.size(), wrapkey.getDelegatedCapabilities().size());
             assertTrue(wrapkey.getDelegatedCapabilities().containsAll(capabilities));
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_WRAP_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_WRAP_KEY);
         }
     }
 
@@ -199,7 +199,7 @@ public class WrapKeyTest {
 
             unwrapInvalidData(wrapKey, algorithm.getName());
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_WRAP_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_WRAP_KEY);
         }
     }
 
@@ -297,7 +297,7 @@ public class WrapKeyTest {
             objectWrap(Algorithm.AES256_CCM_WRAP, id, testCert);
         } finally {
             try {
-                YHObject.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+                YHObject.delete(session, id, ObjectType.TYPE_OPAQUE);
             } catch (YHDeviceException e) {
             }
         }
@@ -315,7 +315,7 @@ public class WrapKeyTest {
             certWrap(wrapKey, certId, cert);
             nonExistingObjectWrap(wrapKey, certId, algorithm.getName());
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_WRAP_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_WRAP_KEY);
         }
     }
 
@@ -324,7 +324,7 @@ public class WrapKeyTest {
         WrapData exportedCert = wrapKey.exportWrapped(session, certId, ObjectType.TYPE_OPAQUE);
 
         // Delete it from the HSM and make sure that it is no longer there
-        YHObject.deleteObject(session, certId, ObjectType.TYPE_OPAQUE);
+        YHObject.delete(session, certId, ObjectType.TYPE_OPAQUE);
         HashMap filters = new HashMap();
         filters.put(YHObject.ListFilter.ID, certId);
         filters.put(YHObject.ListFilter.TYPE, ObjectType.TYPE_OPAQUE);

@@ -4,14 +4,10 @@ import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
-import com.yubico.exceptions.YHDeviceException;
-import com.yubico.exceptions.YHError;
 import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
-import com.yubico.objects.yhconcepts.ObjectType;
 import com.yubico.objects.yhobjects.AsymmetricKey;
 import com.yubico.objects.yhobjects.Opaque;
-import com.yubico.objects.yhobjects.YHObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -78,29 +74,9 @@ public class EcSignCertificateTest {
             }
 
         } finally {
-            try {
-                YHObject.deleteObject(session, attestingKeyid, ObjectType.TYPE_ASYMMETRIC_KEY);
-            } catch (YHDeviceException e) {
-                if (!e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
-                    throw e;
-                }
-            }
-
-            try {
-                YHObject.deleteObject(session, attestedKeyid, ObjectType.TYPE_ASYMMETRIC_KEY);
-            } catch (YHDeviceException e) {
-                if (!e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
-                    throw e;
-                }
-            }
-
-            try {
-                YHObject.deleteObject(session, attestingKeyid, ObjectType.TYPE_OPAQUE);
-            } catch (YHDeviceException e) {
-                if (!e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
-                    throw e;
-                }
-            }
+            AsymmetricKeyTestHelper.cleanupTestObjects(session, Arrays.asList(new AsymmetricKey(attestingKeyid, Algorithm.EC_P224),
+                                                                              new AsymmetricKey(attestedKeyid, Algorithm.EC_P224),
+                                                                              new Opaque(attestingKeyid, Algorithm.OPAQUE_X509_CERTIFICATE)));
         }
         log.info("TEST END: testSigningAttestationCertificate()");
     }

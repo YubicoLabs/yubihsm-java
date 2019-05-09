@@ -453,7 +453,7 @@ public class AsymmetricKey extends YHObject {
     /**
      * @return The digest of the input data
      */
-    protected byte[] getHashedData(final byte[] data, @NonNull final Algorithm algorithm) throws NoSuchAlgorithmException {
+    protected byte[] getHashedData(@Nonnull final byte[] data, @NonNull final Algorithm algorithm) throws NoSuchAlgorithmException {
         MessageDigest digest;
         if (algorithm.equals(Algorithm.RSA_PKCS1_SHA1) || algorithm.equals(Algorithm.RSA_MGF1_SHA1) ||
             algorithm.equals(Algorithm.EC_ECDSA_SHA1) || algorithm.equals(Algorithm.RSA_OAEP_SHA1)) {

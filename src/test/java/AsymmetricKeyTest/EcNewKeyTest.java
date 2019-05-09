@@ -88,7 +88,7 @@ public class EcNewKeyTest {
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
             // Delete the key and verify deletion
-            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             try {
                 YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {
@@ -236,7 +236,7 @@ public class EcNewKeyTest {
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
             // Delete key
-            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             try {
                 YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {

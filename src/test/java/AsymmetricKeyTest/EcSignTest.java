@@ -68,7 +68,7 @@ public class EcSignTest {
             assertTrue("Succeeded to sign in spite of insufficient permissions", exceptionThrown);
 
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
         log.info("TEST END: testSignDataWithInsufficientPermissions()");
     }
@@ -119,7 +119,7 @@ public class EcSignTest {
             signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA512, "SHA512withECDSA", data);
 
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 
@@ -150,7 +150,7 @@ public class EcSignTest {
             signEcdsaBrainpool(publicKey, key, Algorithm.EC_ECDSA_SHA512, "SHA512withECDSA");
 
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 

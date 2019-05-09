@@ -79,7 +79,7 @@ public class RsaDecryptTest {
             }
             assertTrue("Succeeded to sign in spite of insufficient permissions", exceptionThrown);
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
         log.info("TEST END: testDecryptDataWithInsufficientPermissions()");
     }
@@ -136,7 +136,7 @@ public class RsaDecryptTest {
 
             assertArrayEquals(data, dec);
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 
@@ -161,7 +161,7 @@ public class RsaDecryptTest {
             decryptOaepBc(key, publicKey, Algorithm.RSA_MGF1_SHA512, Algorithm.RSA_OAEP_SHA512, "RSA/ECB/OAEPWithSHA-512AndMGF1Padding");
 
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 

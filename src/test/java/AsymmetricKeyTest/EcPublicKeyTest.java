@@ -74,7 +74,7 @@ public class EcPublicKeyTest {
             PublicKey returnedPubKey = key.getEcPublicKey(session);
             assertEquals(keypair.getPublic(), returnedPubKey);
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 }

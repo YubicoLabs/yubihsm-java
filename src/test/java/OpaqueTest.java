@@ -101,7 +101,7 @@ public class OpaqueTest {
             assertArrayEquals(opaqueData, returnedOpaqueData);
         } finally {
             // Delete opaque object
-            YHObject.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+            YHObject.delete(session, id, ObjectType.TYPE_OPAQUE);
             try {
                 YHObject.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
             } catch (YHDeviceException e1) {
@@ -140,7 +140,7 @@ public class OpaqueTest {
             assertEquals(cert, returnedCert);
         } finally {
             // Delete opaque object
-            YHObject.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+            YHObject.delete(session, id, ObjectType.TYPE_OPAQUE);
             try {
                 YHObject.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
             } catch (YHDeviceException e1) {
@@ -164,7 +164,7 @@ public class OpaqueTest {
             assertEquals(testCert, returnedCert);
         } finally {
             // Delete opaque object
-            YHObject.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+            YHObject.delete(session, id, ObjectType.TYPE_OPAQUE);
         }
 
         log.info("TEST END: testImportOpaqueCertificate()");
@@ -187,7 +187,7 @@ public class OpaqueTest {
             assertTrue("Succeeded in returning the opaque ", exceptionThrown);
         } finally {
             // Delete opaque object
-            YHObject.deleteObject(session, id, ObjectType.TYPE_OPAQUE);
+            YHObject.delete(session, id, ObjectType.TYPE_OPAQUE);
         }
 
         log.info("TEST END: testImportOpaqueCertificate()");

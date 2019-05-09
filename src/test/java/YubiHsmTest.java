@@ -128,7 +128,7 @@ public class YubiHsmTest {
         session2.closeSession();
 
         // Delete the new Authentication key and verify deletion
-        YHObject.deleteObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
+        YHObject.delete(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
         listObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY, false);
 
         session.closeSession();

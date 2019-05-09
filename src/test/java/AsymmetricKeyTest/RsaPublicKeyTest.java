@@ -61,7 +61,7 @@ public class RsaPublicKeyTest {
             PublicKey returnedPubKey = key.getRsaPublicKey(session);
             assertEquals(pubKey, returnedPubKey);
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
     }
 }

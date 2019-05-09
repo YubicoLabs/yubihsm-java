@@ -85,7 +85,7 @@ public class AsymmetricKeyEdTest {
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
             // Delete the key and verify deletion
-            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             try {
                 YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {
@@ -211,7 +211,7 @@ public class AsymmetricKeyEdTest {
             assertTrue(key.getCapabilities().containsAll(capabilities));
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             try {
                 YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {
@@ -252,7 +252,7 @@ public class AsymmetricKeyEdTest {
             assertArrayEquals(pubKey.getEncoded(), returnedPubKeyBytes);
 
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
 
         log.info("TEST END: testPublicKey()");
@@ -281,7 +281,7 @@ public class AsymmetricKeyEdTest {
             assertTrue("Succeeded in signing in spite of insufficient permissions", exceptionThrown);
 
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
         log.info("TEST END: testSignDataWithInsufficientPermissions()");
     }
@@ -300,7 +300,7 @@ public class AsymmetricKeyEdTest {
             signDataTest(key, pubKey, "This is a signing test data".getBytes());
 
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
         }
 
         log.info("TEST END: testSignData()");

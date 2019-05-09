@@ -6,6 +6,7 @@ import com.yubico.objects.yhobjects.YHObject;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.InvalidParameterException;
 import java.util.*;
@@ -28,7 +29,7 @@ public class Utils {
                 if (i % 8 == 0) {
                     sb.append(" ");
                 }
-                sb.append(String.format("%02X", ba[i]).toLowerCase());
+                sb.append(String.format("%02x", ba[i]));
             }
         }
         return sb.toString();
@@ -184,6 +185,33 @@ public class Utils {
             }
         }
         return ret;
+    }
+
+    /**
+     * Returns the bytes of a BigInteger.
+     *
+     * The toByteArray() method in BigInteger class returns the two's complement representation of the BigInteger object + one sign byte. Since we
+     * do not care about negative values, this method will remove the sign byte from resulting byte array if it is longer than the expected length.
+     * If, however, toByteArray() returns a byte array shorter than what is expected, this method will add a 0 byte as the element in the least
+     * significant byte
+     *
+     * @param bi
+     * @param length Expected length of the resulting byte array
+     * @return The BigInteger object represented as a byte array without the sign byte
+     */
+    public static byte[] getUnsignedByteArrayFromBigInteger(BigInteger bi, int length) {
+        byte[] ba = bi.toByteArray();
+        if(ba.length > length) {
+            if (ba[0] == 0) {
+                ba = Arrays.copyOfRange(ba, 1, ba.length);
+            }
+        } else if(ba.length < length) {
+            ByteBuffer bb = ByteBuffer.allocate(ba.length + 1);
+            bb.put((byte)0x00);
+            bb.put(ba);
+            ba = bb.array();
+        }
+        return ba;
     }
 
 }

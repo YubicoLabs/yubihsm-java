@@ -14,6 +14,7 @@ import javax.crypto.NoSuchPaddingException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.*;
+import java.security.interfaces.ECPublicKey;
 import java.security.spec.*;
 import java.util.Arrays;
 import java.util.List;
@@ -99,12 +100,7 @@ public class AsymmetricKeyEc extends AsymmetricKey {
         byte[] y = Arrays.copyOfRange(xy, xy.length / 2, xy.length);
 
         ECPoint pubPoint = new ECPoint(new BigInteger(1, x), new BigInteger(1, y));
-        if (isBrainpoolKeyAlgorithm(getKeyAlgorithm())) {
-            return getEcBrainpoolPublicKey(pubPoint);
-        } else {
-            return getEcPublicKey(pubPoint);
-        }
-
+        return getEcPublicKeyFromPoint(pubPoint, isBrainpoolKeyAlgorithm(getKeyAlgorithm()));
     }
 
     /**
@@ -169,7 +165,31 @@ public class AsymmetricKeyEc extends AsymmetricKey {
      * Perform an ECDH operation on this private key and the public component of another EC key
      *
      * @param session   An authenticated session to communicate with the device over
-     * @param publicKey The public component of another EC key
+     * @param publicKey The public key to perform the exchange with
+     * @return The shared secret
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     */
+    public byte[] deriveEcdh(@NonNull final YHSession session, @NonNull final ECPublicKey publicKey)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
+                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
+                   IllegalBlockSizeException, UnsupportedAlgorithmException {
+        return deriveEcdh(session, getUncompressedEcPublicKey(publicKey, getEcComponentLength(getKeyAlgorithm())));
+    }
+
+    /**
+     * Perform an ECDH operation on this private key and the public component of another EC key
+     *
+     * @param session   An authenticated session to communicate with the device over
+     * @param publicKey Uncompressed public key to perform the exchange with (57, 65, 97, 129 or 133 bytes)
      * @return The shared secret
      * @throws NoSuchAlgorithmException           If the encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
@@ -185,7 +205,13 @@ public class AsymmetricKeyEc extends AsymmetricKey {
     public byte[] deriveEcdh(@NonNull final YHSession session, @NonNull final byte[] publicKey)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException {
+                   IllegalBlockSizeException, UnsupportedAlgorithmException {
+        int pubKeyLength = getEcComponentLength(getKeyAlgorithm()) * 2 + 1;
+        if(publicKey.length != pubKeyLength) {
+            throw new IllegalArgumentException("The public key is expected to be " + pubKeyLength + " bytes long but was " + publicKey.length + " " +
+                                               "bytes");
+        }
+
         ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + publicKey.length);
         bb.putShort(getId());
         bb.put(publicKey);
@@ -214,43 +240,29 @@ public class AsymmetricKeyEc extends AsymmetricKey {
      * @throws InvalidParameterSpecException
      * @throws InvalidKeySpecException
      */
-    private PublicKey getEcPublicKey(@NonNull final ECPoint point)
-            throws NoSuchAlgorithmException, InvalidParameterSpecException, InvalidKeySpecException {
-        AlgorithmParameters parameters = AlgorithmParameters.getInstance("EC");
+    private PublicKey getEcPublicKeyFromPoint(@NonNull final ECPoint point, final boolean isBrainpool)
+            throws NoSuchAlgorithmException, InvalidParameterSpecException, InvalidKeySpecException, NoSuchProviderException {
+        AlgorithmParameters parameters;
+        if(isBrainpool) {
+            Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+            parameters = AlgorithmParameters.getInstance("EC", "BC");
+        } else {
+            parameters = AlgorithmParameters.getInstance("EC");
+        }
         parameters.init(new ECGenParameterSpec(getCurveFromAlgorithm(getKeyAlgorithm())));
         ECParameterSpec ecParameters = parameters.getParameterSpec(ECParameterSpec.class);
         ECPublicKeySpec pubSpec = new ECPublicKeySpec(point, ecParameters);
-        KeyFactory kf = KeyFactory.getInstance("EC");
-        log.info("Returned public EC key with ID 0x" + Integer.toHexString(getId()));
-        return kf.generatePublic(pubSpec);
-    }
 
-    /**
-     * Converts the ECPoint into a PublicKey object using the BouncyCastle provider. Used for the following algorithms:
-     *
-     * <ul>
-     * <li>{{@link Algorithm.EC_BP256}}</li>
-     * <li>{{@link Algorithm.EC_BP384}}</li>
-     * <li>{{@link Algorithm.EC_BP512}}</li>
-     * </ul>
-     *
-     * @param point The EC public component
-     * @return The public key
-     * @throws NoSuchAlgorithmException
-     * @throws NoSuchProviderException
-     * @throws InvalidParameterSpecException
-     * @throws InvalidKeySpecException
-     */
-    private PublicKey getEcBrainpoolPublicKey(@NonNull final ECPoint point)
-            throws NoSuchAlgorithmException, NoSuchProviderException, InvalidParameterSpecException, InvalidKeySpecException {
-        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-        AlgorithmParameters parameters = AlgorithmParameters.getInstance("EC", "BC");
-        parameters.init(new ECGenParameterSpec(getCurveFromAlgorithm(getKeyAlgorithm())));
-        ECParameterSpec ecParameters = parameters.getParameterSpec(ECParameterSpec.class);
-        ECPublicKeySpec pubSpec = new ECPublicKeySpec(point, ecParameters);
-        KeyFactory kf = KeyFactory.getInstance("EC", "BC");
-        log.info("Returned public EC key with ID 0x" + Integer.toHexString(getId()));
-        return kf.generatePublic(pubSpec);
+        PublicKey pubkey;
+        if(isBrainpool) {
+            KeyFactory kf = KeyFactory.getInstance("EC", "BC");
+            pubkey = kf.generatePublic(pubSpec);
+        } else {
+            KeyFactory kf = KeyFactory.getInstance("EC");
+            pubkey = kf.generatePublic(pubSpec);
+        }
+        log.info("Returned public EC key with ID 0x" + String.format("%02x", getId()));
+        return pubkey;
     }
 
     /**
@@ -305,6 +317,16 @@ public class AsymmetricKeyEc extends AsymmetricKey {
 
     private boolean isBrainpoolKeyAlgorithm(@NonNull final Algorithm algorithm) {
         return algorithm.equals(Algorithm.EC_BP256) || algorithm.equals(Algorithm.EC_BP384) || algorithm.equals(Algorithm.EC_BP512);
+    }
+
+    private byte[] getUncompressedEcPublicKey(PublicKey publicKey, int length) {
+        ECPublicKey pubkey = (ECPublicKey) publicKey;
+        ECPoint point = pubkey.getW();
+        byte[] x = Utils.getUnsignedByteArrayFromBigInteger(point.getAffineX(), length);
+        byte[] y = Utils.getUnsignedByteArrayFromBigInteger(point.getAffineY(), length);
+        ByteBuffer bb = ByteBuffer.allocate(1 + x.length + y.length);
+        bb.put((byte) 0x04).put(x).put(y);
+        return bb.array();
     }
 
     private static void verifyParametersForNewEcKey(@NonNull final List<Integer> domains, @NonNull final Algorithm keyAlgorithm,

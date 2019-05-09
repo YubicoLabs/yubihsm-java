@@ -79,7 +79,7 @@ public class OtpAeadKeyTest {
             assertTrue(key.getCapabilities().containsAll(capabilities));
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_OTP_AEAD_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_OTP_AEAD_KEY);
         }
     }
 
@@ -118,7 +118,7 @@ public class OtpAeadKeyTest {
             assertTrue(key.getCapabilities().containsAll(capabilities));
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_OTP_AEAD_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_OTP_AEAD_KEY);
         }
     }
 
@@ -144,7 +144,7 @@ public class OtpAeadKeyTest {
             assertFalse(Arrays.equals(aead, aead2));
 
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_OTP_AEAD_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_OTP_AEAD_KEY);
         }
         log.info("TEST END: testRandomizeOtpAead()");
     }
@@ -180,7 +180,7 @@ public class OtpAeadKeyTest {
             }
             assertTrue(exceptionThrown);
         } finally {
-            YHObject.deleteObject(session, keyId, ObjectType.TYPE_OTP_AEAD_KEY);
+            YHObject.delete(session, keyId, ObjectType.TYPE_OTP_AEAD_KEY);
         }
         log.info("TEST END: testDecryptInvalidOtp()");
     }
@@ -238,7 +238,7 @@ public class OtpAeadKeyTest {
             }
         } finally {
             try {
-                YHObject.deleteObject(session, key1Id, ObjectType.TYPE_OTP_AEAD_KEY);
+                YHObject.delete(session, key1Id, ObjectType.TYPE_OTP_AEAD_KEY);
             } catch (YHDeviceException e) {
                 if (!e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
                     throw e;
@@ -246,7 +246,7 @@ public class OtpAeadKeyTest {
             }
 
             try {
-                YHObject.deleteObject(session, key2Id, ObjectType.TYPE_OTP_AEAD_KEY);
+                YHObject.delete(session, key2Id, ObjectType.TYPE_OTP_AEAD_KEY);
             } catch (YHDeviceException e) {
                 if (!e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
                     throw e;
@@ -254,7 +254,7 @@ public class OtpAeadKeyTest {
             }
 
             try {
-                YHObject.deleteObject(session, key3Id, ObjectType.TYPE_OTP_AEAD_KEY);
+                YHObject.delete(session, key3Id, ObjectType.TYPE_OTP_AEAD_KEY);
             } catch (YHDeviceException e) {
                 if (!e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
                     throw e;

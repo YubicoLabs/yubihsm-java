@@ -2,7 +2,8 @@ import com.yubico.YHSession;
 import com.yubico.YubiHsm;
 import com.yubico.backend.Backend;
 import com.yubico.backend.HttpBackend;
-import com.yubico.exceptions.*;
+import com.yubico.exceptions.YHDeviceException;
+import com.yubico.exceptions.YHError;
 import com.yubico.objects.yhconcepts.Algorithm;
 import com.yubico.objects.yhconcepts.Capability;
 import com.yubico.objects.yhconcepts.ObjectOrigin;
@@ -14,17 +15,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.Mac;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
-import java.net.MalformedURLException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -40,9 +33,7 @@ public class HmacKeyTest {
     private static YHSession session;
 
     @BeforeClass
-    public static void init()
-            throws MalformedURLException, InvalidKeySpecException, NoSuchAlgorithmException, YHConnectionException, YHDeviceException,
-                   YHAuthenticationException, YHInvalidResponseException {
+    public static void init() throws Exception {
         if (session == null) {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
@@ -52,10 +43,7 @@ public class HmacKeyTest {
     }
 
     @AfterClass
-    public static void destroy()
-            throws YHDeviceException, YHAuthenticationException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
-                   NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, BadPaddingException,
-                   IllegalBlockSizeException {
+    public static void destroy() throws Exception {
         session.closeSession();
         yubihsm.close();
     }
@@ -90,7 +78,7 @@ public class HmacKeyTest {
             assertTrue(hmackey.getCapabilities().containsAll(capabilities));
             assertTrue(hmackey.getDelegatedCapabilities().isEmpty());
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_HMAC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_HMAC_KEY);
         }
     }
 
@@ -127,7 +115,7 @@ public class HmacKeyTest {
             assertTrue(hmackey.getCapabilities().containsAll(capabilities));
             assertTrue(hmackey.getDelegatedCapabilities().isEmpty());
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_HMAC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_HMAC_KEY);
         }
     }
 
@@ -185,7 +173,7 @@ public class HmacKeyTest {
             }
         } finally {
             try {
-                YHObject.deleteObject(session, id, ObjectType.TYPE_HMAC_KEY);
+                YHObject.delete(session, id, ObjectType.TYPE_HMAC_KEY);
             } catch (YHDeviceException e) {
                 if (!e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
                     throw e;
@@ -245,7 +233,7 @@ public class HmacKeyTest {
             verifyHmacSignature(data, hmacKey, key, hmacAlgorithm, false);
             verifyHmacVerification(data, hmacKey, key, hmacAlgorithm, false);
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_HMAC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_HMAC_KEY);
         }
 
     }
@@ -320,7 +308,7 @@ public class HmacKeyTest {
             }
             assertTrue(exceptionThrown);
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_HMAC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_HMAC_KEY);
         }
     }
 
@@ -343,7 +331,7 @@ public class HmacKeyTest {
             HmacKey hmacKey = new HmacKey(id, keyAlgorithm);
             assertFalse(hmacKey.verifyHmac(session, data, hmac));
         } finally {
-            YHObject.deleteObject(session, id, ObjectType.TYPE_HMAC_KEY);
+            YHObject.delete(session, id, ObjectType.TYPE_HMAC_KEY);
         }
     }
 }
