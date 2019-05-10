@@ -58,24 +58,12 @@ public class WrapData {
         return nonce;
     }
 
-    public void setNonce(byte[] nonce) {
-        this.nonce = nonce;
-    }
-
     public byte[] getWrappedData() {
         return wrappedData;
     }
 
-    public void setWrappedData(byte[] wrappedData) {
-        this.wrappedData = wrappedData;
-    }
-
     public byte[] getMac() {
         return mac;
-    }
-
-    public void setMac(byte[] mac) {
-        this.mac = mac;
     }
 
     @Override

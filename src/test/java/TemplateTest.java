@@ -8,7 +8,7 @@ import com.yubico.hsm.yhconcepts.Origin;
 import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhobjects.Template;
 import com.yubico.hsm.yhobjects.YHObject;
-import com.yubico.hsm.yhobjects.YHObjectInfo;
+import com.yubico.hsm.yhdata.YHObjectInfo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

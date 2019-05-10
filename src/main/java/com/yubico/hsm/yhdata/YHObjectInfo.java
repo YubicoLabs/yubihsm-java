@@ -1,10 +1,11 @@
-package com.yubico.hsm.yhobjects;
+package com.yubico.hsm.yhdata;
 
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Origin;
 import com.yubico.hsm.yhconcepts.Type;
+import com.yubico.hsm.yhobjects.YHObject;
 import lombok.NonNull;
 
 import java.nio.ByteBuffer;
@@ -84,56 +85,28 @@ public class YHObjectInfo {
         return id;
     }
 
-    public void setId(short id) {
-        this.id = id;
-    }
-
     public short getObjectSize() {
         return objectSize;
-    }
-
-    public void setObjectSize(short objectSize) {
-        this.objectSize = objectSize;
     }
 
     public Type getType() {
         return type;
     }
 
-    public void setType(Type type) {
-        this.type = type;
-    }
-
     public byte getSequence() {
         return sequence;
-    }
-
-    public void setSequence(byte sequence) {
-        this.sequence = sequence;
     }
 
     public List<Integer> getDomains() {
         return domains;
     }
 
-    public void setDomains(List<Integer> domains) {
-        this.domains = domains;
-    }
-
     public Algorithm getAlgorithm() {
         return algorithm;
     }
 
-    public void setAlgorithm(Algorithm algorithm) {
-        this.algorithm = algorithm;
-    }
-
     public Origin getOrigin() {
         return origin;
-    }
-
-    public void setOrigin(Origin origin) {
-        this.origin = origin;
     }
 
     public String getLabel() {
@@ -143,24 +116,12 @@ public class YHObjectInfo {
         return label;
     }
 
-    public void setLabel(String label) {
-        this.label = Utils.getLabel(label);
-    }
-
     public List<Capability> getCapabilities() {
         return capabilities;
     }
 
-    public void setCapabilities(List<Capability> capabilities) {
-        this.capabilities = capabilities;
-    }
-
     public List<Capability> getDelegatedCapabilities() {
         return delegatedCapabilities;
-    }
-
-    public void setDelegatedCapabilities(List<Capability> delegatedCapabilities) {
-        this.delegatedCapabilities = delegatedCapabilities;
     }
 
     @Override

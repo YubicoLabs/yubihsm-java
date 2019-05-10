@@ -9,6 +9,7 @@ import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhdata.DeviceInfo;
 import com.yubico.hsm.yhdata.LogData;
 import com.yubico.hsm.yhdata.LogEntry;
+import com.yubico.hsm.yhdata.YHObjectInfo;
 import com.yubico.hsm.yhobjects.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

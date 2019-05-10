@@ -10,6 +10,7 @@ import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
 import com.yubico.hsm.yhconcepts.Type;
+import com.yubico.hsm.yhdata.YHObjectInfo;
 import lombok.NonNull;
 
 import javax.crypto.*;

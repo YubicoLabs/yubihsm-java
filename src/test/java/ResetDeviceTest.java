@@ -7,7 +7,7 @@ import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhobjects.Opaque;
 import com.yubico.hsm.yhobjects.YHObject;
-import com.yubico.hsm.yhobjects.YHObjectInfo;
+import com.yubico.hsm.yhdata.YHObjectInfo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

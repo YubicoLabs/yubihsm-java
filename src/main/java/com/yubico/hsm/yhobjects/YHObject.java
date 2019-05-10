@@ -10,6 +10,7 @@ import com.yubico.hsm.yhconcepts.Command;
 import com.yubico.hsm.yhconcepts.ListObjectsFilter;
 import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhconcepts.YHError;
+import com.yubico.hsm.yhdata.YHObjectInfo;
 import lombok.NonNull;
 
 import javax.crypto.BadPaddingException;

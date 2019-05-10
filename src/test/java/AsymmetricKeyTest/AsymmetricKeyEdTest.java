@@ -9,7 +9,7 @@ import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhobjects.AsymmetricKey;
 import com.yubico.hsm.yhobjects.AsymmetricKeyEd;
 import com.yubico.hsm.yhobjects.YHObject;
-import com.yubico.hsm.yhobjects.YHObjectInfo;
+import com.yubico.hsm.yhdata.YHObjectInfo;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.Signer;
 import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator;

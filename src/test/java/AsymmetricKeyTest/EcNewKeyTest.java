@@ -9,7 +9,7 @@ import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhobjects.AsymmetricKey;
 import com.yubico.hsm.yhobjects.AsymmetricKeyEc;
 import com.yubico.hsm.yhobjects.YHObject;
-import com.yubico.hsm.yhobjects.YHObjectInfo;
+import com.yubico.hsm.yhdata.YHObjectInfo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
