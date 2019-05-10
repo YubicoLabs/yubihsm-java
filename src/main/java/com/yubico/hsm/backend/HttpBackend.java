@@ -91,47 +91,47 @@ public class HttpBackend implements Backend {
 
         log.finest("SEND >> " + Utils.getPrintableBytes(message));
 
+        byte[] response;
         HttpURLConnection conn = getConnection();
         try {
-            OutputStream out = conn.getOutputStream();
-            out.write(message);
-            out.flush();
-            out.close();
-        } catch (IOException e1) {
-            throw new YHConnectionException(e1);
-        }
-
-        InputStream in;
-        try {
-            if (conn.getResponseCode() < 400) {
-                log.finer("Received HTTP response OK");
-                in = conn.getInputStream();
-            } else {
-                log.info("Received HTTP error response");
-                in = conn.getErrorStream();
+            try {
+                OutputStream out = conn.getOutputStream();
+                out.write(message);
+                out.flush();
+                out.close();
+            } catch (IOException e1) {
+                throw new YHConnectionException(e1);
             }
-        } catch (IOException e) {
-            throw new YHConnectionException(e);
-        }
 
-
-        byte[] response;
-
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            int len;
-            byte[] buffer = new byte[2048];
-            while (-1 != (len = in.read(buffer))) {
-                bos.write(buffer, 0, len);
+            InputStream in;
+            try {
+                if (conn.getResponseCode() < 400) {
+                    log.finer("Received HTTP response OK");
+                    in = conn.getInputStream();
+                } else {
+                    log.info("Received HTTP error response");
+                    in = conn.getErrorStream();
+                }
+            } catch (IOException e) {
+                throw new YHConnectionException(e);
             }
-            in.close();
-            response = bos.toByteArray();
-        } catch (IOException e) {
-            throw new YHConnectionException(e);
+
+            try {
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                int len;
+                byte[] buffer = new byte[2048];
+                while (-1 != (len = in.read(buffer))) {
+                    bos.write(buffer, 0, len);
+                }
+                in.close();
+                response = bos.toByteArray();
+            } catch (IOException e) {
+                throw new YHConnectionException(e);
+            }
+        } finally {
+            close();
         }
-        close();
         log.finest("RECEIVE: " + Utils.getPrintableBytes(response));
-
         return response;
     }
 
