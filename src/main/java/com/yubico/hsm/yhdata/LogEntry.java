@@ -113,6 +113,7 @@ public class LogEntry {
         return entryDigest;
     }
 
+    @Override
     public String toString() {
         String.valueOf(sessionKeyId);
         return String.format("item: %4s -- cmd: %25s -- length: %3s -- session key: 0x%04x --  target key: 0x%04x -- second key: 0x%04x -- result: " +

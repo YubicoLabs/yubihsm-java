@@ -1,5 +1,7 @@
 package com.yubico.hsm.yhdata;
 
+import java.util.Objects;
+
 /**
  * Class representing the Decrypted Yubico OTP data
  */
@@ -33,6 +35,7 @@ public class YubicoOtpData {
         return timestampLow;
     }
 
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Session counter: ").append(sessionCounter).append("\n");
@@ -42,14 +45,22 @@ public class YubicoOtpData {
         return sb.toString();
     }
 
-    public boolean equals(Object other) {
-        if (other == null || !(other instanceof YubicoOtpData)) {
+    @Override
+    public boolean equals(final Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof YubicoOtpData)) {
             return false;
         }
-
         YubicoOtpData otherOtpData = (YubicoOtpData) other;
         return getSessionCounter() == otherOtpData.getSessionCounter() && getUsageCounter() == otherOtpData.getUsageCounter() &&
                getTimestampHigh() == otherOtpData.getTimestampHigh() && getTimestampLow() == otherOtpData.getTimestampLow();
     }
 
+    @Override
+    public int hashCode() {
+        Object[] fields = {sessionCounter, usageCounter, timestampHigh, timestampLow};
+        return Objects.hash(fields);
+    }
 }

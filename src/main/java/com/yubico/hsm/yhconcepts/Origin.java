@@ -8,9 +8,9 @@ import java.util.Map;
  */
 public enum Origin {
     /** Object was originated on the YubiHSM */
-    YH_ORIGIN_GENERATED((byte) 0x01, "generated"),
+    YH_ORIGIN_GENERATED       ((byte) 0x01, "generated"),
     /** Object was imported into the YubiHSM */
-    YH_ORIGIN_IMPORTED((byte) 0x02, "imported"),
+    YH_ORIGIN_IMPORTED        ((byte) 0x02, "imported"),
     /** Object was imported into the YubiHSM under wrap */
     YH_ORIGIN_IMPORTED_WRAPPED((byte) 0x10, "imported-under-wrap");
 
@@ -30,10 +30,6 @@ public enum Origin {
         return name;
     }
 
-    public String toString() {
-        return String.format("0x%02x: " + getName(), getId());
-    }
-
     private static final Map<Byte, Origin> BY_VALUE_MAP = new LinkedHashMap<Byte, Origin>();
 
     static {
@@ -44,5 +40,10 @@ public enum Origin {
 
     public static Origin forId(byte id) {
         return BY_VALUE_MAP.get(id);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("0x%02x:%s", id, name);
     }
 }

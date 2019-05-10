@@ -81,6 +81,7 @@ public class LogData {
         return sortedEntries;
     }
 
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Unlogged boot events: " + unloggedBootEvents).append("\n");

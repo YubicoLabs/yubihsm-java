@@ -24,6 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 public class YHObject {
@@ -64,19 +65,33 @@ public class YHObject {
         this.type = type;
     }
 
+    @Override
+    public String toString() {
+        return String.format("0x%02x:%s", id, type.getName());
+    }
+
     /**
      * Compares two YHObject yhdata
      *
      * @param other
      * @return True if the yhdata' IDs and types are equal. False otherwise
      */
+    @Override
     public boolean equals(final Object other) {
-        if (other == null) {
+        if(this == other) {
+            return true;
+        }
+        if (!(other instanceof YHObject)) {
             return false;
         }
-
         YHObject otherObject = (YHObject) other;
         return getId() == otherObject.getId() && getType().equals(otherObject.getType());
+    }
+
+    @Override
+    public int hashCode() {
+        Object[] fields = {id, type};
+        return Objects.hash(fields);
     }
 
     /**

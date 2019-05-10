@@ -72,9 +72,7 @@ public class DeviceInfo {
         return supportedAlgorithms;
     }
 
-    /**
-     * @return A String representation of the device information
-     */
+    @Override
     public String toString() {
         if (version == null && serialnumber == 0) {
             return "";

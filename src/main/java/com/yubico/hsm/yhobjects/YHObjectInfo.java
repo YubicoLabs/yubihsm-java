@@ -10,6 +10,7 @@ import lombok.NonNull;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class YHObjectInfo {
 
@@ -164,17 +165,23 @@ public class YHObjectInfo {
 
     @Override
     public boolean equals(final Object other) {
-        if(other == null) {
+        if(this == other) {
+            return true;
+        }
+        if (!(other instanceof YHObjectInfo)) {
             return false;
         }
-
         YHObjectInfo otherInfo = (YHObjectInfo) other;
-        return getId()==otherInfo.getId() && getType().equals(otherInfo.getType());
+        return id == otherInfo.getId() && type.equals(otherInfo.getType());
     }
 
-    /**
-     * @return A String representation of the object
-     */
+    @Override
+    public int hashCode() {
+        Object[] fields = {id, type};
+        return Objects.hash(fields);
+    }
+
+    @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("Object ID: " + id).append("\n");

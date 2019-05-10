@@ -119,4 +119,9 @@ public enum Algorithm {
     public static Algorithm forId(byte id) {
         return BY_VALUE_MAP.get(id);
     }
+
+    @Override
+    public String toString() {
+        return String.format("0x%02x:%s ", id, name);
+    }
 }

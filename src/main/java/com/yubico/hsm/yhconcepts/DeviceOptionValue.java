@@ -5,7 +5,7 @@ import java.util.Map;
 
 public enum DeviceOptionValue {
     OFF((byte) 0x00, "OFF", "Disabled"),
-    ON((byte) 0x01, "ON", "Enabled"),
+    ON ((byte) 0x01, "ON", "Enabled"),
     FIX((byte) 0x02, "FIX", "Enabled, not possible to turn off");
 
     private final byte value;
@@ -40,5 +40,10 @@ public enum DeviceOptionValue {
 
     public static DeviceOptionValue forValue(byte v) {
         return BY_VALUE_MAP.get(v);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("0x%02x:%s:%s", value, name, description);
     }
 }

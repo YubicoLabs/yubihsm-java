@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public enum DeviceOption {
-    FORCE_AUDIT((byte) 0x01, "Force audit"),
+    FORCE_AUDIT  ((byte) 0x01, "Force audit"),
     COMMAND_AUDIT((byte) 0x03, "Command audit");
 
     private final byte tag;
@@ -33,6 +33,11 @@ public enum DeviceOption {
 
     public static DeviceOption forTag(byte id) {
         return BY_VALUE_MAP.get(id);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("0x%02x:%s", tag, description);
     }
 }
 
