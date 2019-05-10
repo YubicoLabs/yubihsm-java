@@ -4,15 +4,11 @@ import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.exceptions.YHDeviceException;
-import com.yubico.hsm.exceptions.YHError;
 import com.yubico.hsm.internal.util.Utils;
+import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhdata.DeviceInfo;
 import com.yubico.hsm.yhdata.LogData;
 import com.yubico.hsm.yhdata.LogEntry;
-import com.yubico.hsm.yhconcepts.Algorithm;
-import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.ObjectOrigin;
-import com.yubico.hsm.yhconcepts.ObjectType;
 import com.yubico.hsm.yhobjects.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -106,15 +102,15 @@ public class YubiHsmTest {
         final List delegatedCapabilities = new ArrayList<Capability>();
 
         // Import a new authentication key into the HSM and verify import
-        listObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY, false);
+        listObject(session, id, Type.TYPE_AUTHENTICATION_KEY, false);
         AuthenticationKey
                 .importAuthenticationKey(session, id, label, domains, Algorithm.AES128_YUBICO_AUTHENTICATION, capabilities, delegatedCapabilities,
                                          "foo123".toCharArray());
-        listObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY, true);
+        listObject(session, id, Type.TYPE_AUTHENTICATION_KEY, true);
 
         // Verify authentication key details
-        verifyObjectInfo(session, id, ObjectType.TYPE_AUTHENTICATION_KEY, capabilities, domains, Algorithm.AES128_YUBICO_AUTHENTICATION,
-                         ObjectOrigin.YH_ORIGIN_IMPORTED, label, delegatedCapabilities);
+        verifyObjectInfo(session, id, Type.TYPE_AUTHENTICATION_KEY, capabilities, domains, Algorithm.AES128_YUBICO_AUTHENTICATION,
+                         Origin.YH_ORIGIN_IMPORTED, label, delegatedCapabilities);
 
 
         // Communicate over a session authenticated with the new authentication key
@@ -129,8 +125,8 @@ public class YubiHsmTest {
         session2.closeSession();
 
         // Delete the new Authentication key and verify deletion
-        YHObject.delete(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
-        listObject(session, id, ObjectType.TYPE_AUTHENTICATION_KEY, false);
+        YHObject.delete(session, id, Type.TYPE_AUTHENTICATION_KEY);
+        listObject(session, id, Type.TYPE_AUTHENTICATION_KEY, false);
 
         session.closeSession();
         log.info("TEST END: testAuthenticationKeyObject()");
@@ -182,7 +178,7 @@ public class YubiHsmTest {
             List<YHObjectInfo> objects;
 
             // List AsymmetricKey yhdata
-            filters.put(YHObject.ListFilter.TYPE, AsymmetricKey.TYPE.getTypeId());
+            filters.put(ListObjectsFilter.TYPE, AsymmetricKey.TYPE.getId());
             objects = YHObject.getObjectList(session, filters);
             assertEquals(2, objects.size());
             assertTrue(objects.contains(asym1));
@@ -190,21 +186,21 @@ public class YubiHsmTest {
 
             // List object with label "hmac"
             filters.clear();
-            filters.put(YHObject.ListFilter.LABEL, "hmac");
+            filters.put(ListObjectsFilter.LABEL, "hmac");
             objects = YHObject.getObjectList(session, filters);
             assertEquals(1, objects.size());
             assertEquals(hmackey, objects.get(0));
 
             // List object with domains 5 and type HMAC key
             filters.clear();
-            filters.put(YHObject.ListFilter.DOMAINS, Utils.getShortFromList(Arrays.asList(5)));
-            filters.put(YHObject.ListFilter.TYPE, HmacKey.TYPE);
+            filters.put(ListObjectsFilter.DOMAINS, Utils.getShortFromList(Arrays.asList(5)));
+            filters.put(ListObjectsFilter.TYPE, HmacKey.TYPE);
             objects = YHObject.getObjectList(session, filters);
             assertTrue(objects.isEmpty());
 
             // List object with domain 2
             filters.clear();
-            filters.put(YHObject.ListFilter.DOMAINS, Utils.getShortFromList(Arrays.asList(2)));
+            filters.put(ListObjectsFilter.DOMAINS, Utils.getShortFromList(Arrays.asList(2)));
             objects = YHObject.getObjectList(session, filters);
             assertEquals(3, objects.size()); // The third object is the default authentication key
             assertTrue(objects.contains(wrapkey));
@@ -212,7 +208,7 @@ public class YubiHsmTest {
 
             // List object with Capability.EXPORT_WRAPPED
             filters.clear();
-            filters.put(YHObject.ListFilter.CAPABILITIES, Capability.getCapabilities(Arrays.asList(Capability.EXPORT_WRAPPED)));
+            filters.put(ListObjectsFilter.CAPABILITIES, Utils.getLongFromCapabilities(Arrays.asList(Capability.EXPORT_WRAPPED)));
             objects = YHObject.getObjectList(session, filters);
             assertEquals(3, objects.size()); // The third object is the default authentication key
             assertTrue(objects.contains(wrapkey));
@@ -258,11 +254,11 @@ public class YubiHsmTest {
         log.info("TEST END: testeDeleteObject()");
     }
 
-    private void listObject(final YHSession session, final short id, final ObjectType type, final boolean exists) throws Exception {
+    private void listObject(final YHSession session, final short id, final Type type, final boolean exists) throws Exception {
 
         HashMap filters = new HashMap();
-        filters.put(YHObject.ListFilter.ID, id);
-        filters.put(YHObject.ListFilter.TYPE, type);
+        filters.put(ListObjectsFilter.ID, id);
+        filters.put(ListObjectsFilter.TYPE, type);
         List<YHObjectInfo> objects = YHObject.getObjectList(session, filters);
         if (exists) {
             assertEquals(1, objects.size());
@@ -274,8 +270,8 @@ public class YubiHsmTest {
         }
     }
 
-    private void verifyObjectInfo(final YHSession session, final short id, final ObjectType type, final List<Capability> capabilities,
-                                  final List domains, final Algorithm algorithm, final ObjectOrigin origin, final String label,
+    private void verifyObjectInfo(final YHSession session, final short id, final Type type, final List<Capability> capabilities,
+                                  final List domains, final Algorithm algorithm, final Origin origin, final String label,
                                   final List<Capability> delegatedCapabilities) throws Exception {
         YHObjectInfo object = YHObject.getObjectInfo(session, id, type);
         assertNotNull(object);

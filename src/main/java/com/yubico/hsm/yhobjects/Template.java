@@ -6,10 +6,9 @@ import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
-import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhconcepts.Type;
 import lombok.NonNull;
 
-import javax.annotation.Nonnull;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
@@ -27,7 +26,7 @@ import java.util.logging.Logger;
 public class Template extends YHObject {
     private static Logger log = Logger.getLogger(Template.class.getName());
 
-    public static final ObjectType TYPE = ObjectType.TYPE_TEMPLATE;
+    public static final Type TYPE = Type.TYPE_TEMPLATE;
     public static final int MAX_TEMPLATE_DATA_LENGTH = 1968;
 
     /**
@@ -82,8 +81,8 @@ public class Template extends YHObject {
         bb.putShort(id);
         bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
-        bb.putLong(Capability.getCapabilities(capabilities));
-        bb.put(algorithm.getAlgorithmId());
+        bb.putLong(Utils.getLongFromCapabilities(capabilities));
+        bb.put(algorithm.getId());
         bb.put(templateData);
 
         byte[] resp = session.sendSecureCmd(Command.PUT_TEMPLATE, bb.array());
@@ -101,7 +100,7 @@ public class Template extends YHObject {
     }
 
     private static void verifyParametersForNewTemplate(@NonNull final List<Integer> domains, @NonNull final Algorithm algorithm,
-                                                       @Nonnull final byte[] templateData)
+                                                       @NonNull final byte[] templateData)
             throws UnsupportedAlgorithmException {
         if (domains.isEmpty()) {
             throw new IllegalArgumentException("Domains parameter cannot be null or empty");

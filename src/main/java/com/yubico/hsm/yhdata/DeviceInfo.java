@@ -48,7 +48,7 @@ public class DeviceInfo {
 
         supportedAlgorithms = new ArrayList<Algorithm>();
         while (bb.hasRemaining()) {
-            supportedAlgorithms.add(Algorithm.getAlgorithm(bb.get()));
+            supportedAlgorithms.add(Algorithm.forId(bb.get()));
         }
     }
 

@@ -217,7 +217,7 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
 
         ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_ALGORITHM_SIZE + SIGN_PSS_SALT_LENGTH + hashedData.length);
         bb.putShort(getId());
-        bb.put(mgf1Algorithm.getAlgorithmId());
+        bb.put(mgf1Algorithm.getId());
         bb.putShort(saltLength);
         bb.put(hashedData);
 
@@ -314,7 +314,7 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
 
         ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_ALGORITHM_SIZE + enc.length + hashedLabel.length);
         bb.putShort(getId());
-        bb.put(mgf1Algorithm.getAlgorithmId());
+        bb.put(mgf1Algorithm.getId());
         bb.put(enc);
         bb.put(hashedLabel);
 

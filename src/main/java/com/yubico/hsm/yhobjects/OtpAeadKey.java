@@ -6,11 +6,10 @@ import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
-import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhdata.YubicoOtpData;
 import lombok.NonNull;
 
-import javax.annotation.Nonnull;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
@@ -25,7 +24,7 @@ import java.util.logging.Logger;
 public class OtpAeadKey extends YHObject {
     private static Logger log = Logger.getLogger(OtpAeadKey.class.getName());
 
-    public static final ObjectType TYPE = ObjectType.TYPE_OTP_AEAD_KEY;
+    public static final Type TYPE = Type.TYPE_OTP_AEAD_KEY;
 
     private static final int NEW_KEY_NONCE_ID_LENGTH = 4;
     private static final int OTP_LENGTH = 16;
@@ -87,8 +86,8 @@ public class OtpAeadKey extends YHObject {
         bb.putShort(id);
         bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
-        bb.putLong(Capability.getCapabilities(capabilities));
-        bb.put(keyAlgorithm.getAlgorithmId());
+        bb.putLong(Utils.getLongFromCapabilities(capabilities));
+        bb.put(keyAlgorithm.getId());
         bb.putInt(nonceId);
 
         byte[] resp = session.sendSecureCmd(Command.GENERATE_OTP_AEAD_KEY, bb.array());
@@ -131,7 +130,7 @@ public class OtpAeadKey extends YHObject {
      */
     public static short importOtpAeadKey(@NonNull final YHSession session, final short id, final String label, @NonNull final List<Integer> domains,
                                          @NonNull final Algorithm keyAlgorithm, final List<Capability> capabilities,
-                                         @Nonnull final byte[] nonceId, @NonNull final byte[] key)
+                                         @NonNull final byte[] nonceId, @NonNull final byte[] key)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, UnsupportedAlgorithmException {
@@ -143,8 +142,8 @@ public class OtpAeadKey extends YHObject {
         bb.putShort(id);
         bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
-        bb.putLong(Capability.getCapabilities(capabilities));
-        bb.put(keyAlgorithm.getAlgorithmId());
+        bb.putLong(Utils.getLongFromCapabilities(capabilities));
+        bb.put(keyAlgorithm.getId());
         bb.put(nonceId);
         bb.put(key);
 

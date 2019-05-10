@@ -4,11 +4,7 @@ import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.exceptions.YHAuthenticationException;
-import com.yubico.hsm.exceptions.YHError;
-import com.yubico.hsm.yhconcepts.Algorithm;
-import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.ObjectOrigin;
-import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhobjects.AuthenticationKey;
 import com.yubico.hsm.yhobjects.YHObject;
 import com.yubico.hsm.yhobjects.YHObjectInfo;
@@ -58,19 +54,19 @@ public class AuthenticationKeyTest {
                                                              "foo123".toCharArray());
 
         try {
-            final YHObjectInfo authKey = YHObject.getObjectInfo(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
+            final YHObjectInfo authKey = YHObject.getObjectInfo(session, id, Type.TYPE_AUTHENTICATION_KEY);
             assertEquals(id, authKey.getId());
-            assertEquals(ObjectType.TYPE_AUTHENTICATION_KEY, authKey.getType());
+            assertEquals(Type.TYPE_AUTHENTICATION_KEY, authKey.getType());
             assertEquals(domains, authKey.getDomains());
             assertEquals(Algorithm.AES128_YUBICO_AUTHENTICATION, authKey.getAlgorithm());
-            assertEquals(ObjectOrigin.YH_ORIGIN_IMPORTED, authKey.getOrigin());
+            assertEquals(Origin.YH_ORIGIN_IMPORTED, authKey.getOrigin());
             assertEquals(label, authKey.getLabel());
             assertEquals(capabilities.size(), authKey.getCapabilities().size());
             assertTrue(authKey.getCapabilities().containsAll(capabilities));
             assertEquals(capabilities.size(), authKey.getDelegatedCapabilities().size());
             assertTrue(authKey.getDelegatedCapabilities().containsAll(capabilities));
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
+            YHObject.delete(session, id, Type.TYPE_AUTHENTICATION_KEY);
         }
         log.info("TEST END: testGetAuthenticationKey()");
     }
@@ -83,7 +79,7 @@ public class AuthenticationKeyTest {
         boolean exceptionThrown = false;
         try {
             AuthenticationKey.importAuthenticationKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_AUTHENTICATION,
-                                                      Capability.ALL_CAPABILITIES, null, null);
+                                                      Capability.ALL, null, null);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -93,7 +89,7 @@ public class AuthenticationKeyTest {
         exceptionThrown = false;
         try {
             AuthenticationKey.importAuthenticationKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_AUTHENTICATION,
-                                                      Capability.ALL_CAPABILITIES, null, new char[0]);
+                                                      Capability.ALL, null, new char[0]);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -107,7 +103,7 @@ public class AuthenticationKeyTest {
         exceptionThrown = false;
         try {
             AuthenticationKey.importAuthenticationKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_AUTHENTICATION,
-                                                      Capability.ALL_CAPABILITIES, null, enc, mac);
+                                                      Capability.ALL, null, enc, mac);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -117,7 +113,7 @@ public class AuthenticationKeyTest {
         exceptionThrown = false;
         try {
             AuthenticationKey.importAuthenticationKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_AUTHENTICATION,
-                                                      Capability.ALL_CAPABILITIES, null, mac, enc);
+                                                      Capability.ALL, null, mac, enc);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -129,7 +125,7 @@ public class AuthenticationKeyTest {
         exceptionThrown = false;
         try {
             AuthenticationKey.importAuthenticationKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_AUTHENTICATION,
-                                                      Capability.ALL_CAPABILITIES, null, enc, mac);
+                                                      Capability.ALL, null, enc, mac);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -139,7 +135,7 @@ public class AuthenticationKeyTest {
         exceptionThrown = false;
         try {
             AuthenticationKey.importAuthenticationKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_AUTHENTICATION,
-                                                      Capability.ALL_CAPABILITIES, null, mac, enc);
+                                                      Capability.ALL, null, mac, enc);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -149,7 +145,7 @@ public class AuthenticationKeyTest {
         exceptionThrown = false;
         try {
             AuthenticationKey.importAuthenticationKey(session, (short) 0, "", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_AUTHENTICATION,
-                                                      Capability.ALL_CAPABILITIES, null, null, null);
+                                                      Capability.ALL, null, null, null);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -206,7 +202,7 @@ public class AuthenticationKeyTest {
             assertEquals(YHSession.SessionStatus.CLOSED, session1.getStatus());
         } finally {
             // Delete the authentication key
-            YHObject.delete(session, id, ObjectType.TYPE_AUTHENTICATION_KEY);
+            YHObject.delete(session, id, Type.TYPE_AUTHENTICATION_KEY);
         }
         log.info("TEST END: testChangeAuthenticationKey()");
     }

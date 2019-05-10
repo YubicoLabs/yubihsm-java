@@ -3,11 +3,7 @@ import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.exceptions.YHDeviceException;
-import com.yubico.hsm.exceptions.YHError;
-import com.yubico.hsm.yhconcepts.Algorithm;
-import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.ObjectOrigin;
-import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhobjects.Opaque;
 import com.yubico.hsm.yhobjects.YHObject;
 import com.yubico.hsm.yhobjects.YHObjectInfo;
@@ -84,13 +80,13 @@ public class OpaqueTest {
 
         try {
             // Verify object properties
-            final YHObjectInfo opaqueObj = YHObject.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+            final YHObjectInfo opaqueObj = YHObject.getObjectInfo(session, id, Type.TYPE_OPAQUE);
             assertNotEquals(0, opaqueObj.getId());
             assertEquals(id, opaqueObj.getId());
-            assertEquals(ObjectType.TYPE_OPAQUE, opaqueObj.getType());
+            assertEquals(Type.TYPE_OPAQUE, opaqueObj.getType());
             assertEquals(domains, opaqueObj.getDomains());
             assertEquals(Algorithm.OPAQUE_DATA, opaqueObj.getAlgorithm());
-            assertEquals(ObjectOrigin.YH_ORIGIN_IMPORTED, opaqueObj.getOrigin());
+            assertEquals(Origin.YH_ORIGIN_IMPORTED, opaqueObj.getOrigin());
             assertEquals(label, opaqueObj.getLabel());
             assertEquals(capabilities.size(), opaqueObj.getCapabilities().size());
             assertTrue(opaqueObj.getCapabilities().containsAll(capabilities));
@@ -101,9 +97,9 @@ public class OpaqueTest {
             assertArrayEquals(opaqueData, returnedOpaqueData);
         } finally {
             // Delete opaque object
-            YHObject.delete(session, id, ObjectType.TYPE_OPAQUE);
+            YHObject.delete(session, id, Type.TYPE_OPAQUE);
             try {
-                YHObject.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+                YHObject.getObjectInfo(session, id, Type.TYPE_OPAQUE);
             } catch (YHDeviceException e1) {
                 assertEquals(YHError.OBJECT_NOT_FOUND, e1.getYhError());
             }
@@ -124,13 +120,13 @@ public class OpaqueTest {
 
         try {
             // Verify object properties
-            final YHObjectInfo opaqueObj = YHObject.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+            final YHObjectInfo opaqueObj = YHObject.getObjectInfo(session, id, Type.TYPE_OPAQUE);
             assertNotEquals(0, opaqueObj.getId());
             assertEquals(id, opaqueObj.getId());
-            assertEquals(ObjectType.TYPE_OPAQUE, opaqueObj.getType());
+            assertEquals(Type.TYPE_OPAQUE, opaqueObj.getType());
             assertEquals(domains, opaqueObj.getDomains());
             assertEquals(Algorithm.OPAQUE_X509_CERTIFICATE, opaqueObj.getAlgorithm());
-            assertEquals(ObjectOrigin.YH_ORIGIN_IMPORTED, opaqueObj.getOrigin());
+            assertEquals(Origin.YH_ORIGIN_IMPORTED, opaqueObj.getOrigin());
             assertEquals(label, opaqueObj.getLabel());
             assertEquals(0, opaqueObj.getCapabilities().size());
             assertEquals(0, opaqueObj.getDelegatedCapabilities().size());
@@ -140,9 +136,9 @@ public class OpaqueTest {
             assertEquals(cert, returnedCert);
         } finally {
             // Delete opaque object
-            YHObject.delete(session, id, ObjectType.TYPE_OPAQUE);
+            YHObject.delete(session, id, Type.TYPE_OPAQUE);
             try {
-                YHObject.getObjectInfo(session, id, ObjectType.TYPE_OPAQUE);
+                YHObject.getObjectInfo(session, id, Type.TYPE_OPAQUE);
             } catch (YHDeviceException e1) {
                 assertEquals(YHError.OBJECT_NOT_FOUND, e1.getYhError());
             }
@@ -164,7 +160,7 @@ public class OpaqueTest {
             assertEquals(testCert, returnedCert);
         } finally {
             // Delete opaque object
-            YHObject.delete(session, id, ObjectType.TYPE_OPAQUE);
+            YHObject.delete(session, id, Type.TYPE_OPAQUE);
         }
 
         log.info("TEST END: testImportOpaqueCertificate()");
@@ -187,7 +183,7 @@ public class OpaqueTest {
             assertTrue("Succeeded in returning the opaque ", exceptionThrown);
         } finally {
             // Delete opaque object
-            YHObject.delete(session, id, ObjectType.TYPE_OPAQUE);
+            YHObject.delete(session, id, Type.TYPE_OPAQUE);
         }
 
         log.info("TEST END: testImportOpaqueCertificate()");

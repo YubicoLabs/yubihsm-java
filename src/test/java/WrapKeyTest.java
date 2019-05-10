@@ -5,12 +5,8 @@ import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.exceptions.UnsupportedAlgorithmException;
 import com.yubico.hsm.exceptions.YHDeviceException;
-import com.yubico.hsm.exceptions.YHError;
+import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhdata.WrapData;
-import com.yubico.hsm.yhconcepts.Algorithm;
-import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.ObjectOrigin;
-import com.yubico.hsm.yhconcepts.ObjectType;
 import com.yubico.hsm.yhobjects.Opaque;
 import com.yubico.hsm.yhobjects.WrapKey;
 import com.yubico.hsm.yhobjects.YHObject;
@@ -71,20 +67,20 @@ public class WrapKeyTest {
         short id = WrapKey.generateWrapKey(session, (short) 0, label, domains, keyAlgorithm, capabilities, capabilities);
 
         try {
-            final YHObjectInfo wrapkey = YHObject.getObjectInfo(session, id, ObjectType.TYPE_WRAP_KEY);
+            final YHObjectInfo wrapkey = YHObject.getObjectInfo(session, id, Type.TYPE_WRAP_KEY);
             assertEquals(id, wrapkey.getId());
-            assertEquals(ObjectType.TYPE_WRAP_KEY, wrapkey.getType());
+            assertEquals(Type.TYPE_WRAP_KEY, wrapkey.getType());
             assertEquals(keyLength + 8, wrapkey.getObjectSize());
             assertEquals(domains, wrapkey.getDomains());
             assertEquals(keyAlgorithm, wrapkey.getAlgorithm());
-            assertEquals(ObjectOrigin.YH_ORIGIN_GENERATED, wrapkey.getOrigin());
+            assertEquals(Origin.YH_ORIGIN_GENERATED, wrapkey.getOrigin());
             assertEquals(label, wrapkey.getLabel());
             assertEquals(capabilities.size(), wrapkey.getCapabilities().size());
             assertTrue(wrapkey.getCapabilities().containsAll(capabilities));
             assertEquals(capabilities.size(), wrapkey.getDelegatedCapabilities().size());
             assertTrue(wrapkey.getDelegatedCapabilities().containsAll(capabilities));
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_WRAP_KEY);
+            YHObject.delete(session, id, Type.TYPE_WRAP_KEY);
         }
     }
 
@@ -110,20 +106,20 @@ public class WrapKeyTest {
         WrapKey.importWrapKey(session, id, label, domains, keyAlgorithm, capabilities, capabilities, data);
 
         try {
-            final YHObjectInfo wrapkey = YHObject.getObjectInfo(session, id, ObjectType.TYPE_WRAP_KEY);
+            final YHObjectInfo wrapkey = YHObject.getObjectInfo(session, id, Type.TYPE_WRAP_KEY);
             assertEquals(id, wrapkey.getId());
-            assertEquals(ObjectType.TYPE_WRAP_KEY, wrapkey.getType());
+            assertEquals(Type.TYPE_WRAP_KEY, wrapkey.getType());
             assertEquals(keyLength + 8, wrapkey.getObjectSize());
             assertEquals(domains, wrapkey.getDomains());
             assertEquals(keyAlgorithm, wrapkey.getAlgorithm());
-            assertEquals(ObjectOrigin.YH_ORIGIN_IMPORTED, wrapkey.getOrigin());
+            assertEquals(Origin.YH_ORIGIN_IMPORTED, wrapkey.getOrigin());
             assertEquals(label, wrapkey.getLabel());
             assertEquals(capabilities.size(), wrapkey.getCapabilities().size());
             assertTrue(wrapkey.getCapabilities().containsAll(capabilities));
             assertEquals(capabilities.size(), wrapkey.getDelegatedCapabilities().size());
             assertTrue(wrapkey.getDelegatedCapabilities().containsAll(capabilities));
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_WRAP_KEY);
+            YHObject.delete(session, id, Type.TYPE_WRAP_KEY);
         }
     }
 
@@ -199,7 +195,7 @@ public class WrapKeyTest {
 
             unwrapInvalidData(wrapKey, algorithm.getName());
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_WRAP_KEY);
+            YHObject.delete(session, id, Type.TYPE_WRAP_KEY);
         }
     }
 
@@ -297,7 +293,7 @@ public class WrapKeyTest {
             objectWrap(Algorithm.AES256_CCM_WRAP, id, testCert);
         } finally {
             try {
-                YHObject.delete(session, id, ObjectType.TYPE_OPAQUE);
+                YHObject.delete(session, id, Type.TYPE_OPAQUE);
             } catch (YHDeviceException e) {
             }
         }
@@ -315,19 +311,19 @@ public class WrapKeyTest {
             certWrap(wrapKey, certId, cert);
             nonExistingObjectWrap(wrapKey, certId, algorithm.getName());
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_WRAP_KEY);
+            YHObject.delete(session, id, Type.TYPE_WRAP_KEY);
         }
     }
 
     private void certWrap(WrapKey wrapKey, short certId, X509Certificate cert) throws Exception {
         // Export certificate under wrap
-        WrapData exportedCert = wrapKey.exportWrapped(session, certId, ObjectType.TYPE_OPAQUE);
+        WrapData exportedCert = wrapKey.exportWrapped(session, certId, Type.TYPE_OPAQUE);
 
         // Delete it from the HSM and make sure that it is no longer there
-        YHObject.delete(session, certId, ObjectType.TYPE_OPAQUE);
+        YHObject.delete(session, certId, Type.TYPE_OPAQUE);
         HashMap filters = new HashMap();
-        filters.put(YHObject.ListFilter.ID, certId);
-        filters.put(YHObject.ListFilter.TYPE, ObjectType.TYPE_OPAQUE);
+        filters.put(ListObjectsFilter.ID, certId);
+        filters.put(ListObjectsFilter.TYPE, Type.TYPE_OPAQUE);
         List<YHObjectInfo> objects = YHObject.getObjectList(session, filters);
         assertEquals(0, objects.size());
 
@@ -350,14 +346,14 @@ public class WrapKeyTest {
     private void nonExistingObjectWrap(WrapKey wrapKey, short certId, String wrapKeyAlgorithm) throws Exception {
         log.info("Test wrapping a non existing object using wrap key of algorithm " + wrapKeyAlgorithm);
         HashMap filters = new HashMap();
-        filters.put(YHObject.ListFilter.ID, certId);
-        filters.put(YHObject.ListFilter.TYPE, ObjectType.TYPE_ASYMMETRIC_KEY);
+        filters.put(ListObjectsFilter.ID, certId);
+        filters.put(ListObjectsFilter.TYPE, Type.TYPE_ASYMMETRIC_KEY);
         List<YHObjectInfo> objects = YHObject.getObjectList(session, filters);
         assertEquals(0, objects.size());
 
         boolean exceptionThrown = false;
         try {
-            wrapKey.exportWrapped(session, certId, ObjectType.TYPE_ASYMMETRIC_KEY);
+            wrapKey.exportWrapped(session, certId, Type.TYPE_ASYMMETRIC_KEY);
         } catch (YHDeviceException e) {
             exceptionThrown = true;
             assertEquals(YHError.OBJECT_NOT_FOUND, e.getYhError());

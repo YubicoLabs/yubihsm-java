@@ -6,7 +6,7 @@ import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhobjects.AsymmetricKeyEc;
 import com.yubico.hsm.yhobjects.YHObject;
 import org.junit.AfterClass;
@@ -74,7 +74,7 @@ public class EcPublicKeyTest {
             PublicKey returnedPubKey = key.getEcPublicKey(session);
             assertEquals(keypair.getPublic(), returnedPubKey);
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
         }
     }
 }

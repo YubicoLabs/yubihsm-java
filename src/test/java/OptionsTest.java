@@ -5,6 +5,7 @@ import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Command;
+import com.yubico.hsm.yhconcepts.DeviceOptionValue;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -34,20 +35,18 @@ public class OptionsTest {
     @AfterClass
     public static void destroy() throws Exception {
         testCommandAuditFix();
-        session.closeSession();
-        yubihsm.close();
     }
 
     @Test
     public void testForceAudit() throws Exception {
         log.info("TEST START: testForceAudit()");
-        YHCore.OptionValue original = YHCore.getForceAudit(session);
+        DeviceOptionValue original = YHCore.getForceAudit(session);
 
-        YHCore.setForceAudit(session, YHCore.OptionValue.ON);
-        assertEquals(YHCore.OptionValue.ON, YHCore.getForceAudit(session));
+        YHCore.setForceAudit(session, DeviceOptionValue.ON);
+        assertEquals(DeviceOptionValue.ON, YHCore.getForceAudit(session));
 
-        YHCore.setForceAudit(session, YHCore.OptionValue.OFF);
-        assertEquals(YHCore.OptionValue.OFF, YHCore.getForceAudit(session));
+        YHCore.setForceAudit(session, DeviceOptionValue.OFF);
+        assertEquals(DeviceOptionValue.OFF, YHCore.getForceAudit(session));
 
         YHCore.setForceAudit(session, original);
         log.info("TEST END: testForceAudit()");
@@ -56,19 +55,19 @@ public class OptionsTest {
     @Test
     public void testCommandOptionValueConversion() {
         log.info("TEST START: testCommandOptionValueConversion()");
-        Map<Command, YHCore.OptionValue> map = new HashMap<Command, YHCore.OptionValue>();
-        map.put(Command.SIGN_HMAC, YHCore.OptionValue.ON);
-        map.put(Command.VERIFY_HMAC, YHCore.OptionValue.OFF);
-        map.put(Command.GENERATE_HMAC_KEY, YHCore.OptionValue.FIX);
+        Map<Command, DeviceOptionValue> map = new HashMap<Command, DeviceOptionValue>();
+        map.put(Command.SIGN_HMAC, DeviceOptionValue.ON);
+        map.put(Command.VERIFY_HMAC, DeviceOptionValue.OFF);
+        map.put(Command.GENERATE_HMAC_KEY, DeviceOptionValue.FIX);
         byte[] byteValue = {0x5a, 0x02, 0x53, 0x01, 0x5c, 0x00};
 
         byte[] retByteValue = Utils.geOptionTlvValue(map);
         assertEquals(map.size() * 2, retByteValue.length);
         for (int i = 0; i < retByteValue.length; i += 2) {
-            Command c = Command.getCommand(retByteValue[i]);
+            Command c = Command.forId(retByteValue[i]);
             assertNotNull(c);
             assertTrue(map.containsKey(c));
-            YHCore.OptionValue retV = YHCore.OptionValue.forValue(retByteValue[i + 1]);
+            DeviceOptionValue retV = DeviceOptionValue.forValue(retByteValue[i + 1]);
             assertEquals(map.get(c), retV);
         }
 
@@ -79,22 +78,22 @@ public class OptionsTest {
     @Test
     public void testCommandAudit() throws Exception {
         log.info("TEST START: testCommandAudit()");
-        Map<Command, YHCore.OptionValue> original = YHCore.getCommandAudit(session);
+        Map<Command, DeviceOptionValue> original = YHCore.getCommandAudit(session);
 
-        Map<Command, YHCore.OptionValue> testOptions = new HashMap<Command, YHCore.OptionValue>();
-        testOptions.put(Command.SIGN_HMAC, YHCore.OptionValue.ON);
-        testOptions.put(Command.VERIFY_HMAC, YHCore.OptionValue.OFF);
+        Map<Command, DeviceOptionValue> testOptions = new HashMap<Command, DeviceOptionValue>();
+        testOptions.put(Command.SIGN_HMAC, DeviceOptionValue.ON);
+        testOptions.put(Command.VERIFY_HMAC, DeviceOptionValue.OFF);
         YHCore.setCommandAudit(session, testOptions);
-        Map<Command, YHCore.OptionValue> ret = YHCore.getCommandAudit(session);
-        assertEquals(ret.get(Command.SIGN_HMAC), YHCore.OptionValue.ON);
-        assertEquals(ret.get(Command.VERIFY_HMAC), YHCore.OptionValue.OFF);
+        Map<Command, DeviceOptionValue> ret = YHCore.getCommandAudit(session);
+        assertEquals(ret.get(Command.SIGN_HMAC), DeviceOptionValue.ON);
+        assertEquals(ret.get(Command.VERIFY_HMAC), DeviceOptionValue.OFF);
 
-        testOptions.put(Command.SIGN_HMAC, YHCore.OptionValue.OFF);
-        testOptions.put(Command.VERIFY_HMAC, YHCore.OptionValue.ON);
+        testOptions.put(Command.SIGN_HMAC, DeviceOptionValue.OFF);
+        testOptions.put(Command.VERIFY_HMAC, DeviceOptionValue.ON);
         YHCore.setCommandAudit(session, testOptions);
         ret = YHCore.getCommandAudit(session);
-        assertEquals(ret.get(Command.SIGN_HMAC), YHCore.OptionValue.OFF);
-        assertEquals(ret.get(Command.VERIFY_HMAC), YHCore.OptionValue.ON);
+        assertEquals(ret.get(Command.SIGN_HMAC), DeviceOptionValue.OFF);
+        assertEquals(ret.get(Command.VERIFY_HMAC), DeviceOptionValue.ON);
 
         YHCore.setCommandAudit(session, original);
         log.info("TEST END: testCommandAudit()");
@@ -103,12 +102,12 @@ public class OptionsTest {
     // This test will run after all other tests because it needs to reset the device
     public static void testCommandAuditFix() throws Exception {
         log.info("TEST START: testCommandAuditFix()");
-        Map<Command, YHCore.OptionValue> testOptions = new HashMap<Command, YHCore.OptionValue>();
-        testOptions.put(Command.GENERATE_HMAC_KEY, YHCore.OptionValue.FIX);
+        Map<Command, DeviceOptionValue> testOptions = new HashMap<Command, DeviceOptionValue>();
+        testOptions.put(Command.GENERATE_HMAC_KEY, DeviceOptionValue.FIX);
         YHCore.setCommandAudit(session, testOptions);
-        Map<Command, YHCore.OptionValue> ret = YHCore.getCommandAudit(session);
-        assertEquals(ret.get(Command.GENERATE_HMAC_KEY), YHCore.OptionValue.FIX);
-        testOptions.put(Command.GENERATE_HMAC_KEY, YHCore.OptionValue.ON);
+        Map<Command, DeviceOptionValue> ret = YHCore.getCommandAudit(session);
+        assertEquals(ret.get(Command.GENERATE_HMAC_KEY), DeviceOptionValue.FIX);
+        testOptions.put(Command.GENERATE_HMAC_KEY, DeviceOptionValue.ON);
         boolean exceptionThrown = false;
         try {
             YHCore.setCommandAudit(session, testOptions);

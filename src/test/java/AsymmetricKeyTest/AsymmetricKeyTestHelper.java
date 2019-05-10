@@ -4,6 +4,7 @@ import com.yubico.hsm.YHSession;
 import com.yubico.hsm.exceptions.*;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
+import com.yubico.hsm.yhconcepts.YHError;
 import com.yubico.hsm.yhobjects.AsymmetricKeyEc;
 import com.yubico.hsm.yhobjects.AsymmetricKeyRsa;
 import com.yubico.hsm.yhobjects.YHObject;
@@ -145,7 +146,7 @@ public class AsymmetricKeyTestHelper {
     }
 
     public static void cleanupTestObjects(YHSession session, List<YHObject> objects) throws Exception {
-        for(YHObject object : objects) {
+        for (YHObject object : objects) {
             try {
                 object.delete(session);
             } catch (YHDeviceException e) {

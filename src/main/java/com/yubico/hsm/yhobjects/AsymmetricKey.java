@@ -1,15 +1,14 @@
 package com.yubico.hsm.yhobjects;
 
 import com.yubico.hsm.YHSession;
-import com.yubico.hsm.exceptions.*;
+import com.yubico.hsm.exceptions.YHAuthenticationException;
+import com.yubico.hsm.exceptions.YHConnectionException;
+import com.yubico.hsm.exceptions.YHDeviceException;
+import com.yubico.hsm.exceptions.YHInvalidResponseException;
 import com.yubico.hsm.internal.util.Utils;
-import com.yubico.hsm.yhconcepts.Algorithm;
-import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.Command;
-import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhconcepts.*;
 import lombok.NonNull;
 
-import javax.annotation.Nonnull;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
@@ -26,7 +25,7 @@ import java.util.logging.Logger;
 public class AsymmetricKey extends YHObject {
     private static Logger log = Logger.getLogger(AsymmetricKey.class.getName());
 
-    public static final ObjectType TYPE = ObjectType.TYPE_ASYMMETRIC_KEY;
+    public static final Type TYPE = Type.TYPE_ASYMMETRIC_KEY;
     private static final int SSH_CERT_REQUEST_TIMESTAMP_LENGTH = 4;
     private static final int SSH_CERT_REQUEST_SIGNATURE_LENGTH = 256;
 
@@ -81,7 +80,7 @@ public class AsymmetricKey extends YHObject {
     /**
      * @return True `algorithm` is a supported algorithm for ED keys. False otherwise
      */
-    public static boolean isEdAlgorithm(@Nonnull final Algorithm algorithm) {
+    public static boolean isEdAlgorithm(@NonNull final Algorithm algorithm) {
         return algorithm.equals(Algorithm.EC_ED25519);
     }
 
@@ -120,8 +119,8 @@ public class AsymmetricKey extends YHObject {
         bb.putShort(id);
         bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
-        bb.putLong(Capability.getCapabilities(capabilities));
-        bb.put(keyAlgorithm.getAlgorithmId());
+        bb.putLong(Utils.getLongFromCapabilities(capabilities));
+        bb.put(keyAlgorithm.getId());
 
         byte[] resp = session.sendSecureCmd(Command.GENERATE_ASYMMETRIC_KEY, bb.array());
         if (resp.length != OBJECT_ID_SIZE) {
@@ -163,7 +162,7 @@ public class AsymmetricKey extends YHObject {
 
         byte[] resp = session.sendSecureCmd(Command.GET_PUBLIC_KEY, bb.array());
         bb = ByteBuffer.wrap(resp);
-        final Algorithm algorithm = Algorithm.getAlgorithm(bb.get());
+        final Algorithm algorithm = Algorithm.forId(bb.get());
         if (algorithm == null || !algorithm.equals(getKeyAlgorithm())) {
             throw new YHInvalidResponseException("The public key algorithm was " + algorithm.toString() + ", which does not match the private key " +
                                                  "algorithm " + getKeyAlgorithm().toString());
@@ -233,7 +232,7 @@ public class AsymmetricKey extends YHObject {
         }
 
         try {
-            getObjectInfo(session, attestingKey, ObjectType.TYPE_OPAQUE);
+            getObjectInfo(session, attestingKey, Type.TYPE_OPAQUE);
         } catch (YHDeviceException e) {
             if (e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
                 throw new UnsupportedOperationException("To sign attestation certificates, there has to exist a template X509Certificate with ID " +
@@ -275,8 +274,8 @@ public class AsymmetricKey extends YHObject {
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      */
-    public byte[] signSshCertificate(@Nonnull final YHSession session, final short sshTemplateId, @Nonnull final Algorithm algorithm,
-                                     @Nonnull final byte[] timestamp, @Nonnull final byte[] reqSignature, @Nonnull final byte[] req)
+    public byte[] signSshCertificate(@NonNull final YHSession session, final short sshTemplateId, @NonNull final Algorithm algorithm,
+                                     @NonNull final byte[] timestamp, @NonNull final byte[] reqSignature, @NonNull final byte[] req)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException {
@@ -306,8 +305,8 @@ public class AsymmetricKey extends YHObject {
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      */
-    public byte[] signSshCertificate(@Nonnull final YHSession session, final short sshTemplateId, @Nonnull final Algorithm algorithm,
-                                     @Nonnull final byte[] sshCertRequest)
+    public byte[] signSshCertificate(@NonNull final YHSession session, final short sshTemplateId, @NonNull final Algorithm algorithm,
+                                     @NonNull final byte[] sshCertRequest)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException {
@@ -338,9 +337,9 @@ public class AsymmetricKey extends YHObject {
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      */
-    public static byte[] signSshCertificate(@Nonnull final YHSession session, final short asymKeyId, final short sshTemplateId,
-                                            @Nonnull final Algorithm algorithm, @Nonnull final byte[] timestamp, @Nonnull final byte[] reqSignature,
-                                            @Nonnull final byte[] req)
+    public static byte[] signSshCertificate(@NonNull final YHSession session, final short asymKeyId, final short sshTemplateId,
+                                            @NonNull final Algorithm algorithm, @NonNull final byte[] timestamp, @NonNull final byte[] reqSignature,
+                                            @NonNull final byte[] req)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException {
@@ -385,8 +384,8 @@ public class AsymmetricKey extends YHObject {
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      */
-    public static byte[] signSshCertificate(@Nonnull final YHSession session, final short asymKeyId, final short sshTemplateId,
-                                            @Nonnull final Algorithm algorithm, @Nonnull final byte[] sshCertrequest)
+    public static byte[] signSshCertificate(@NonNull final YHSession session, final short asymKeyId, final short sshTemplateId,
+                                            @NonNull final Algorithm algorithm, @NonNull final byte[] sshCertrequest)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException {
@@ -395,7 +394,7 @@ public class AsymmetricKey extends YHObject {
                 OBJECT_ID_SIZE + OBJECT_ID_SIZE + OBJECT_ALGORITHM_SIZE + sshCertrequest.length);
         bb.putShort(asymKeyId);
         bb.putShort(sshTemplateId);
-        bb.put(algorithm.getAlgorithmId());
+        bb.put(algorithm.getId());
         bb.put(sshCertrequest);
 
         byte[] sig = session.sendSecureCmd(Command.SIGN_SSH_CERTIFICATE, bb.array());
@@ -430,8 +429,8 @@ public class AsymmetricKey extends YHObject {
         bb.putShort(id);
         bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
-        bb.putLong(Capability.getCapabilities(capabilities));
-        bb.put(keyAlgorithm.getAlgorithmId());
+        bb.putLong(Utils.getLongFromCapabilities(capabilities));
+        bb.put(keyAlgorithm.getId());
         bb.put(p1);
         if (p2 != null) {
             bb.put(p2);
@@ -453,7 +452,7 @@ public class AsymmetricKey extends YHObject {
     /**
      * @return The digest of the input data
      */
-    protected byte[] getHashedData(@Nonnull final byte[] data, @NonNull final Algorithm algorithm) throws NoSuchAlgorithmException {
+    protected byte[] getHashedData(@NonNull final byte[] data, @NonNull final Algorithm algorithm) throws NoSuchAlgorithmException {
         MessageDigest digest;
         if (algorithm.equals(Algorithm.RSA_PKCS1_SHA1) || algorithm.equals(Algorithm.RSA_MGF1_SHA1) ||
             algorithm.equals(Algorithm.EC_ECDSA_SHA1) || algorithm.equals(Algorithm.RSA_OAEP_SHA1)) {

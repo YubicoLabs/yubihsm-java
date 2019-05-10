@@ -5,8 +5,8 @@ import com.yubico.hsm.exceptions.YHConnectionException;
 import com.yubico.hsm.exceptions.YHDeviceException;
 import com.yubico.hsm.exceptions.YHInvalidResponseException;
 import com.yubico.hsm.internal.util.CommandUtils;
-import com.yubico.hsm.yhdata.DeviceInfo;
 import com.yubico.hsm.yhconcepts.Command;
+import com.yubico.hsm.yhdata.DeviceInfo;
 
 import java.util.logging.Logger;
 

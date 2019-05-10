@@ -5,10 +5,10 @@ import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.exceptions.YHDeviceException;
-import com.yubico.hsm.exceptions.YHError;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhconcepts.Type;
+import com.yubico.hsm.yhconcepts.YHError;
 import com.yubico.hsm.yhobjects.AsymmetricKeyRsa;
 import com.yubico.hsm.yhobjects.YHObject;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -79,7 +79,7 @@ public class RsaDecryptTest {
             }
             assertTrue("Succeeded to sign in spite of insufficient permissions", exceptionThrown);
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
         }
         log.info("TEST END: testDecryptDataWithInsufficientPermissions()");
     }
@@ -136,7 +136,7 @@ public class RsaDecryptTest {
 
             assertArrayEquals(data, dec);
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
         }
     }
 
@@ -161,7 +161,7 @@ public class RsaDecryptTest {
             decryptOaepBc(key, publicKey, Algorithm.RSA_MGF1_SHA512, Algorithm.RSA_OAEP_SHA512, "RSA/ECB/OAEPWithSHA-512AndMGF1Padding");
 
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
         }
     }
 

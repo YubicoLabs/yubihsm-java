@@ -1,9 +1,13 @@
 package com.yubico.hsm;
 
-import com.yubico.hsm.exceptions.*;
+import com.yubico.hsm.exceptions.YHAuthenticationException;
+import com.yubico.hsm.exceptions.YHConnectionException;
+import com.yubico.hsm.exceptions.YHDeviceException;
+import com.yubico.hsm.exceptions.YHInvalidResponseException;
 import com.yubico.hsm.internal.util.CommandUtils;
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Command;
+import com.yubico.hsm.yhconcepts.YHError;
 import com.yubico.hsm.yhobjects.AuthenticationKey;
 import lombok.NonNull;
 import org.bouncycastle.crypto.BlockCipher;
@@ -235,7 +239,7 @@ public class YHSession {
         }
 
         try {
-            byte[] closeSessionMsg = {Command.CLOSE_SESSION.getCommandId(), (byte) 0, (byte) 0};
+            byte[] closeSessionMsg = {Command.CLOSE_SESSION.getId(), (byte) 0, (byte) 0};
             byte[] response = secureTransceive(closeSessionMsg);
             byte[] responseData = CommandUtils.getResponseData(Command.CLOSE_SESSION, response);
             if (responseData.length == 0) {
@@ -404,7 +408,7 @@ public class YHSession {
 
         // Get the message MAC
         ByteBuffer msg = ByteBuffer.allocate(12);
-        msg.put(Command.AUTHENTICATE_SESSION.getCommandId());
+        msg.put(Command.AUTHENTICATE_SESSION.getId());
         msg.putShort((short) (17)); // 1 byte sessionID + 8 byte host cryptogram + 8 bytes MAC
         msg.put(sessionID);
         msg.put(hostCryptogram);
@@ -509,7 +513,7 @@ public class YHSession {
     private byte[] getMessageToMac(@NonNull final byte[] encMessage) {
         int lengthToMac = 1 + encMessage.length + 8; // sessionID + length of encrypted message + mac
         ByteBuffer bb = ByteBuffer.allocate(3 + 1 + encMessage.length);
-        bb.put(Command.SESSION_MESSAGE.getCommandId()).putShort((short) lengthToMac);
+        bb.put(Command.SESSION_MESSAGE.getId()).putShort((short) lengthToMac);
         bb.put(getSessionID());
         bb.put(encMessage);
         return bb.array();

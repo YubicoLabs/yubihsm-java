@@ -1,15 +1,17 @@
 package com.yubico.hsm.yhobjects;
 
 import com.yubico.hsm.YHSession;
-import com.yubico.hsm.exceptions.*;
-import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.Command;
-import com.yubico.hsm.yhconcepts.ObjectType;
-import com.yubico.hsm.yhconcepts.YHConcept;
+import com.yubico.hsm.exceptions.YHAuthenticationException;
+import com.yubico.hsm.exceptions.YHConnectionException;
+import com.yubico.hsm.exceptions.YHDeviceException;
+import com.yubico.hsm.exceptions.YHInvalidResponseException;
 import com.yubico.hsm.internal.util.Utils;
+import com.yubico.hsm.yhconcepts.Command;
+import com.yubico.hsm.yhconcepts.ListObjectsFilter;
+import com.yubico.hsm.yhconcepts.Type;
+import com.yubico.hsm.yhconcepts.YHError;
 import lombok.NonNull;
 
-import javax.annotation.Nonnull;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
@@ -37,36 +39,11 @@ public class YHObject {
 
 
     private short id;
-    private ObjectType type;
-
-    public enum ListFilter {
-        ID          ((byte) 0x01, 3), // 1 identifier byte + 2
-        TYPE        ((byte) 0x02, 2), // 1 identifier byte + 1
-        DOMAINS     ((byte) 0x03, 3), // 1 identifier byte + 2
-        CAPABILITIES((byte) 0x04, 9), // 1 identifier byte + 8
-        ALGORITHM   ((byte) 0x05, 2), // 1 identifier byte + 1
-        LABEL       ((byte) 0x06, 41); // 1 identifier byte + 40
-
-        private final byte identifier;
-        private final int length;
-
-        ListFilter(byte id, int l) {
-            this.identifier = id;
-            this.length = l;
-        }
-
-        public byte getIdentifier() {
-            return this.identifier;
-        }
-
-        public int getLength() {
-            return this.length;
-        }
-    }
+    private Type type;
 
     protected YHObject() {}
 
-    public YHObject(final short id, @NonNull final ObjectType type) {
+    public YHObject(final short id, @NonNull final Type type) {
         this.id = id;
         this.type = type;
     }
@@ -79,11 +56,11 @@ public class YHObject {
         this.id = id;
     }
 
-    public ObjectType getType() {
+    public Type getType() {
         return type;
     }
 
-    protected void setType(@NonNull ObjectType type) {
+    protected void setType(@NonNull Type type) {
         this.type = type;
     }
 
@@ -93,8 +70,13 @@ public class YHObject {
      * @param other
      * @return True if the yhdata' IDs and types are equal. False otherwise
      */
-    public boolean equals(@NonNull final YHObject other) {
-        return (getId() == other.getId()) && YHConcept.equals(getType(), other.getType());
+    public boolean equals(final Object other) {
+        if (other == null) {
+            return false;
+        }
+
+        YHObject otherObject = (YHObject) other;
+        return getId() == otherObject.getId() && getType().equals(otherObject.getType());
     }
 
     /**
@@ -115,7 +97,7 @@ public class YHObject {
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      * @throws IOException                        If failed to parse the filter
      */
-    public static List<YHObjectInfo> getObjectList(@NonNull final YHSession session, final Map<ListFilter, Object> filters)
+    public static List<YHObjectInfo> getObjectList(@NonNull final YHSession session, final Map<ListObjectsFilter, Object> filters)
             throws IOException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    NoSuchPaddingException, IllegalBlockSizeException {
@@ -123,27 +105,27 @@ public class YHObject {
         if (filters != null) {
             try {
                 ByteBuffer bb;
-                for (ListFilter f : filters.keySet()) {
+                for (ListObjectsFilter f : filters.keySet()) {
                     switch (f) {
                         case ID:
-                            bb = ByteBuffer.allocate(ListFilter.ID.length);
-                            bb.put(ListFilter.ID.identifier).putShort((short) filters.get(f));
+                            bb = ByteBuffer.allocate(ListObjectsFilter.ID.getLength());
+                            bb.put(ListObjectsFilter.ID.getId()).putShort((short) filters.get(f));
                             baos.write(bb.array());
                             break;
                         case TYPE:
-                            bb = ByteBuffer.allocate(ListFilter.TYPE.length);
-                            bb.put(ListFilter.TYPE.identifier);
+                            bb = ByteBuffer.allocate(ListObjectsFilter.TYPE.getLength());
+                            bb.put(ListObjectsFilter.TYPE.getId());
                             Object type = filters.get(f);
                             if (type instanceof Byte) {
                                 bb.put((byte) type);
-                            } else if (type instanceof ObjectType) {
-                                bb.put(((ObjectType) type).getTypeId());
+                            } else if (type instanceof Type) {
+                                bb.put(((Type) type).getId());
                             }
                             baos.write(bb.array());
                             break;
                         case DOMAINS:
-                            bb = ByteBuffer.allocate(ListFilter.DOMAINS.length);
-                            bb.put(ListFilter.DOMAINS.identifier);
+                            bb = ByteBuffer.allocate(ListObjectsFilter.DOMAINS.getLength());
+                            bb.put(ListObjectsFilter.DOMAINS.getId());
                             Object domains = filters.get(f);
                             if (domains instanceof Short) {
                                 bb.putShort((short) domains);
@@ -153,25 +135,25 @@ public class YHObject {
                             baos.write(bb.array());
                             break;
                         case CAPABILITIES:
-                            bb = ByteBuffer.allocate(ListFilter.CAPABILITIES.length);
-                            bb.put(ListFilter.CAPABILITIES.identifier);
+                            bb = ByteBuffer.allocate(ListObjectsFilter.CAPABILITIES.getLength());
+                            bb.put(ListObjectsFilter.CAPABILITIES.getId());
                             Object capabilities = filters.get(f);
                             if (capabilities instanceof Long) {
                                 bb.putLong(((long) capabilities));
                             } else if (capabilities instanceof List) {
-                                bb.putLong(Capability.getCapabilities((List) capabilities));
+                                bb.putLong(Utils.getLongFromCapabilities((List) capabilities));
                             }
                             baos.write(bb.array());
                             break;
                         case ALGORITHM:
-                            bb = ByteBuffer.allocate(ListFilter.ALGORITHM.length);
-                            bb.put(ListFilter.ALGORITHM.identifier).put((byte) filters.get(f));
+                            bb = ByteBuffer.allocate(ListObjectsFilter.ALGORITHM.getLength());
+                            bb.put(ListObjectsFilter.ALGORITHM.getId()).put((byte) filters.get(f));
                             baos.write(bb.array());
                             break;
                         case LABEL:
                             final String label = (String) filters.get(f);
-                            bb = ByteBuffer.allocate(ListFilter.LABEL.length);
-                            bb.put(ListFilter.LABEL.identifier).put(label.getBytes());
+                            bb = ByteBuffer.allocate(ListObjectsFilter.LABEL.getLength());
+                            bb.put(ListObjectsFilter.LABEL.getId()).put(label.getBytes());
                             baos.write(bb.array());
                             break;
                         default:
@@ -196,7 +178,7 @@ public class YHObject {
         ByteBuffer bb = ByteBuffer.wrap(response);
         List<YHObjectInfo> ret = new ArrayList<>();
         while (bb.hasRemaining()) {
-            ret.add(new YHObjectInfo(bb.getShort(), ObjectType.getObjectType(bb.get()), bb.get()));
+            ret.add(new YHObjectInfo(bb.getShort(), Type.forId(bb.get()), bb.get()));
         }
         log.fine("Response to " + Command.LIST_OBJECTS.getName() + " command contained " + ret.size() + " yhdata");
         return ret;
@@ -227,9 +209,9 @@ public class YHObject {
     /**
      * Deletes a specific object from the device
      *
-     * @param session    An authenticated session to communicate with the device over
-     * @param objectID   The ID of the subject to delete
-     * @param objectType The type of the object to delete
+     * @param session  An authenticated session to communicate with the device over
+     * @param objectID The ID of the subject to delete
+     * @param type     The type of the object to delete
      * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
      * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
@@ -241,23 +223,23 @@ public class YHObject {
      * @throws BadPaddingException                If the message encryption/decryption fails
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      */
-    public static void delete(@NonNull final YHSession session, final short objectID, @NonNull final ObjectType objectType)
+    public static void delete(@NonNull final YHSession session, final short objectID, @NonNull final Type type)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
                    InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
 
-        log.finer("Deleting " + objectType.getName() + " " + String.format("0x%02x", objectID));
+        log.finer("Deleting " + type.getName() + " " + String.format("0x%02x", objectID));
 
         ByteBuffer bb = ByteBuffer.allocate(3);
         bb.putShort(objectID);
-        bb.put(objectType.getTypeId());
+        bb.put(type.getId());
         try {
             session.sendSecureCmd(Command.DELETE_OBJECT, bb.array());
         } catch (YHDeviceException e) {
-            if(!YHError.OBJECT_NOT_FOUND.equals(e.getYhError())) {
+            if (!YHError.OBJECT_NOT_FOUND.equals(e.getYhError())) {
                 throw e;
             } else {
-                log.info(objectType.getName() + " with ID " + String.format("0x%02x", objectID) + " does not exist. Doing nothing");
+                log.info(type.getName() + " with ID " + String.format("0x%02x", objectID) + " does not exist. Doing nothing");
             }
         }
     }
@@ -287,9 +269,9 @@ public class YHObject {
     /**
      * Retrieves details of a specific object in the device
      *
-     * @param session    An authenticated session to communicate with the device over
-     * @param objectID   The ID of the object to delete
-     * @param objectType The type of the object to delete
+     * @param session  An authenticated session to communicate with the device over
+     * @param objectID The ID of the object to delete
+     * @param type     The type of the object to delete
      * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
      * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
@@ -301,20 +283,20 @@ public class YHObject {
      * @throws BadPaddingException                If the message encryption/decryption fails
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      */
-    public static YHObjectInfo getObjectInfo(@NonNull final YHSession session, final short objectID, @NonNull final ObjectType objectType)
+    public static YHObjectInfo getObjectInfo(@NonNull final YHSession session, final short objectID, @NonNull final Type type)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
                    InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
 
-        log.finer("Getting object info for " + objectType.getName() + " " + String.format("0x%02X", objectID));
+        log.finer("Getting object info for " + type.getName() + " " + String.format("0x%02X", objectID));
 
         ByteBuffer bb = ByteBuffer.allocate(3);
         bb.putShort(objectID);
-        bb.put(objectType.getTypeId());
+        bb.put(type.getId());
         byte[] response = session.sendSecureCmd(Command.GET_OBJECT_INFO, bb.array());
         YHObjectInfo info = new YHObjectInfo(response);
 
-        log.info("Returned metadata for " + objectType.getName() + " with ID 0x" + Integer.toHexString(objectID));
+        log.info("Returned metadata for " + type.getName() + " with ID 0x" + Integer.toHexString(objectID));
 
         return info;
     }
@@ -345,9 +327,9 @@ public class YHObject {
     /**
      * Checks whether an object exists in the YubiHSM or not
      *
-     * @param session    An authenticated session to communicate with the device over
-     * @param objectID   The ID of the subject to check
-     * @param objectType The type of the object to check
+     * @param session  An authenticated session to communicate with the device over
+     * @param objectID The ID of the subject to check
+     * @param type     The type of the object to check
      * @return True if there exist and object in the YubiHSM with the same ID and Type. False otherwise
      * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
@@ -361,14 +343,14 @@ public class YHObject {
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      * @throws IllegalBlockSizeException
      */
-    public static boolean exists(@Nonnull final YHSession session, final short objectID, @NonNull final ObjectType objectType)
+    public static boolean exists(@NonNull final YHSession session, final short objectID, @NonNull final Type type)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
                    InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
         try {
-            YHObject.getObjectInfo(session, objectID, objectType);
+            YHObject.getObjectInfo(session, objectID, type);
         } catch (YHDeviceException e) {
-            if(YHError.OBJECT_NOT_FOUND.equals(e.getYhError())) {
+            if (YHError.OBJECT_NOT_FOUND.equals(e.getYhError())) {
                 return false;
             } else {
                 throw e;

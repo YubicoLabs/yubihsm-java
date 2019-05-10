@@ -3,8 +3,8 @@ package com.yubico.hsm.yhobjects;
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.ObjectOrigin;
-import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhconcepts.Origin;
+import com.yubico.hsm.yhconcepts.Type;
 import lombok.NonNull;
 
 import java.nio.ByteBuffer;
@@ -15,11 +15,11 @@ public class YHObjectInfo {
 
     private short id = 0;
     private short objectSize = 0;
-    private ObjectType type = null;
+    private Type type = null;
     private byte sequence = 0;
     private List<Integer> domains = new ArrayList<Integer>();
     private Algorithm algorithm = null;
-    private ObjectOrigin origin = null;
+    private Origin origin = null;
     private String label = "";
     private List<Capability> capabilities = new ArrayList<Capability>();
     private List<Capability> delegatedCapabilities = new ArrayList<Capability>();
@@ -30,7 +30,7 @@ public class YHObjectInfo {
      * @param type     The object type uniquely identifying the object together with the object ID
      * @param sequence The number of previews yhdata that had had the same ID and type
      */
-    public YHObjectInfo(final short id, final ObjectType type, final byte sequence) {
+    public YHObjectInfo(final short id, final Type type, final byte sequence) {
         this.id = id;
         this.type = type;
         this.sequence = sequence;
@@ -45,7 +45,7 @@ public class YHObjectInfo {
      * @param label                 The object label
      * @param delegatedCapabilities What capabilities can the object bestow on other yhdata when applicable
      */
-    public YHObjectInfo(final short objectId, final ObjectType type, final String label, final List<Integer> domains,
+    public YHObjectInfo(final short objectId, final Type type, final String label, final List<Integer> domains,
                         final Algorithm algorithm, final List<Capability> capabilities, final List<Capability> delegatedCapabilities) {
         this.id = objectId;
         this.type = type;
@@ -64,19 +64,19 @@ public class YHObjectInfo {
      */
     public YHObjectInfo(@NonNull final byte[] data) {
         ByteBuffer bb = ByteBuffer.wrap(data);
-        capabilities = Capability.getCapabilities(bb.getLong());
+        capabilities = Utils.getCapabilitiesFromLong(bb.getLong());
         id = bb.getShort();
         objectSize = bb.getShort();
         domains = Utils.getListFromShort(bb.getShort());
-        type = ObjectType.getObjectType(bb.get());
-        algorithm = Algorithm.getAlgorithm(bb.get());
+        type = Type.forId(bb.get());
+        algorithm = Algorithm.forId(bb.get());
         sequence = bb.get();
-        origin = ObjectOrigin.getObjectOrigin(bb.get());
+        origin = Origin.forId(bb.get());
         byte[] l = new byte[YHObject.OBJECT_LABEL_SIZE];
         bb.get(l, 0, YHObject.OBJECT_LABEL_SIZE);
         label = new String(l);
         label = label.trim();
-        delegatedCapabilities = Capability.getCapabilities(bb.getLong());
+        delegatedCapabilities = Utils.getCapabilitiesFromLong(bb.getLong());
     }
 
     public short getId() {
@@ -95,11 +95,11 @@ public class YHObjectInfo {
         this.objectSize = objectSize;
     }
 
-    public ObjectType getType() {
+    public Type getType() {
         return type;
     }
 
-    public void setType(ObjectType type) {
+    public void setType(Type type) {
         this.type = type;
     }
 
@@ -127,11 +127,11 @@ public class YHObjectInfo {
         this.algorithm = algorithm;
     }
 
-    public ObjectOrigin getOrigin() {
+    public Origin getOrigin() {
         return origin;
     }
 
-    public void setOrigin(ObjectOrigin origin) {
+    public void setOrigin(Origin origin) {
         this.origin = origin;
     }
 

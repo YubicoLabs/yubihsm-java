@@ -2,12 +2,7 @@ import com.yubico.hsm.YHSession;
 import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
-import com.yubico.hsm.exceptions.YHDeviceException;
-import com.yubico.hsm.exceptions.YHError;
-import com.yubico.hsm.yhconcepts.Algorithm;
-import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.ObjectOrigin;
-import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhobjects.HmacKey;
 import com.yubico.hsm.yhobjects.YHObject;
 import com.yubico.hsm.yhobjects.YHObjectInfo;
@@ -61,24 +56,24 @@ public class HmacKeyTest {
     private void generateHmacKey(Algorithm keyAlgorithm) throws Exception {
         log.info("Test generating an HMAC key with algorithm " + keyAlgorithm.getName());
         List domains = Arrays.asList(2, 5, 8);
-        List capabilities = Capability.ALL_CAPABILITIES;
+        List capabilities = Capability.ALL;
         String label = "test_wrap_key";
 
         short id = HmacKey.generateHmacKey(session, (short) 0, label, domains, keyAlgorithm, capabilities);
 
         try {
-            final YHObjectInfo hmackey = YHObject.getObjectInfo(session, id, ObjectType.TYPE_HMAC_KEY);
+            final YHObjectInfo hmackey = YHObject.getObjectInfo(session, id, Type.TYPE_HMAC_KEY);
             assertEquals(id, hmackey.getId());
-            assertEquals(ObjectType.TYPE_HMAC_KEY, hmackey.getType());
+            assertEquals(Type.TYPE_HMAC_KEY, hmackey.getType());
             assertEquals(domains, hmackey.getDomains());
             assertEquals(keyAlgorithm, hmackey.getAlgorithm());
-            assertEquals(ObjectOrigin.YH_ORIGIN_GENERATED, hmackey.getOrigin());
+            assertEquals(Origin.YH_ORIGIN_GENERATED, hmackey.getOrigin());
             assertEquals(label, hmackey.getLabel());
             assertEquals(capabilities.size(), hmackey.getCapabilities().size());
             assertTrue(hmackey.getCapabilities().containsAll(capabilities));
             assertTrue(hmackey.getDelegatedCapabilities().isEmpty());
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_HMAC_KEY);
+            YHObject.delete(session, id, Type.TYPE_HMAC_KEY);
         }
     }
 
@@ -95,7 +90,7 @@ public class HmacKeyTest {
     private void importHmacKey(Algorithm keyAlgorithm, int keyLength) throws Exception {
         log.info("Test importing an HMAC key with algorithm " + keyAlgorithm.getName());
         List domains = Arrays.asList(2, 5, 8);
-        List capabilities = Capability.ALL_CAPABILITIES;
+        List capabilities = Capability.ALL;
         String label = "test_wrap_key";
 
         byte[] key = new byte[keyLength];
@@ -104,18 +99,18 @@ public class HmacKeyTest {
         short id = HmacKey.importHmacKey(session, (short) 0, label, domains, keyAlgorithm, capabilities, key);
 
         try {
-            final YHObjectInfo hmackey = YHObject.getObjectInfo(session, id, ObjectType.TYPE_HMAC_KEY);
+            final YHObjectInfo hmackey = YHObject.getObjectInfo(session, id, Type.TYPE_HMAC_KEY);
             assertEquals(id, hmackey.getId());
-            assertEquals(ObjectType.TYPE_HMAC_KEY, hmackey.getType());
+            assertEquals(Type.TYPE_HMAC_KEY, hmackey.getType());
             assertEquals(domains, hmackey.getDomains());
             assertEquals(keyAlgorithm, hmackey.getAlgorithm());
-            assertEquals(ObjectOrigin.YH_ORIGIN_IMPORTED, hmackey.getOrigin());
+            assertEquals(Origin.YH_ORIGIN_IMPORTED, hmackey.getOrigin());
             assertEquals(label, hmackey.getLabel());
             assertEquals(capabilities.size(), hmackey.getCapabilities().size());
             assertTrue(hmackey.getCapabilities().containsAll(capabilities));
             assertTrue(hmackey.getDelegatedCapabilities().isEmpty());
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_HMAC_KEY);
+            YHObject.delete(session, id, Type.TYPE_HMAC_KEY);
         }
     }
 
@@ -151,8 +146,8 @@ public class HmacKeyTest {
 
         try {
             HashMap filters = new HashMap();
-            filters.put(YHObject.ListFilter.ID, id);
-            filters.put(YHObject.ListFilter.TYPE, ObjectType.TYPE_HMAC_KEY);
+            filters.put(ListObjectsFilter.ID, id);
+            filters.put(ListObjectsFilter.TYPE, Type.TYPE_HMAC_KEY);
             List<YHObjectInfo> objects = YHObject.getObjectList(session, filters);
             assertEquals(0, objects.size());
 
@@ -161,7 +156,7 @@ public class HmacKeyTest {
 
             boolean exceptionThrown = false;
             try {
-                HmacKey.importHmacKey(session, id, "", Arrays.asList(2, 5, 8), keyAlgorithm, Capability.ALL_CAPABILITIES, key);
+                HmacKey.importHmacKey(session, id, "", Arrays.asList(2, 5, 8), keyAlgorithm, Capability.ALL, key);
             } catch (IllegalArgumentException e) {
                 exceptionThrown = true;
             }
@@ -201,7 +196,7 @@ public class HmacKeyTest {
         byte[] key = new byte[keyLength];
         new SecureRandom().nextBytes(key);
 
-        short id = HmacKey.importHmacKey(session, (short) 0, "", Arrays.asList(2, 5, 8), keyAlgorithm, Capability.ALL_CAPABILITIES, key);
+        short id = HmacKey.importHmacKey(session, (short) 0, "", Arrays.asList(2, 5, 8), keyAlgorithm, Capability.ALL, key);
 
         try {
             HmacKey hmacKey = new HmacKey(id, keyAlgorithm);
@@ -227,7 +222,7 @@ public class HmacKeyTest {
             verifyHmacSignature(data, hmacKey, key, hmacAlgorithm, false);
             verifyHmacVerification(data, hmacKey, key, hmacAlgorithm, false);
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_HMAC_KEY);
+            YHObject.delete(session, id, Type.TYPE_HMAC_KEY);
         }
 
     }
@@ -284,7 +279,7 @@ public class HmacKeyTest {
 
         byte[] data = "test signing data".getBytes();
 
-        short id = HmacKey.importHmacKey(session, (short) 0, "", Arrays.asList(2, 5, 8), keyAlgorithm, Capability.ALL_CAPABILITIES, key);
+        short id = HmacKey.importHmacKey(session, (short) 0, "", Arrays.asList(2, 5, 8), keyAlgorithm, Capability.ALL, key);
 
         try {
 
@@ -302,7 +297,7 @@ public class HmacKeyTest {
             }
             assertTrue(exceptionThrown);
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_HMAC_KEY);
+            YHObject.delete(session, id, Type.TYPE_HMAC_KEY);
         }
     }
 
@@ -319,13 +314,13 @@ public class HmacKeyTest {
 
         byte[] yhkey = new byte[keyLength];
         new SecureRandom().nextBytes(yhkey);
-        short id = HmacKey.importHmacKey(session, (short) 0, "", Arrays.asList(2, 5, 8), keyAlgorithm, Capability.ALL_CAPABILITIES, yhkey);
+        short id = HmacKey.importHmacKey(session, (short) 0, "", Arrays.asList(2, 5, 8), keyAlgorithm, Capability.ALL, yhkey);
 
         try {
             HmacKey hmacKey = new HmacKey(id, keyAlgorithm);
             assertFalse(hmacKey.verifyHmac(session, data, hmac));
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_HMAC_KEY);
+            YHObject.delete(session, id, Type.TYPE_HMAC_KEY);
         }
     }
 }

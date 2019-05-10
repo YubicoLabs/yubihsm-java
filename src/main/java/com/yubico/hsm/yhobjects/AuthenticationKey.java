@@ -9,7 +9,7 @@ import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
-import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhconcepts.Type;
 import lombok.NonNull;
 
 import javax.crypto.*;
@@ -31,7 +31,7 @@ import java.util.logging.Logger;
 public class AuthenticationKey extends YHObject {
     private static Logger log = Logger.getLogger(AuthenticationKey.class.getName());
 
-    public static final ObjectType TYPE = ObjectType.TYPE_AUTHENTICATION_KEY;
+    public static final Type TYPE = Type.TYPE_AUTHENTICATION_KEY;
 
     private static final String ALGORITHM = "PBKDF2WithHmacSHA256";
     private static final int KEY_SIZE = 16;
@@ -159,9 +159,9 @@ public class AuthenticationKey extends YHObject {
         bb.putShort(id);
         bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
-        bb.putLong(Capability.getCapabilities(capabilities));
-        bb.put(keyAlgorithm == null ? Algorithm.AES128_YUBICO_AUTHENTICATION.getAlgorithmId() : keyAlgorithm.getAlgorithmId());
-        bb.putLong(Capability.getCapabilities(delegatedCapabilities));
+        bb.putLong(Utils.getLongFromCapabilities(capabilities));
+        bb.put(keyAlgorithm == null ? Algorithm.AES128_YUBICO_AUTHENTICATION.getId() : keyAlgorithm.getId());
+        bb.putLong(Utils.getLongFromCapabilities(delegatedCapabilities));
         bb.put(encryptionKey);
         bb.put(macKey);
 
@@ -256,7 +256,7 @@ public class AuthenticationKey extends YHObject {
 
         ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_ALGORITHM_SIZE + KEY_SIZE + KEY_SIZE);
         bb.putShort(id);
-        bb.put(keyinfo.getAlgorithm().getAlgorithmId());
+        bb.put(keyinfo.getAlgorithm().getId());
         bb.put(encryptionKey);
         bb.put(macKey);
         byte[] resp = session.sendSecureCmd(Command.CHANGE_AUTHENTICATION_KEY, bb.array());

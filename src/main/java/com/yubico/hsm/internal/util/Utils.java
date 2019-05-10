@@ -1,11 +1,11 @@
 package com.yubico.hsm.internal.util;
 
-import com.yubico.hsm.YHCore;
+import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
+import com.yubico.hsm.yhconcepts.DeviceOptionValue;
 import com.yubico.hsm.yhobjects.YHObject;
 import lombok.NonNull;
 
-import javax.annotation.Nonnull;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.InvalidParameterException;
@@ -111,6 +111,41 @@ public class Utils {
     }
 
     /**
+     * Converts a list of capabilities into a long object
+     *
+     * @param capabilities A list of capabilities
+     * @return `capabilities` as a 64 bit long object
+     */
+    public static long getLongFromCapabilities(final List<Capability> capabilities) {
+        long ret = 0L;
+        if (capabilities != null) {
+            for (Capability c : capabilities) {
+                ret = ret | c.getId();
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * Converts a 64 bit long object into a list of capabilities
+     *
+     * @param capabilities Capabilities as a long object
+     * @return `capabilities` as a List of Capability
+     */
+    public static List<Capability> getCapabilitiesFromLong(final long capabilities) {
+        List<Capability> ret = new ArrayList();
+        long c = 1L;
+        while (c <= capabilities) {
+            if ((capabilities & c) == c) {
+                ret.add(Capability.forId(c));
+            }
+            c = c << 1;
+        }
+        return ret;
+
+    }
+
+    /**
      * Throws an IllegalArgumentException with a specific error message if `ba` is null or empty
      *
      * @param ba           The byte array to check
@@ -157,11 +192,11 @@ public class Utils {
      * @param commandOptionValueMap
      * @return Byte array where each pair in the map is represented as 2 bytes: commandID byte and OptionValue value byte, in that order
      */
-    public static byte[] geOptionTlvValue(@Nonnull Map<Command, YHCore.OptionValue> commandOptionValueMap) {
-        ByteBuffer bb = ByteBuffer.allocate(commandOptionValueMap.size()*2);
-        for(Command c : commandOptionValueMap.keySet()) {
-            if(c != null) {
-                bb.put(c.getCommandId()).put(commandOptionValueMap.get(c).getValue());
+    public static byte[] geOptionTlvValue(@NonNull Map<Command, DeviceOptionValue> commandOptionValueMap) {
+        ByteBuffer bb = ByteBuffer.allocate(commandOptionValueMap.size() * 2);
+        for (Command c : commandOptionValueMap.keySet()) {
+            if (c != null) {
+                bb.put(c.getId()).put(commandOptionValueMap.get(c).getValue());
             }
         }
         return bb.array();
@@ -169,19 +204,19 @@ public class Utils {
 
     /**
      * Converts a byte array into a map containing Command-OptionValue pairs.
-     *
+     * <p>
      * The byte array is expected to contain an even number of bytes, where each bytes represent a commandID byte and an OptionValue value byte, in
      * that order
      *
      * @param commandOptionValue
      * @return A map containing Command-OptionValue pairs
      */
-    public static Map<Command, YHCore.OptionValue> geOptionTlvValue(@Nonnull byte[] commandOptionValue) {
-        Map<Command, YHCore.OptionValue> ret = new HashMap<Command, YHCore.OptionValue>();
-        for(int i=0; i<commandOptionValue.length; i+=2) {
-            Command command = Command.getCommand(commandOptionValue[i]);
-            if(command != null) {
-                ret.put(command, YHCore.OptionValue.forValue(commandOptionValue[i + 1]));
+    public static Map<Command, DeviceOptionValue> geOptionTlvValue(@NonNull byte[] commandOptionValue) {
+        Map<Command, DeviceOptionValue> ret = new HashMap<Command, DeviceOptionValue>();
+        for (int i = 0; i < commandOptionValue.length; i += 2) {
+            Command command = Command.forId(commandOptionValue[i]);
+            if (command != null) {
+                ret.put(command, DeviceOptionValue.forValue(commandOptionValue[i + 1]));
             }
         }
         return ret;
@@ -189,7 +224,7 @@ public class Utils {
 
     /**
      * Returns the bytes of a BigInteger.
-     *
+     * <p>
      * The toByteArray() method in BigInteger class returns the two's complement representation of the BigInteger object + one sign byte. Since we
      * do not care about negative values, this method will remove the sign byte from resulting byte array if it is longer than the expected length.
      * If, however, toByteArray() returns a byte array shorter than what is expected, this method will add a 0 byte as the element in the least
@@ -201,13 +236,13 @@ public class Utils {
      */
     public static byte[] getUnsignedByteArrayFromBigInteger(BigInteger bi, int length) {
         byte[] ba = bi.toByteArray();
-        if(ba.length > length) {
+        if (ba.length > length) {
             if (ba[0] == 0) {
                 ba = Arrays.copyOfRange(ba, 1, ba.length);
             }
-        } else if(ba.length < length) {
+        } else if (ba.length < length) {
             ByteBuffer bb = ByteBuffer.allocate(ba.length + 1);
-            bb.put((byte)0x00);
+            bb.put((byte) 0x00);
             bb.put(ba);
             ba = bb.array();
         }

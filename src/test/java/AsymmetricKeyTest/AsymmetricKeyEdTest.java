@@ -5,11 +5,7 @@ import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.exceptions.YHDeviceException;
-import com.yubico.hsm.exceptions.YHError;
-import com.yubico.hsm.yhconcepts.Algorithm;
-import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.ObjectOrigin;
-import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhobjects.AsymmetricKey;
 import com.yubico.hsm.yhobjects.AsymmetricKeyEd;
 import com.yubico.hsm.yhobjects.YHObject;
@@ -72,22 +68,22 @@ public class AsymmetricKeyEdTest {
 
         try {
             // Verify key properties
-            final YHObjectInfo key = YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final YHObjectInfo key = YHObject.getObjectInfo(session, id, Type.TYPE_ASYMMETRIC_KEY);
             assertNotEquals(0, key.getId());
             assertEquals(id, key.getId());
-            assertEquals(ObjectType.TYPE_ASYMMETRIC_KEY, key.getType());
+            assertEquals(Type.TYPE_ASYMMETRIC_KEY, key.getType());
             assertEquals(domains, key.getDomains());
             assertEquals(Algorithm.EC_ED25519, key.getAlgorithm());
-            assertEquals(ObjectOrigin.YH_ORIGIN_GENERATED, key.getOrigin());
+            assertEquals(Origin.YH_ORIGIN_GENERATED, key.getOrigin());
             assertEquals(label, key.getLabel());
             assertEquals(capabilities.size(), key.getCapabilities().size());
             assertTrue(key.getCapabilities().containsAll(capabilities));
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
             // Delete the key and verify deletion
-            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
             try {
-                YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+                YHObject.getObjectInfo(session, id, Type.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {
                 assertEquals(YHError.OBJECT_NOT_FOUND, e1.getYhError());
             }
@@ -200,20 +196,20 @@ public class AsymmetricKeyEdTest {
 
         try {
 
-            final YHObjectInfo key = YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            final YHObjectInfo key = YHObject.getObjectInfo(session, id, Type.TYPE_ASYMMETRIC_KEY);
             assertEquals(id, key.getId());
-            assertEquals(ObjectType.TYPE_ASYMMETRIC_KEY, key.getType());
+            assertEquals(Type.TYPE_ASYMMETRIC_KEY, key.getType());
             assertEquals(domains, key.getDomains());
             assertEquals(Algorithm.EC_ED25519, key.getAlgorithm());
-            assertEquals(ObjectOrigin.YH_ORIGIN_IMPORTED, key.getOrigin());
+            assertEquals(Origin.YH_ORIGIN_IMPORTED, key.getOrigin());
             assertEquals(label, key.getLabel());
             assertEquals(capabilities.size(), key.getCapabilities().size());
             assertTrue(key.getCapabilities().containsAll(capabilities));
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
             try {
-                YHObject.getObjectInfo(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+                YHObject.getObjectInfo(session, id, Type.TYPE_ASYMMETRIC_KEY);
             } catch (YHDeviceException e1) {
                 assertEquals(YHError.OBJECT_NOT_FOUND, e1.getYhError());
             }
@@ -252,7 +248,7 @@ public class AsymmetricKeyEdTest {
             assertArrayEquals(pubKey.getEncoded(), returnedPubKeyBytes);
 
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
         }
 
         log.info("TEST END: testPublicKey()");
@@ -281,7 +277,7 @@ public class AsymmetricKeyEdTest {
             assertTrue("Succeeded in signing in spite of insufficient permissions", exceptionThrown);
 
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
         }
         log.info("TEST END: testSignDataWithInsufficientPermissions()");
     }
@@ -300,7 +296,7 @@ public class AsymmetricKeyEdTest {
             signDataTest(key, pubKey, "This is a signing test data".getBytes());
 
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
         }
 
         log.info("TEST END: testSignData()");

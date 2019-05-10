@@ -2,8 +2,8 @@ package com.yubico.hsm.yhdata;
 
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Command;
+import lombok.NonNull;
 
-import javax.annotation.Nonnull;
 import java.nio.ByteBuffer;
 
 /**
@@ -58,7 +58,7 @@ public class LogEntry {
      * @param logEntryData Byte array in the format: 2 bytes item number, 1 byte command ID, 2 bytes command length, 2 bytes session ID, 2 bytes
      *                     target key ID, 2 bytes second target key ID, 1 byte command result (or error code), 4 bytes systick, 16 bytes entryDigest
      */
-    public LogEntry(@Nonnull final byte[] logEntryData) {
+    public LogEntry(@NonNull final byte[] logEntryData) {
         if (logEntryData.length != LOG_ENTRY_SIZE) {
             throw new IllegalArgumentException("Log entry expected to be " + LOG_ENTRY_SIZE + " bytes long, but was " + logEntryData.length);
         }
@@ -116,7 +116,7 @@ public class LogEntry {
     public String toString() {
         String.valueOf(sessionKeyId);
         return String.format("item: %4s -- cmd: %25s -- length: %3s -- session key: 0x%04x --  target key: 0x%04x -- second key: 0x%04x -- result: " +
-                             "0x%02x -- tick: %6s -- hash: %s\n", itemNumber, Command.getCommand(commandId).getName(), commandLength, sessionKeyId,
+                             "0x%02x -- tick: %6s -- hash: %s\n", itemNumber, Command.forId(commandId).getName(), commandLength, sessionKeyId,
                              targetKeyId, targetKeyId2, commandErrorCode, systick, Utils.getPrintableBytes(entryDigest));
     }
 }

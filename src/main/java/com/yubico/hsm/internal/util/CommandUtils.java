@@ -1,9 +1,9 @@
 package com.yubico.hsm.internal.util;
 
 import com.yubico.hsm.exceptions.YHDeviceException;
-import com.yubico.hsm.exceptions.YHError;
 import com.yubico.hsm.exceptions.YHInvalidResponseException;
 import com.yubico.hsm.yhconcepts.Command;
+import com.yubico.hsm.yhconcepts.YHError;
 import lombok.NonNull;
 
 import java.nio.ByteBuffer;
@@ -23,7 +23,7 @@ public class CommandUtils {
     public static byte[] getTransceiveMessage(@NonNull final Command cmd, final byte[] data) {
         final int dl = data != null ? data.length : 0;
         ByteBuffer ret = ByteBuffer.allocate(dl + 3);
-        ret.put(cmd.getCommandId());
+        ret.put(cmd.getId());
         ret.putShort((short) dl);
         if (dl > 0) {
             ret.put(data);
@@ -46,7 +46,7 @@ public class CommandUtils {
         if (respCode == cmd.getCommandResponse()) {
             log.fine("Received response from device for " + cmd.getName());
         } else if (isErrorResponse(response)) {
-            final YHError error = YHError.getError(response[3]);
+            final YHError error = YHError.forId(response[3]);
             log.severe("Device returned error code: " + error.toString());
             throw new YHDeviceException(error);
         } else {
@@ -84,7 +84,7 @@ public class CommandUtils {
             return false;
         }
 
-        byte[] errResp = {Command.ERROR.getCommandId(), (byte) 0, (byte) 1};
+        byte[] errResp = {Command.ERROR.getId(), (byte) 0, (byte) 1};
         for (int i = 0; i < errResp.length; i++) {
             if (data[i] != errResp[i]) {
                 return false;

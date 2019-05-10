@@ -5,10 +5,10 @@ import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.exceptions.YHDeviceException;
-import com.yubico.hsm.exceptions.YHError;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhconcepts.Type;
+import com.yubico.hsm.yhconcepts.YHError;
 import com.yubico.hsm.yhobjects.AsymmetricKeyRsa;
 import com.yubico.hsm.yhobjects.YHObject;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -71,7 +71,7 @@ public class RsaSignTest {
             assertTrue("Succeeded to sign in spite of insufficient permissions", exceptionThrown);
 
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
         }
 
         log.info("TEST END: testSignDataWithInsufficientPermissions()");
@@ -120,7 +120,7 @@ public class RsaSignTest {
             signPkcs1(pubKey, key, Algorithm.RSA_PKCS1_SHA384, "SHA384withRSA", data);
             signPkcs1(pubKey, key, Algorithm.RSA_PKCS1_SHA512, "SHA512withRSA", data);
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
         }
     }
 
@@ -161,7 +161,7 @@ public class RsaSignTest {
             signPss(pubKey, key, Algorithm.RSA_MGF1_SHA384, "SHA384withRSA/PSS", "SHA-384", (short) 32, data);
             signPss(pubKey, key, Algorithm.RSA_MGF1_SHA512, "SHA512withRSA/PSS", "SHA-512", (short) 32, data);
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
         }
     }
 

@@ -5,10 +5,10 @@ import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.exceptions.YHDeviceException;
-import com.yubico.hsm.exceptions.YHError;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhconcepts.Type;
+import com.yubico.hsm.yhconcepts.YHError;
 import com.yubico.hsm.yhobjects.AsymmetricKeyEc;
 import com.yubico.hsm.yhobjects.YHObject;
 import org.junit.AfterClass;
@@ -68,7 +68,7 @@ public class EcSignTest {
             assertTrue("Succeeded to sign in spite of insufficient permissions", exceptionThrown);
 
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
         }
         log.info("TEST END: testSignDataWithInsufficientPermissions()");
     }
@@ -119,7 +119,7 @@ public class EcSignTest {
             signEcdsa(publicKey, key, Algorithm.EC_ECDSA_SHA512, "SHA512withECDSA", data);
 
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
         }
     }
 
@@ -150,7 +150,7 @@ public class EcSignTest {
             signEcdsaBrainpool(publicKey, key, Algorithm.EC_ECDSA_SHA512, "SHA512withECDSA");
 
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_ASYMMETRIC_KEY);
+            YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
         }
     }
 

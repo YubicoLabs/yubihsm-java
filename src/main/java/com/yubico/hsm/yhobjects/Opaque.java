@@ -2,11 +2,11 @@ package com.yubico.hsm.yhobjects;
 
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.exceptions.*;
-import com.yubico.hsm.yhconcepts.ObjectType;
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
+import com.yubico.hsm.yhconcepts.Type;
 import lombok.NonNull;
 
 import javax.crypto.BadPaddingException;
@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 public class Opaque extends YHObject {
     private static Logger log = Logger.getLogger(Opaque.class.getName());
 
-    public static final ObjectType TYPE = ObjectType.TYPE_OPAQUE;
+    public static final Type TYPE = Type.TYPE_OPAQUE;
     public static final int MAX_OPAQUE_DATA_LENGTH = 1968;
 
     private Algorithm algorithm;
@@ -149,8 +149,8 @@ public class Opaque extends YHObject {
         bb.putShort(id);
         bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
-        bb.putLong(Capability.getCapabilities(capabilities));
-        bb.put(algorithm.getAlgorithmId());
+        bb.putLong(Utils.getLongFromCapabilities(capabilities));
+        bb.put(algorithm.getId());
         bb.put(opaqueData);
 
         byte[] resp = session.sendSecureCmd(Command.PUT_OPAQUE, bb.array());

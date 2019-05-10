@@ -6,7 +6,7 @@ import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
-import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhconcepts.Type;
 import lombok.NonNull;
 
 import javax.crypto.BadPaddingException;
@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 public class HmacKey extends YHObject {
     private static Logger log = Logger.getLogger(HmacKey.class.getName());
 
-    public static final ObjectType TYPE = ObjectType.TYPE_HMAC_KEY;
+    public static final Type TYPE = Type.TYPE_HMAC_KEY;
     public static final int MAX_KEY_LENGTH_SHA1_SHA256 = 64;
     public static final int MAX_KEY_LENGTH_SHA384_SHA512 = 128;
 
@@ -85,8 +85,8 @@ public class HmacKey extends YHObject {
         bb.putShort(id);
         bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
-        bb.putLong(Capability.getCapabilities(capabilities));
-        bb.put(keyAlgorithm.getAlgorithmId());
+        bb.putLong(Utils.getLongFromCapabilities(capabilities));
+        bb.put(keyAlgorithm.getId());
 
         byte[] resp = session.sendSecureCmd(Command.GENERATE_HMAC_KEY, bb.array());
         if (resp.length != OBJECT_ID_SIZE) {
@@ -139,8 +139,8 @@ public class HmacKey extends YHObject {
         bb.putShort(id);
         bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
-        bb.putLong(Capability.getCapabilities(capabilities));
-        bb.put(keyAlgorithm.getAlgorithmId());
+        bb.putLong(Utils.getLongFromCapabilities(capabilities));
+        bb.put(keyAlgorithm.getId());
         bb.put(hmacKey);
 
         byte[] resp = session.sendSecureCmd(Command.PUT_HMAC_KEY, bb.array());

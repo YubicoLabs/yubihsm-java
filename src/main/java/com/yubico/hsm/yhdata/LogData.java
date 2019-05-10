@@ -1,6 +1,7 @@
 package com.yubico.hsm.yhdata;
 
-import javax.annotation.Nonnull;
+import lombok.NonNull;
+
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -10,7 +11,7 @@ public class LogData {
     private short unloggedAuthenticationEvents;
     Map<Short, LogEntry> logEntries;
 
-    public LogData(final short unloggedBootEvents, final short unloggedAuthenticationEvents, @Nonnull final Map<Short, LogEntry> logEntries) {
+    public LogData(final short unloggedBootEvents, final short unloggedAuthenticationEvents, @NonNull final Map<Short, LogEntry> logEntries) {
         this.unloggedBootEvents = unloggedBootEvents;
         this.unloggedAuthenticationEvents = unloggedAuthenticationEvents;
         this.logEntries = logEntries;
@@ -22,7 +23,7 @@ public class LogData {
      * @param data Byte array in the format: 2 bytes unlogged boot events, 2 bytes unlogged authentication events, 1 byte the number of log
      *             entries, the log entries - each constructed as described in LogEntry
      */
-    public LogData(@Nonnull final byte[] data) {
+    public LogData(@NonNull final byte[] data) {
         ByteBuffer bb = ByteBuffer.wrap(data);
         unloggedBootEvents = bb.getShort();
         unloggedAuthenticationEvents = bb.getShort();

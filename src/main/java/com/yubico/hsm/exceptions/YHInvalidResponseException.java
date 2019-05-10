@@ -1,5 +1,7 @@
 package com.yubico.hsm.exceptions;
 
+import com.yubico.hsm.yhconcepts.YHError;
+
 public class YHInvalidResponseException extends YHException {
 
     public YHInvalidResponseException(final String message) {

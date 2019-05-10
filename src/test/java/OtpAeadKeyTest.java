@@ -3,12 +3,8 @@ import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.exceptions.YHDeviceException;
-import com.yubico.hsm.exceptions.YHError;
+import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhdata.YubicoOtpData;
-import com.yubico.hsm.yhconcepts.Algorithm;
-import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.ObjectOrigin;
-import com.yubico.hsm.yhconcepts.ObjectType;
 import com.yubico.hsm.yhobjects.OtpAeadKey;
 import com.yubico.hsm.yhobjects.YHObject;
 import com.yubico.hsm.yhobjects.YHObjectInfo;
@@ -68,18 +64,18 @@ public class OtpAeadKeyTest {
         short id = OtpAeadKey.generateOtpAeadKey(session, (short) 0, label, domains, keyAlgorithm, capabilities, 4711);
 
         try {
-            final YHObjectInfo key = YHObject.getObjectInfo(session, id, ObjectType.TYPE_OTP_AEAD_KEY);
+            final YHObjectInfo key = YHObject.getObjectInfo(session, id, Type.TYPE_OTP_AEAD_KEY);
             assertEquals(id, key.getId());
-            assertEquals(ObjectType.TYPE_OTP_AEAD_KEY, key.getType());
+            assertEquals(Type.TYPE_OTP_AEAD_KEY, key.getType());
             assertEquals(domains, key.getDomains());
             assertEquals(keyAlgorithm, key.getAlgorithm());
-            assertEquals(ObjectOrigin.YH_ORIGIN_GENERATED, key.getOrigin());
+            assertEquals(Origin.YH_ORIGIN_GENERATED, key.getOrigin());
             assertEquals(label, key.getLabel());
             assertEquals(capabilities.size(), key.getCapabilities().size());
             assertTrue(key.getCapabilities().containsAll(capabilities));
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_OTP_AEAD_KEY);
+            YHObject.delete(session, id, Type.TYPE_OTP_AEAD_KEY);
         }
     }
 
@@ -107,18 +103,18 @@ public class OtpAeadKeyTest {
         OtpAeadKey.importOtpAeadKey(session, id, label, domains, keyAlgorithm, capabilities, nonceId, otpAeadKey);
 
         try {
-            final YHObjectInfo key = YHObject.getObjectInfo(session, id, ObjectType.TYPE_OTP_AEAD_KEY);
+            final YHObjectInfo key = YHObject.getObjectInfo(session, id, Type.TYPE_OTP_AEAD_KEY);
             assertEquals(id, key.getId());
-            assertEquals(ObjectType.TYPE_OTP_AEAD_KEY, key.getType());
+            assertEquals(Type.TYPE_OTP_AEAD_KEY, key.getType());
             assertEquals(domains, key.getDomains());
             assertEquals(keyAlgorithm, key.getAlgorithm());
-            assertEquals(ObjectOrigin.YH_ORIGIN_IMPORTED, key.getOrigin());
+            assertEquals(Origin.YH_ORIGIN_IMPORTED, key.getOrigin());
             assertEquals(label, key.getLabel());
             assertEquals(capabilities.size(), key.getCapabilities().size());
             assertTrue(key.getCapabilities().containsAll(capabilities));
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_OTP_AEAD_KEY);
+            YHObject.delete(session, id, Type.TYPE_OTP_AEAD_KEY);
         }
     }
 
@@ -144,7 +140,7 @@ public class OtpAeadKeyTest {
             assertFalse(Arrays.equals(aead, aead2));
 
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_OTP_AEAD_KEY);
+            YHObject.delete(session, id, Type.TYPE_OTP_AEAD_KEY);
         }
         log.info("TEST END: testRandomizeOtpAead()");
     }
@@ -180,7 +176,7 @@ public class OtpAeadKeyTest {
             }
             assertTrue(exceptionThrown);
         } finally {
-            YHObject.delete(session, keyId, ObjectType.TYPE_OTP_AEAD_KEY);
+            YHObject.delete(session, keyId, Type.TYPE_OTP_AEAD_KEY);
         }
         log.info("TEST END: testDecryptInvalidOtp()");
     }
@@ -238,7 +234,7 @@ public class OtpAeadKeyTest {
             }
         } finally {
             try {
-                YHObject.delete(session, key1Id, ObjectType.TYPE_OTP_AEAD_KEY);
+                YHObject.delete(session, key1Id, Type.TYPE_OTP_AEAD_KEY);
             } catch (YHDeviceException e) {
                 if (!e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
                     throw e;
@@ -246,7 +242,7 @@ public class OtpAeadKeyTest {
             }
 
             try {
-                YHObject.delete(session, key2Id, ObjectType.TYPE_OTP_AEAD_KEY);
+                YHObject.delete(session, key2Id, Type.TYPE_OTP_AEAD_KEY);
             } catch (YHDeviceException e) {
                 if (!e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
                     throw e;
@@ -254,7 +250,7 @@ public class OtpAeadKeyTest {
             }
 
             try {
-                YHObject.delete(session, key3Id, ObjectType.TYPE_OTP_AEAD_KEY);
+                YHObject.delete(session, key3Id, Type.TYPE_OTP_AEAD_KEY);
             } catch (YHDeviceException e) {
                 if (!e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
                     throw e;

@@ -4,8 +4,8 @@ import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.ObjectOrigin;
-import com.yubico.hsm.yhconcepts.ObjectType;
+import com.yubico.hsm.yhconcepts.Origin;
+import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhobjects.Template;
 import com.yubico.hsm.yhobjects.YHObject;
 import com.yubico.hsm.yhobjects.YHObjectInfo;
@@ -56,13 +56,13 @@ public class TemplateTest {
 
         try {
             // Verify object properties
-            final YHObjectInfo tempObj = YHObject.getObjectInfo(session, id, ObjectType.TYPE_TEMPLATE);
+            final YHObjectInfo tempObj = YHObject.getObjectInfo(session, id, Type.TYPE_TEMPLATE);
             assertNotEquals(0, tempObj.getId());
             assertEquals(id, tempObj.getId());
-            assertEquals(ObjectType.TYPE_TEMPLATE, tempObj.getType());
+            assertEquals(Type.TYPE_TEMPLATE, tempObj.getType());
             assertEquals(domains, tempObj.getDomains());
             assertEquals(Algorithm.TEMPLATE_SSH, tempObj.getAlgorithm());
-            assertEquals(ObjectOrigin.YH_ORIGIN_IMPORTED, tempObj.getOrigin());
+            assertEquals(Origin.YH_ORIGIN_IMPORTED, tempObj.getOrigin());
             assertEquals(label, tempObj.getLabel());
             assertEquals(capabilities.size(), tempObj.getCapabilities().size());
             assertTrue(tempObj.getCapabilities().containsAll(capabilities));
@@ -72,7 +72,7 @@ public class TemplateTest {
             byte[] returnedTemplateData = template.getTemplate(session);
             assertArrayEquals(templateData, returnedTemplateData);
         } finally {
-            YHObject.delete(session, id, ObjectType.TYPE_TEMPLATE);
+            YHObject.delete(session, id, Type.TYPE_TEMPLATE);
         }
 
         log.info("TEST END: testTemplateObject()");

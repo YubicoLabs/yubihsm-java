@@ -4,7 +4,7 @@ import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.exceptions.YHAuthenticationException;
-import com.yubico.hsm.exceptions.YHError;
+import com.yubico.hsm.yhconcepts.YHError;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

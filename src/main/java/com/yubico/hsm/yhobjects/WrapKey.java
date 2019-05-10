@@ -2,11 +2,11 @@ package com.yubico.hsm.yhobjects;
 
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.exceptions.*;
+import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
-import com.yubico.hsm.yhconcepts.ObjectType;
-import com.yubico.hsm.internal.util.Utils;
+import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhdata.WrapData;
 import lombok.NonNull;
 
@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 public class WrapKey extends YHObject {
     private static Logger log = Logger.getLogger(WrapKey.class.getName());
 
-    public static final ObjectType TYPE = ObjectType.TYPE_WRAP_KEY;
+    public static final Type TYPE = Type.TYPE_WRAP_KEY;
 
     private final int IMPORT_WRAPPED_RESPONSE_LENGTH = 3;
 
@@ -84,9 +84,9 @@ public class WrapKey extends YHObject {
         bb.putShort(id);
         bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
-        bb.putLong(Capability.getCapabilities(capabilities));
-        bb.put(wrapKeyAlgorithm.getAlgorithmId());
-        bb.putLong(Capability.getCapabilities(delegatedCapabilities));
+        bb.putLong(Utils.getLongFromCapabilities(capabilities));
+        bb.put(wrapKeyAlgorithm.getId());
+        bb.putLong(Utils.getLongFromCapabilities(delegatedCapabilities));
 
         byte[] resp = session.sendSecureCmd(Command.GENERATE_WRAP_KEY, bb.array());
         if (resp.length != OBJECT_ID_SIZE) {
@@ -140,9 +140,9 @@ public class WrapKey extends YHObject {
         bb.putShort(id);
         bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
         bb.putShort(Utils.getShortFromList(domains));
-        bb.putLong(Capability.getCapabilities(capabilities));
-        bb.put(wrapKeyAlgorithm.getAlgorithmId());
-        bb.putLong(Capability.getCapabilities(delegatedCapabilities));
+        bb.putLong(Utils.getLongFromCapabilities(capabilities));
+        bb.put(wrapKeyAlgorithm.getId());
+        bb.putLong(Utils.getLongFromCapabilities(delegatedCapabilities));
         bb.put(wrapKey);
 
         byte[] resp = session.sendSecureCmd(Command.PUT_WRAP_KEY, bb.array());
@@ -281,7 +281,7 @@ public class WrapKey extends YHObject {
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      */
-    public WrapData exportWrapped(@NonNull final YHSession session, final short idToExport, @NonNull final ObjectType typeToExport)
+    public WrapData exportWrapped(@NonNull final YHSession session, final short idToExport, @NonNull final Type typeToExport)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException {
@@ -290,7 +290,7 @@ public class WrapKey extends YHObject {
 
         ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_TYPE_SIZE + OBJECT_ID_SIZE);
         bb.putShort(getId());
-        bb.put(typeToExport.getTypeId());
+        bb.put(typeToExport.getId());
         bb.putShort(idToExport);
 
         byte[] resp = session.sendSecureCmd(Command.EXPORT_WRAPPED, bb.array());
@@ -365,7 +365,7 @@ public class WrapKey extends YHObject {
         }
 
         bb = ByteBuffer.wrap(resp);
-        ObjectType type = ObjectType.getObjectType(bb.get());
+        Type type = Type.forId(bb.get());
         if (type == null) {
             throw new YHInvalidResponseException("Unwrapped object was of an unknown type");
         }
