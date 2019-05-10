@@ -100,7 +100,7 @@ public class Utils {
      * @return The list of integers from 1 to 16
      */
     public static List<Integer> getListFromShort(final short value) {
-        List<Integer> ret = new ArrayList();
+        List<Integer> ret = new ArrayList<Integer>();
         for (int i = 0; i < 16; i++) {
             int v = 1 << i;
             if ((value & v) == v) {
@@ -133,7 +133,7 @@ public class Utils {
      * @return `capabilities` as a List of Capability
      */
     public static List<Capability> getCapabilitiesFromLong(final long capabilities) {
-        List<Capability> ret = new ArrayList();
+        List<Capability> ret = new ArrayList<Capability>();
         long c = 1L;
         while (c <= capabilities) {
             if ((capabilities & c) == c) {
@@ -153,18 +153,6 @@ public class Utils {
      */
     public static void checkEmptyByteArray(@NonNull final byte[] ba, final String errorMessage) {
         if (ba.length == 0) {
-            throw new IllegalArgumentException(errorMessage);
-        }
-    }
-
-    /**
-     * Throws an IllegalArgumentException with a specific error message if `l` is null or empty
-     *
-     * @param l            The list to check
-     * @param errorMessage The error message to include in the InvalidParameterException
-     */
-    public static void checkEmptyList(@NonNull final List l, final String errorMessage) {
-        if (l.isEmpty()) {
             throw new IllegalArgumentException(errorMessage);
         }
     }

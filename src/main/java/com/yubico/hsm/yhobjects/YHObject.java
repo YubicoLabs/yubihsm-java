@@ -6,10 +6,7 @@ import com.yubico.hsm.exceptions.YHConnectionException;
 import com.yubico.hsm.exceptions.YHDeviceException;
 import com.yubico.hsm.exceptions.YHInvalidResponseException;
 import com.yubico.hsm.internal.util.Utils;
-import com.yubico.hsm.yhconcepts.Command;
-import com.yubico.hsm.yhconcepts.ListObjectsFilter;
-import com.yubico.hsm.yhconcepts.Type;
-import com.yubico.hsm.yhconcepts.YHError;
+import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhdata.YHObjectInfo;
 import lombok.NonNull;
 
@@ -72,10 +69,10 @@ public class YHObject {
     }
 
     /**
-     * Compares two YHObject yhdata
+     * Compares two YHObject objects
      *
      * @param other
-     * @return True if the yhdata' IDs and types are equal. False otherwise
+     * @return True if the objects' IDs and types are equal. False otherwise
      */
     @Override
     public boolean equals(final Object other) {
@@ -96,11 +93,11 @@ public class YHObject {
     }
 
     /**
-     * Return a list of yhdata on the device. The return value can be filtered by object ID, type, domains, capabilities, algorithm and/or label
+     * Return a list of objects on the device. The return value can be filtered by object ID, type, domains, capabilities, algorithm and/or label
      *
      * @param session An authenticated session to communicate with the device over
      * @param filters The filter applied to the result
-     * @return A list of yhdata on the device
+     * @return A list of objects on the device
      * @throws YHConnectionException              If the connection to the device fails
      * @throws NoSuchAlgorithmException           If the message encryption/decryption fails
      * @throws InvalidKeyException                If the message encryption/decryption fails
@@ -146,7 +143,7 @@ public class YHObject {
                             if (domains instanceof Short) {
                                 bb.putShort((short) domains);
                             } else if (domains instanceof List) {
-                                bb.putShort(Utils.getShortFromList((List) domains));
+                                bb.putShort(Utils.getShortFromList((List<Integer>) domains));
                             }
                             baos.write(bb.array());
                             break;
@@ -157,7 +154,7 @@ public class YHObject {
                             if (capabilities instanceof Long) {
                                 bb.putLong(((long) capabilities));
                             } else if (capabilities instanceof List) {
-                                bb.putLong(Utils.getLongFromCapabilities((List) capabilities));
+                                bb.putLong(Utils.getLongFromCapabilities((List<Capability>) capabilities));
                             }
                             baos.write(bb.array());
                             break;
@@ -192,11 +189,11 @@ public class YHObject {
                                                  "of 4 but have received " + response.length + " bytes instead");
         }
         ByteBuffer bb = ByteBuffer.wrap(response);
-        List<YHObjectInfo> ret = new ArrayList<>();
+        List<YHObjectInfo> ret = new ArrayList<YHObjectInfo>();
         while (bb.hasRemaining()) {
             ret.add(new YHObjectInfo(bb.getShort(), Type.forId(bb.get()), bb.get()));
         }
-        log.fine("Response to " + Command.LIST_OBJECTS.getName() + " command contained " + ret.size() + " yhdata");
+        log.fine("Response to " + Command.LIST_OBJECTS.getName() + " command contained " + ret.size() + " objects");
         return ret;
     }
 

@@ -30,7 +30,7 @@ public class YHObjectInfo {
     /**
      * @param id       The object ID uniquely identifying the object together with the object type
      * @param type     The object type uniquely identifying the object together with the object ID
-     * @param sequence The number of previews yhdata that had had the same ID and type
+     * @param sequence The number of previous objects that had had the same ID and type
      */
     public YHObjectInfo(final short id, final Type type, final byte sequence) {
         this.id = id;
@@ -45,7 +45,7 @@ public class YHObjectInfo {
      * @param domains               The domains that the object can operate within
      * @param algorithm             The algorithm used to create this object when applicable
      * @param label                 The object label
-     * @param delegatedCapabilities What capabilities can the object bestow on other yhdata when applicable
+     * @param delegatedCapabilities What capabilities can the object bestow on other objects when applicable
      */
     public YHObjectInfo(final short objectId, final Type type, final String label, final List<Integer> domains,
                         final Algorithm algorithm, final List<Capability> capabilities, final List<Capability> delegatedCapabilities) {

@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Class representing the types of yhdata that can be stored on the device
+ * Class representing the types of objects that can be stored on the device
  */
 public enum Type {
 

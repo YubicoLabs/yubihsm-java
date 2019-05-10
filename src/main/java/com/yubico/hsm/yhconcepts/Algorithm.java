@@ -61,7 +61,7 @@ public enum Algorithm {
     /** Algorithm used for decryption using RSA-OAEP */
     RSA_OAEP_SHA512             ((byte) 28, "rsa-oaep-sha512"),
     AES128_CCM_WRAP             ((byte) 29, "aes128-ccm-wrap"),
-    /** Algorithm used for storing Opaque yhdata */
+    /** Algorithm used for storing Opaque objects */
     OPAQUE_DATA                 ((byte) 30, "opaque-data"),
     /** Algorithm used to storing an X509Certificate as an Opaque object */
     OPAQUE_X509_CERTIFICATE     ((byte) 31, "opaque-x509-certificate"),

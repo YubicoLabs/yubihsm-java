@@ -64,7 +64,7 @@ public class AsymmetricKey extends YHObject {
      * @return True `algorithm` is a supported algorithm for RSA keys. False otherwise
      */
     public static boolean isRsaKeyAlgorithm(final Algorithm algorithm) {
-        List rsaAlgorithms = Arrays.asList(Algorithm.RSA_2048, Algorithm.RSA_3072, Algorithm.RSA_4096);
+        List<Algorithm> rsaAlgorithms = Arrays.asList(Algorithm.RSA_2048, Algorithm.RSA_3072, Algorithm.RSA_4096);
         return rsaAlgorithms.contains(algorithm);
     }
 
@@ -72,7 +72,7 @@ public class AsymmetricKey extends YHObject {
      * @return True if `algorithm` is a supported algorithm for EC keys. False otherwise
      */
     public static boolean isEcAlgorithm(final Algorithm algorithm) {
-        List ecAlgorithsms = Arrays.asList(Algorithm.EC_P256, Algorithm.EC_P384, Algorithm.EC_P521, Algorithm.EC_K256, Algorithm.EC_BP256,
+        List<Algorithm> ecAlgorithsms = Arrays.asList(Algorithm.EC_P256, Algorithm.EC_P384, Algorithm.EC_P521, Algorithm.EC_K256, Algorithm.EC_BP256,
                                            Algorithm.EC_BP384, Algorithm.EC_BP512, Algorithm.EC_P224);
         return ecAlgorithsms.contains(algorithm);
     }

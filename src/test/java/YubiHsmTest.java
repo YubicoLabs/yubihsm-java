@@ -178,7 +178,7 @@ public class YubiHsmTest {
             HashMap filters = new HashMap();
             List<YHObjectInfo> objects;
 
-            // List AsymmetricKey yhdata
+            // List AsymmetricKey objects
             filters.put(ListObjectsFilter.TYPE, AsymmetricKey.TYPE.getId());
             objects = YHObject.getObjectList(session, filters);
             assertEquals(2, objects.size());

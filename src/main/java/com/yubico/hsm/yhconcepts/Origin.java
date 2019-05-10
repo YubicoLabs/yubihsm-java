@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Class representing the origin of yhdata stored on the device, aka. where the yhdata have been created originally
+ * Class representing the origin of objects stored on the device, aka. where an object has been created originally
  */
 public enum Origin {
     /** Object was originated on the YubiHSM */

@@ -65,9 +65,9 @@ public class AuthenticationKey extends YHObject {
      */
     public AuthenticationKey(final short id, char[] password) throws InvalidKeySpecException, NoSuchAlgorithmException {
         super(id, TYPE);
-        List keys = deriveSecretKey(password);
-        encryptionKey = (byte[]) keys.get(0);
-        macKey = (byte[]) keys.get(1);
+        List<byte[]> keys = deriveSecretKey(password);
+        encryptionKey = keys.get(0);
+        macKey = keys.get(1);
     }
 
     /**
@@ -84,7 +84,7 @@ public class AuthenticationKey extends YHObject {
         return macKey;
     }
 
-    private static List deriveSecretKey(@NonNull char[] password) throws InvalidKeySpecException, NoSuchAlgorithmException {
+    private static List<byte[]> deriveSecretKey(@NonNull char[] password) throws InvalidKeySpecException, NoSuchAlgorithmException {
         if (password.length == 0) {
             throw new IllegalArgumentException("Missing password for derivation of authentication key");
         }
@@ -95,7 +95,7 @@ public class AuthenticationKey extends YHObject {
         SecretKey key = keyFactory.generateSecret(keySpec);
         final byte[] keybytes = key.getEncoded();
 
-        ArrayList keys = new ArrayList();
+        ArrayList<byte[]> keys = new ArrayList<byte[]>();
         keys.add(Arrays.copyOfRange(keybytes, 0, KEY_SIZE));
         keys.add(Arrays.copyOfRange(keybytes, KEY_SIZE, keybytes.length));
 
@@ -130,7 +130,7 @@ public class AuthenticationKey extends YHObject {
      * @param keyAlgorithm          The algorithm used to derive the long term encryption key and MAC key. Currently, only {
      *                              {@link Algorithm.AES128_YUBICO_AUTHENTICATION}} is supported
      * @param capabilities          The actions that can be performed while inside a session authenticated using the new Authentication key
-     * @param delegatedCapabilities The capabilities that can be bestowed on yhdata created or imported during a session authenticated with the
+     * @param delegatedCapabilities The capabilities that can be bestowed on an object created or imported during a session authenticated with the
      *                              new Authentication key
      * @param encryptionKey         Long term encryption key
      * @param macKey                Long term MAC key
@@ -193,7 +193,7 @@ public class AuthenticationKey extends YHObject {
      * @param keyAlgorithm          The algorithm used to derive the long term encryption key and MAC key. Currently, only {
      *                              {@link Algorithm.AES128_YUBICO_AUTHENTICATION}} is supported
      * @param capabilities          The actions that can be performed while inside a session authenticated using the new Authentication key
-     * @param delegatedCapabilities The capabilities that can be bestowed on yhdata created or imported during a session authenticated with the
+     * @param delegatedCapabilities The capabilities that can be bestowed on an object created or imported during a session authenticated with the
      *                              new Authentication key
      * @param password              The password to derive the long term encryption key and MAC key from
      * @return ID of the Authentication Key on the device
@@ -215,9 +215,9 @@ public class AuthenticationKey extends YHObject {
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, InvalidKeySpecException {
-        List secretKey = deriveSecretKey(password);
-        byte[] encKey = (byte[]) secretKey.get(0);
-        byte[] macKey = (byte[]) secretKey.get(1);
+        List<byte[]> secretKey = deriveSecretKey(password);
+        byte[] encKey = secretKey.get(0);
+        byte[] macKey = secretKey.get(1);
         short newid = importAuthenticationKey(session, id, label, domains, keyAlgorithm, capabilities, delegatedCapabilities, encKey, macKey);
 
         Arrays.fill(password, 'c');
@@ -302,9 +302,9 @@ public class AuthenticationKey extends YHObject {
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, InvalidKeySpecException {
-        List secretKey = deriveSecretKey(password);
-        byte[] encKey = (byte[]) secretKey.get(0);
-        byte[] macKey = (byte[]) secretKey.get(1);
+        List<byte[]> secretKey = deriveSecretKey(password);
+        byte[] encKey = secretKey.get(0);
+        byte[] macKey = secretKey.get(1);
         changeAuthenticationKey(session, id, encKey, macKey);
 
         Arrays.fill(password, 'c');
