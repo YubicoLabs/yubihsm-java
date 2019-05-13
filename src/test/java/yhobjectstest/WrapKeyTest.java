@@ -1,4 +1,6 @@
-import AsymmetricKeyTest.AsymmetricKeyTestHelper;
+package yhobjectstest;
+
+import yhobjectstest.asymmetrickeystest.AsymmetricKeyTestHelper;
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
@@ -7,10 +9,11 @@ import com.yubico.hsm.exceptions.UnsupportedAlgorithmException;
 import com.yubico.hsm.exceptions.YHDeviceException;
 import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhdata.WrapData;
+import com.yubico.hsm.yhdata.YHObjectInfo;
+import com.yubico.hsm.yhobjects.AsymmetricKey;
 import com.yubico.hsm.yhobjects.Opaque;
 import com.yubico.hsm.yhobjects.WrapKey;
 import com.yubico.hsm.yhobjects.YHObject;
-import com.yubico.hsm.yhdata.YHObjectInfo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -20,7 +23,6 @@ import java.security.SecureRandom;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -39,7 +41,7 @@ public class WrapKeyTest {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
             session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
-            session.createAuthenticatedSession();
+            session.authenticateSession();
         }
     }
 
@@ -292,10 +294,7 @@ public class WrapKeyTest {
             objectWrap(Algorithm.AES192_CCM_WRAP, id, testCert);
             objectWrap(Algorithm.AES256_CCM_WRAP, id, testCert);
         } finally {
-            try {
-                YHObject.delete(session, id, Type.TYPE_OPAQUE);
-            } catch (YHDeviceException e) {
-            }
+            YHObject.delete(session, id, Type.TYPE_OPAQUE);
         }
 
         log.info("TEST END: testObjectWrap()");
@@ -321,18 +320,13 @@ public class WrapKeyTest {
 
         // Delete it from the HSM and make sure that it is no longer there
         YHObject.delete(session, certId, Type.TYPE_OPAQUE);
-        HashMap filters = new HashMap();
-        filters.put(ListObjectsFilter.ID, certId);
-        filters.put(ListObjectsFilter.TYPE, Type.TYPE_OPAQUE);
-        List<YHObjectInfo> objects = YHObject.getObjectList(session, filters);
-        assertEquals(0, objects.size());
+        assertFalse(YHObject.exists(session, certId, Opaque.TYPE));
 
         // Import the certificate under wrap
         YHObject importedCert = wrapKey.importWrapped(session, exportedCert.getNonce(), exportedCert.getWrappedData());
 
         // Verify that the certificate exists
-        objects = YHObject.getObjectList(session, filters);
-        assertEquals(1, objects.size());
+        assertTrue(YHObject.exists(session, certId, Opaque.TYPE));
 
         // Verify that it is the same certificate as the test certificate
         Opaque opaque = new Opaque(certId, Algorithm.OPAQUE_DATA);
@@ -345,11 +339,7 @@ public class WrapKeyTest {
 
     private void nonExistingObjectWrap(WrapKey wrapKey, short certId, String wrapKeyAlgorithm) throws Exception {
         log.info("Test wrapping a non existing object using wrap key of algorithm " + wrapKeyAlgorithm);
-        HashMap filters = new HashMap();
-        filters.put(ListObjectsFilter.ID, certId);
-        filters.put(ListObjectsFilter.TYPE, Type.TYPE_ASYMMETRIC_KEY);
-        List<YHObjectInfo> objects = YHObject.getObjectList(session, filters);
-        assertEquals(0, objects.size());
+        assertFalse(YHObject.exists(session, certId, AsymmetricKey.TYPE));
 
         boolean exceptionThrown = false;
         try {

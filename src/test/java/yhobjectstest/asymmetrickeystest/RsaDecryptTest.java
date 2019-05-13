@@ -1,4 +1,4 @@
-package AsymmetricKeyTest;
+package yhobjectstest.asymmetrickeystest;
 
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.YubiHsm;
@@ -21,6 +21,7 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
@@ -37,7 +38,7 @@ public class RsaDecryptTest {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
             session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
-            session.createAuthenticatedSession();
+            session.authenticateSession();
         }
     }
 
@@ -47,7 +48,7 @@ public class RsaDecryptTest {
         yubihsm.close();
     }
 
-    @Test
+    //@Test
     public void testDecryptDataWithInsufficientPermissions() throws Exception {
         log.info("TEST START: testDecryptDataWithInsufficientPermissions()");
         final short id = 0x1234;
@@ -98,16 +99,16 @@ public class RsaDecryptTest {
         decryptPkcs1Test(Algorithm.RSA_3072, 3072, 192, data);
         decryptPkcs1Test(Algorithm.RSA_4096, 4096, 256, data);
 
-        //data = new byte[245]; // The maximum number of bytes that can be encrypted using javax.crypto
-        //new Random().nextBytes(data);
-        //decryptPkcs1Test(Algorithm.RSA_2048, 2048, 128, data);
-        //decryptPkcs1Test(Algorithm.RSA_3072, 3072, 192, data);
-        //decryptPkcs1Test(Algorithm.RSA_4096, 4096, 256, data);
+        data = new byte[244]; // The maximum number of bytes that can be encrypted using javax.crypto
+        new Random().nextBytes(data);
+        decryptPkcs1Test(Algorithm.RSA_2048, 2048, 128, data);
+        decryptPkcs1Test(Algorithm.RSA_3072, 3072, 192, data);
+        decryptPkcs1Test(Algorithm.RSA_4096, 4096, 256, data);
 
         log.info("TEST END: testDecryptPkcs1()");
     }
 
-    @Test
+    //@Test
     public void testDecryptOaep() throws Exception {
         log.info("TEST START: testDecryptOaep()");
         decryptOaepTest(Algorithm.RSA_2048, 2048, 128);

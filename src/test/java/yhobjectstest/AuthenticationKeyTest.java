@@ -1,3 +1,5 @@
+package yhobjectstest;
+
 import com.yubico.hsm.YHCore;
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.YubiHsm;
@@ -5,9 +7,9 @@ import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.exceptions.YHAuthenticationException;
 import com.yubico.hsm.yhconcepts.*;
+import com.yubico.hsm.yhdata.YHObjectInfo;
 import com.yubico.hsm.yhobjects.AuthenticationKey;
 import com.yubico.hsm.yhobjects.YHObject;
-import com.yubico.hsm.yhdata.YHObjectInfo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -33,7 +35,7 @@ public class AuthenticationKeyTest {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
             session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
-            session.createAuthenticatedSession();
+            session.authenticateSession();
         }
     }
 
@@ -155,6 +157,31 @@ public class AuthenticationKeyTest {
     }
 
     @Test
+    public void testAuthenticationKeyObject() throws Exception {
+        log.info("TEST START: testAuthenticationKeyObject()");
+
+        short id = AuthenticationKey
+                .importAuthenticationKey(session, (short) 0, "", Arrays.asList(1, 2, 3, 4), Algorithm.AES128_YUBICO_AUTHENTICATION,
+                                         Arrays.asList(Capability.SIGN_SSH_CERTIFICATE), null, "foo123".toCharArray());
+
+        try {
+            // Communicate over a session authenticated with the new authentication key
+            YHSession session2 = new YHSession(yubihsm, id, "foo123".toCharArray());
+            session2.authenticateSession();
+            assertEquals(id, session2.getAuthenticationKeyID());
+            assertEquals(YHSession.SessionStatus.AUTHENTICATED, session2.getStatus());
+            byte[] data = new byte[32];
+            new Random().nextBytes(data);
+            byte[] response = YHCore.secureEcho(session2, data);
+            assertTrue(Arrays.equals(response, data));
+            session2.closeSession();
+        } finally {
+            YHObject.delete(session, id, Type.TYPE_AUTHENTICATION_KEY);
+        }
+        log.info("TEST END: testAuthenticationKeyObject()");
+    }
+
+    @Test
     public void testChangeAuthenticationKey() throws Exception {
         log.info("TEST START: testChangeAuthenticationKey()");
 
@@ -167,7 +194,7 @@ public class AuthenticationKeyTest {
         try {
             // Open an authenticated session with the new key, verify that communication works then close the session
             YHSession session1 = new YHSession(yubihsm, id, "foo123".toCharArray());
-            session1.createAuthenticatedSession();
+            session1.authenticateSession();
             assertEquals(id, session1.getAuthenticationKeyID());
             byte[] data = new byte[32];
             new Random().nextBytes(data);
@@ -183,7 +210,7 @@ public class AuthenticationKeyTest {
             session1 = new YHSession(yubihsm, id, "foo123".toCharArray());
             assertEquals(id, session1.getAuthenticationKeyID());
             try {
-                session1.createAuthenticatedSession();
+                session1.authenticateSession();
             } catch (Exception e) {
                 assertTrue("Expected YHAuthenticationException. Instead got " + e.getClass().getName(),
                            (e instanceof YHAuthenticationException));
@@ -193,7 +220,7 @@ public class AuthenticationKeyTest {
 
             // Open a new authenticated session with the new password, verify that communication works then close the session
             session1 = new YHSession(yubihsm, id, "bar123".toCharArray());
-            session1.createAuthenticatedSession();
+            session1.authenticateSession();
             assertEquals(id, session1.getAuthenticationKeyID());
             assertEquals(YHSession.SessionStatus.AUTHENTICATED, session1.getStatus());
             response = YHCore.secureEcho(session1, data);
@@ -201,7 +228,6 @@ public class AuthenticationKeyTest {
             session1.closeSession();
             assertEquals(YHSession.SessionStatus.CLOSED, session1.getStatus());
         } finally {
-            // Delete the authentication key
             YHObject.delete(session, id, Type.TYPE_AUTHENTICATION_KEY);
         }
         log.info("TEST END: testChangeAuthenticationKey()");

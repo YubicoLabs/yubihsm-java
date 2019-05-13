@@ -1,11 +1,16 @@
+package yhobjectstest;
+
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
-import com.yubico.hsm.yhconcepts.*;
+import com.yubico.hsm.yhconcepts.Algorithm;
+import com.yubico.hsm.yhconcepts.Capability;
+import com.yubico.hsm.yhconcepts.Origin;
+import com.yubico.hsm.yhconcepts.Type;
+import com.yubico.hsm.yhdata.YHObjectInfo;
 import com.yubico.hsm.yhobjects.HmacKey;
 import com.yubico.hsm.yhobjects.YHObject;
-import com.yubico.hsm.yhdata.YHObjectInfo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -14,7 +19,6 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -33,7 +37,7 @@ public class HmacKeyTest {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
             session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
-            session.createAuthenticatedSession();
+            session.authenticateSession();
         }
     }
 
@@ -145,11 +149,7 @@ public class HmacKeyTest {
         short id = (short) 0x1234;
 
         try {
-            HashMap filters = new HashMap();
-            filters.put(ListObjectsFilter.ID, id);
-            filters.put(ListObjectsFilter.TYPE, Type.TYPE_HMAC_KEY);
-            List<YHObjectInfo> objects = YHObject.getObjectList(session, filters);
-            assertEquals(0, objects.size());
+            assertFalse(YHObject.exists(session, id, HmacKey.TYPE));
 
             byte[] key = new byte[keyLength];
             new SecureRandom().nextBytes(key);
@@ -163,8 +163,7 @@ public class HmacKeyTest {
             assertEquals(!success, exceptionThrown);
 
             if (success) {
-                objects = YHObject.getObjectList(session, filters);
-                assertEquals(1, objects.size());
+                assertTrue(YHObject.exists(session, id, HmacKey.TYPE));
             }
         } finally {
             YHObject.delete(session, id, HmacKey.TYPE);

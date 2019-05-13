@@ -1,13 +1,11 @@
-package AsymmetricKeyTest;
+package yhobjectstest.asymmetrickeystest;
 
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.exceptions.*;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.YHError;
 import com.yubico.hsm.yhobjects.AsymmetricKeyEc;
 import com.yubico.hsm.yhobjects.AsymmetricKeyRsa;
-import com.yubico.hsm.yhobjects.YHObject;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -144,17 +142,4 @@ public class AsymmetricKeyTestHelper {
         AsymmetricKeyEc.importKey(session, id, label, domains, algorithm, capabilities, d);
         return keypair;
     }
-
-    public static void cleanupTestObjects(YHSession session, List<YHObject> objects) throws Exception {
-        for (YHObject object : objects) {
-            try {
-                object.delete(session);
-            } catch (YHDeviceException e) {
-                if (!e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
-                    throw e;
-                }
-            }
-        }
-    }
-
 }

@@ -1,4 +1,4 @@
-package AsymmetricKeyTest;
+package yhobjectstest.asymmetrickeystest;
 
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.YubiHsm;
@@ -40,7 +40,7 @@ public class RsaSignTest {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
             session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
-            session.createAuthenticatedSession();
+            session.authenticateSession();
         }
     }
 

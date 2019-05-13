@@ -4,16 +4,14 @@ import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.yhconcepts.Algorithm;
-import com.yubico.hsm.yhconcepts.Capability;
+import com.yubico.hsm.yhdata.YHObjectInfo;
 import com.yubico.hsm.yhobjects.Opaque;
 import com.yubico.hsm.yhobjects.YHObject;
-import com.yubico.hsm.yhdata.YHObjectInfo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -43,12 +41,16 @@ public class ResetDeviceTest {
     public void testResetDevice() throws Exception {
         log.info("TEST START: testResetDevice()");
         YHSession session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
+        session.authenticateSession();
         assertNotNull("Failed to create an authenticated session", session);
 
-        byte[] data = new byte[16];
-        new Random().nextBytes(data);
-        Opaque.importOpaque(session, (short) 0, "", Arrays.asList(1, 2), new ArrayList<Capability>(), Algorithm.OPAQUE_DATA, data);
         List<YHObjectInfo> objects = YHObject.getObjectList(session, null);
+        if(objects.size() == 1) {
+            byte[] data = new byte[16];
+            new Random().nextBytes(data);
+            Opaque.importOpaque(session, (short) 0, "", Arrays.asList(1, 2), null, Algorithm.OPAQUE_DATA, data);
+            objects = YHObject.getObjectList(session, null);
+        }
         assertTrue(objects.size() > 1);
 
         YHCore.resetDevice(session);

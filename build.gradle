@@ -34,3 +34,7 @@ repositories {
     jcenter()
 }
 
+test {
+    exclude '**/OptionsTest.class'
+}
+

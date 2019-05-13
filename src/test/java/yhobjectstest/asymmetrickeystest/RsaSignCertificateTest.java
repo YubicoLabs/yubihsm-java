@@ -1,4 +1,4 @@
-package AsymmetricKeyTest;
+package yhobjectstest.asymmetrickeystest;
 
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.YubiHsm;
@@ -6,10 +6,7 @@ import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhobjects.AsymmetricKey;
-import com.yubico.hsm.yhobjects.AsymmetricKeyRsa;
-import com.yubico.hsm.yhobjects.Opaque;
-import com.yubico.hsm.yhobjects.Template;
+import com.yubico.hsm.yhobjects.*;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
@@ -138,7 +135,7 @@ public class RsaSignCertificateTest {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
             session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
-            session.createAuthenticatedSession();
+            session.authenticateSession();
         }
     }
 
@@ -183,9 +180,9 @@ public class RsaSignCertificateTest {
             }
 
         } finally {
-            AsymmetricKeyTestHelper.cleanupTestObjects(session, Arrays.asList(new AsymmetricKey(attestingKeyid, Algorithm.RSA_2048),
-                                                                              new AsymmetricKey(attestedKeyid, Algorithm.RSA_2048),
-                                                                              new Opaque(attestingKeyid, Algorithm.OPAQUE_X509_CERTIFICATE)));
+            YHObject.delete(session, attestedKeyid, AsymmetricKey.TYPE);
+            YHObject.delete(session, attestingKeyid, AsymmetricKey.TYPE);
+            YHObject.delete(session, attestingKeyid, Opaque.TYPE);
         }
         log.info("TEST END: testSigningAttestationCertificate()");
     }
@@ -230,8 +227,7 @@ public class RsaSignCertificateTest {
             assertEquals(expectedResultCert.length, resultCert.length);
             assertArrayEquals(expectedResultCert, resultCert);
         } finally {
-            AsymmetricKeyTestHelper.cleanupTestObjects(session, Arrays.asList(new AsymmetricKey(keyId, Algorithm.RSA_2048),
-                                                                              new Template(templateId)));
+            YHObject.delete(session, keyId, AsymmetricKey.TYPE);
         }
         log.info("TEST END: testSSHCertificateSign()");
     }

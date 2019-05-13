@@ -94,7 +94,7 @@ public class YHCore {
      * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      */
-    public static byte[] getRandom(@NonNull final YHSession session, final int length)
+    public static byte[] getPseudoRandom(@NonNull final YHSession session, final int length)
             throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
                    NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
                    YHInvalidResponseException, IllegalBlockSizeException {
@@ -267,7 +267,7 @@ public class YHCore {
      * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      */
-    public static LogData getLogData(@NonNull final YHSession session)
+    public static LogData getAuditLogData(@NonNull final YHSession session)
             throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
                    NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
                    YHInvalidResponseException, IllegalBlockSizeException {
@@ -312,7 +312,7 @@ public class YHCore {
      * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      */
-    public static void setLogIndex(@NonNull final YHSession session, final short index)
+    public static void setAuditLogIndex(@NonNull final YHSession session, final short index)
             throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
                    NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
                    YHInvalidResponseException, IllegalBlockSizeException {

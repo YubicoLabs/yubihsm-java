@@ -1,4 +1,4 @@
-package AsymmetricKeyTest;
+package yhobjectstest.asymmetrickeystest;
 
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.YubiHsm;
@@ -8,6 +8,7 @@ import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhobjects.AsymmetricKey;
 import com.yubico.hsm.yhobjects.Opaque;
+import com.yubico.hsm.yhobjects.YHObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -32,7 +33,7 @@ public class EcSignCertificateTest {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
             session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
-            session.createAuthenticatedSession();
+            session.authenticateSession();
         }
     }
 
@@ -74,9 +75,9 @@ public class EcSignCertificateTest {
             }
 
         } finally {
-            AsymmetricKeyTestHelper.cleanupTestObjects(session, Arrays.asList(new AsymmetricKey(attestingKeyid, Algorithm.EC_P224),
-                                                                              new AsymmetricKey(attestedKeyid, Algorithm.EC_P224),
-                                                                              new Opaque(attestingKeyid, Algorithm.OPAQUE_X509_CERTIFICATE)));
+            YHObject.delete(session, attestedKeyid, AsymmetricKey.TYPE);
+            YHObject.delete(session, attestingKeyid, AsymmetricKey.TYPE);
+            YHObject.delete(session, attestingKeyid, Opaque.TYPE);
         }
         log.info("TEST END: testSigningAttestationCertificate()");
     }

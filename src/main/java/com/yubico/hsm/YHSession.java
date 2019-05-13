@@ -103,7 +103,7 @@ public class YHSession {
      * @throws YHConnectionException      If connection with the device fails
      * @throws YHAuthenticationException  If authenticating the session fails
      */
-    public void createAuthenticatedSession()
+    public void authenticateSession()
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
                    YHAuthenticationException {
 
@@ -168,7 +168,7 @@ public class YHSession {
                    YHDeviceException {
         if (status != SessionStatus.AUTHENTICATED) {
             if (status == SessionStatus.NOT_INITIALIZED || status == SessionStatus.CREATED) {
-                createAuthenticatedSession();
+                authenticateSession();
             } else {
                 throw new YHAuthenticationException("Session needs to be authenticated to send secure messages to the device");
             }
@@ -286,7 +286,7 @@ public class YHSession {
                    IllegalBlockSizeException {
 
         if (status != YHSession.SessionStatus.AUTHENTICATED) {
-            createAuthenticatedSession();
+            authenticateSession();
         }
 
         byte[] resp = secureTransceive(CommandUtils.getTransceiveMessage(cmd, data == null ? new byte[0] : data));

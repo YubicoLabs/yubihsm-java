@@ -1,12 +1,16 @@
+package yhobjectstest;
+
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
-import com.yubico.hsm.exceptions.YHDeviceException;
-import com.yubico.hsm.yhconcepts.*;
+import com.yubico.hsm.yhconcepts.Algorithm;
+import com.yubico.hsm.yhconcepts.Capability;
+import com.yubico.hsm.yhconcepts.Origin;
+import com.yubico.hsm.yhconcepts.Type;
+import com.yubico.hsm.yhdata.YHObjectInfo;
 import com.yubico.hsm.yhobjects.Opaque;
 import com.yubico.hsm.yhobjects.YHObject;
-import com.yubico.hsm.yhdata.YHObjectInfo;
 import org.bouncycastle.util.encoders.Base64;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -56,7 +60,7 @@ public class OpaqueTest {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
             session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
-            session.createAuthenticatedSession();
+            session.authenticateSession();
         }
     }
 
@@ -96,13 +100,7 @@ public class OpaqueTest {
             byte[] returnedOpaqueData = opaque.getOpaque(session);
             assertArrayEquals(opaqueData, returnedOpaqueData);
         } finally {
-            // Delete opaque object
             YHObject.delete(session, id, Type.TYPE_OPAQUE);
-            try {
-                YHObject.getObjectInfo(session, id, Type.TYPE_OPAQUE);
-            } catch (YHDeviceException e1) {
-                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getYhError());
-            }
         }
 
         log.info("TEST END: testImportOpaque()");
@@ -135,13 +133,7 @@ public class OpaqueTest {
             X509Certificate returnedCert = opaque.getCertificate(session);
             assertEquals(cert, returnedCert);
         } finally {
-            // Delete opaque object
             YHObject.delete(session, id, Type.TYPE_OPAQUE);
-            try {
-                YHObject.getObjectInfo(session, id, Type.TYPE_OPAQUE);
-            } catch (YHDeviceException e1) {
-                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getYhError());
-            }
         }
 
         log.info("TEST END: testImportCertificate()");
@@ -159,7 +151,6 @@ public class OpaqueTest {
             X509Certificate returnedCert = opaque.getCertificate(session);
             assertEquals(testCert, returnedCert);
         } finally {
-            // Delete opaque object
             YHObject.delete(session, id, Type.TYPE_OPAQUE);
         }
 
@@ -182,7 +173,6 @@ public class OpaqueTest {
             }
             assertTrue("Succeeded in returning the opaque ", exceptionThrown);
         } finally {
-            // Delete opaque object
             YHObject.delete(session, id, Type.TYPE_OPAQUE);
         }
 

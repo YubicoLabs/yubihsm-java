@@ -1,4 +1,4 @@
-package AsymmetricKeyTest;
+package yhobjectstest.asymmetrickeystest;
 
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.YubiHsm;
@@ -6,10 +6,10 @@ import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.exceptions.YHDeviceException;
 import com.yubico.hsm.yhconcepts.*;
+import com.yubico.hsm.yhdata.YHObjectInfo;
 import com.yubico.hsm.yhobjects.AsymmetricKey;
 import com.yubico.hsm.yhobjects.AsymmetricKeyEd;
 import com.yubico.hsm.yhobjects.YHObject;
-import com.yubico.hsm.yhdata.YHObjectInfo;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.Signer;
 import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator;
@@ -41,7 +41,7 @@ public class AsymmetricKeyEdTest {
             Backend backend = new HttpBackend();
             yubihsm = new YubiHsm(backend);
             session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
-            session.createAuthenticatedSession();
+            session.authenticateSession();
         }
     }
 
@@ -80,13 +80,7 @@ public class AsymmetricKeyEdTest {
             assertTrue(key.getCapabilities().containsAll(capabilities));
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
-            // Delete the key and verify deletion
             YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
-            try {
-                YHObject.getObjectInfo(session, id, Type.TYPE_ASYMMETRIC_KEY);
-            } catch (YHDeviceException e1) {
-                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getYhError());
-            }
         }
 
         log.info("TEST END: testGenerateKey()");
@@ -208,11 +202,6 @@ public class AsymmetricKeyEdTest {
             assertEquals(0, key.getDelegatedCapabilities().size());
         } finally {
             YHObject.delete(session, id, Type.TYPE_ASYMMETRIC_KEY);
-            try {
-                YHObject.getObjectInfo(session, id, Type.TYPE_ASYMMETRIC_KEY);
-            } catch (YHDeviceException e1) {
-                assertEquals(YHError.OBJECT_NOT_FOUND, e1.getYhError());
-            }
         }
 
         log.info("TEST END: testImportKey()");

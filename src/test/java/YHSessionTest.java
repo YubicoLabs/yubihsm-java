@@ -44,18 +44,18 @@ public class YHSessionTest {
         assertEquals((byte) -1, session1.getSessionID());
         assertEquals(YHSession.SessionStatus.NOT_INITIALIZED, session1.getStatus());
 
-        session1.createAuthenticatedSession();
+        session1.authenticateSession();
         assertNotEquals((byte) -1, session1.getSessionID());
         assertEquals(YHSession.SessionStatus.AUTHENTICATED, session1.getStatus());
 
 
         YHSession session2 = new YHSession(yubihsm, (short) 1, "password".toCharArray());
-        session2.createAuthenticatedSession();
+        session2.authenticateSession();
         assertEquals((short) 1, session2.getAuthenticationKeyID());
         assertNotEquals((byte) -1, session2.getSessionID());
         assertNotEquals(session1.getSessionID(), session2.getSessionID());
         assertEquals(YHSession.SessionStatus.AUTHENTICATED, session2.getStatus());
-        session2.createAuthenticatedSession();
+        session2.authenticateSession();
         assertEquals(YHSession.SessionStatus.AUTHENTICATED, session2.getStatus());
 
 
@@ -65,7 +65,7 @@ public class YHSessionTest {
         assertEquals(YHSession.SessionStatus.NOT_INITIALIZED, session3.getStatus());
 
         try {
-            session3.createAuthenticatedSession();
+            session3.authenticateSession();
         } catch (Exception e) {
             assertTrue("Expected YHAuthenticationException. Instead got " + e.getClass().getName(),
                        (e instanceof YHAuthenticationException));
@@ -76,7 +76,7 @@ public class YHSessionTest {
         session2.closeSession();
         assertEquals(YHSession.SessionStatus.CLOSED, session2.getStatus());
         try {
-            session2.createAuthenticatedSession();
+            session2.authenticateSession();
         } catch (Exception e) {
             assertTrue("Expected YHAuthenticationException. Instead got " + e.getClass().getName(),
                        (e instanceof YHAuthenticationException));
