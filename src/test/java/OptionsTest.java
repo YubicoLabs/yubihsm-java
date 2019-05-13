@@ -16,6 +16,11 @@ import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
+/**
+ * This test is excluded from running with all other tests because resets the device.
+ * To run his test, remove its exclusion from build.gradle and then run:
+ *   >> gradle test -Dtest.single=OptionsTest 
+ */
 public class OptionsTest {
     private static Logger log = Logger.getLogger(OptionsTest.class.getName());
 
