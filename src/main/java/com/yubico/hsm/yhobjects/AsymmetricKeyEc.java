@@ -93,7 +93,8 @@ public class AsymmetricKeyEc extends AsymmetricKey {
     public PublicKey getEcPublicKey(@NonNull final YHSession session)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, InvalidKeySpecException, InvalidParameterSpecException, NoSuchProviderException {
+                   IllegalBlockSizeException, InvalidKeySpecException, InvalidParameterSpecException, NoSuchProviderException,
+                   UnsupportedAlgorithmException {
 
         byte[] xy = super.getPublicKey(session);
         byte[] x = Arrays.copyOfRange(xy, 0, xy.length / 2);
@@ -122,11 +123,12 @@ public class AsymmetricKeyEc extends AsymmetricKey {
      * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     * @throws UnsupportedAlgorithmException      If the hash algorithm is not supported
      */
     public byte[] signEcdsa(final YHSession session, final byte[] data, @NonNull final Algorithm hashAlgorithm)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException {
+                   IllegalBlockSizeException, UnsupportedAlgorithmException {
         final byte[] hashedData = getHashedData(data, hashAlgorithm);
         return signEcdsa(session, hashedData);
     }
@@ -241,7 +243,8 @@ public class AsymmetricKeyEc extends AsymmetricKey {
      * @throws InvalidKeySpecException
      */
     private PublicKey getEcPublicKeyFromPoint(@NonNull final ECPoint point, final boolean isBrainpool)
-            throws NoSuchAlgorithmException, InvalidParameterSpecException, InvalidKeySpecException, NoSuchProviderException {
+            throws NoSuchAlgorithmException, InvalidParameterSpecException, InvalidKeySpecException, NoSuchProviderException,
+                   UnsupportedAlgorithmException {
         AlgorithmParameters parameters;
         if(isBrainpool) {
             Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
@@ -284,10 +287,7 @@ public class AsymmetricKeyEc extends AsymmetricKey {
         }
     }
 
-    private String getCurveFromAlgorithm(final Algorithm algorithm) {
-        if (algorithm == null) {
-            return "";
-        }
+    private String getCurveFromAlgorithm(@NonNull final Algorithm algorithm) throws UnsupportedAlgorithmException {
         if (algorithm.equals(Algorithm.EC_P224)) {
             return "secp224r1";
         }
@@ -312,7 +312,7 @@ public class AsymmetricKeyEc extends AsymmetricKey {
         if (algorithm.equals(Algorithm.EC_BP512)) {
             return "brainpoolP512r1";
         }
-        return "";
+        throw new UnsupportedAlgorithmException(algorithm.getName() + " algorithm is not a supported EC key algorithm");
     }
 
     private boolean isBrainpoolKeyAlgorithm(@NonNull final Algorithm algorithm) {

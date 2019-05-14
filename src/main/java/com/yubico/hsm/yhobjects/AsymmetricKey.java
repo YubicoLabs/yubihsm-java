@@ -1,10 +1,7 @@
 package com.yubico.hsm.yhobjects;
 
 import com.yubico.hsm.YHSession;
-import com.yubico.hsm.exceptions.YHAuthenticationException;
-import com.yubico.hsm.exceptions.YHConnectionException;
-import com.yubico.hsm.exceptions.YHDeviceException;
-import com.yubico.hsm.exceptions.YHInvalidResponseException;
+import com.yubico.hsm.exceptions.*;
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.*;
 import lombok.NonNull;
@@ -452,7 +449,8 @@ public class AsymmetricKey extends YHObject {
     /**
      * @return The digest of the input data
      */
-    protected byte[] getHashedData(@NonNull final byte[] data, @NonNull final Algorithm algorithm) throws NoSuchAlgorithmException {
+    protected byte[] getHashedData(@NonNull final byte[] data, @NonNull final Algorithm algorithm)
+            throws NoSuchAlgorithmException, UnsupportedAlgorithmException {
         MessageDigest digest;
         if (algorithm.equals(Algorithm.RSA_PKCS1_SHA1) || algorithm.equals(Algorithm.RSA_MGF1_SHA1) ||
             algorithm.equals(Algorithm.EC_ECDSA_SHA1) || algorithm.equals(Algorithm.RSA_OAEP_SHA1)) {
@@ -467,7 +465,7 @@ public class AsymmetricKey extends YHObject {
                    algorithm.equals(Algorithm.EC_ECDSA_SHA512) || algorithm.equals(Algorithm.RSA_OAEP_SHA512)) {
             digest = MessageDigest.getInstance("SHA-512");
         } else {
-            throw new InvalidParameterException("Unsupported hash algorithm " + algorithm.toString());
+            throw new UnsupportedAlgorithmException(algorithm.toString() + " algorithm is not supported for hashing data");
         }
         return digest.digest(data);
     }
