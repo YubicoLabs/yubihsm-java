@@ -4,13 +4,11 @@ import com.yubico.hsm.exceptions.YHConnectionException;
 import com.yubico.hsm.internal.util.Utils;
 import lombok.NonNull;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 /**
@@ -21,6 +19,7 @@ public class HttpBackend implements Backend {
 
     private final String DEFAULT_URL = "http://localhost:12345/connector/api";
     private final int DEFAULT_TIMEOUT = 0;
+    private final int MAX_MESSAGE_SIZE = 2048;
 
     private URL url;
     private int timeout;
@@ -89,6 +88,11 @@ public class HttpBackend implements Backend {
     @Override
     public byte[] transceive(@NonNull byte[] message) throws YHConnectionException {
 
+        if(message.length > MAX_MESSAGE_SIZE) {
+            throw new IllegalArgumentException("The message to send is too long. The message can at most be " + MAX_MESSAGE_SIZE + " bytes long but" +
+                                               " was " + message.length + " bytes");
+        }
+
         log.finest("SEND >> " + Utils.getPrintableBytes(message));
 
         byte[] response;
@@ -103,31 +107,34 @@ public class HttpBackend implements Backend {
                 throw new YHConnectionException(e1);
             }
 
-            InputStream in;
+            BufferedInputStream bin;
             try {
-                if (conn.getResponseCode() < 400) {
+                final int httpRespCode = conn.getResponseCode();
+                if (httpRespCode == HttpURLConnection.HTTP_OK) {
                     log.finer("Received HTTP response OK");
-                    in = conn.getInputStream();
+                    bin = new BufferedInputStream(conn.getInputStream());
                 } else {
-                    log.info("Received HTTP error response");
-                    in = conn.getErrorStream();
+                    log.info("Received HTTP error response " + httpRespCode);
+                    bin = new BufferedInputStream(conn.getErrorStream());
                 }
             } catch (IOException e) {
                 throw new YHConnectionException(e);
             }
 
+            byte[] buffer = new byte[MAX_MESSAGE_SIZE];
+            int len;
             try {
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                int len;
-                byte[] buffer = new byte[2048];
-                while (-1 != (len = in.read(buffer))) {
-                    bos.write(buffer, 0, len);
-                }
-                in.close();
-                response = bos.toByteArray();
+                len = bin.read(buffer);
+                bin.close();
             } catch (IOException e) {
                 throw new YHConnectionException(e);
             }
+
+            if(len < 0) {
+                throw new YHConnectionException();
+            }
+            response = Arrays.copyOfRange(buffer, 0, len);
+
         } finally {
             close();
         }
