@@ -131,7 +131,8 @@ public class EcNewKeyTest {
         log.info("Test importing an EC key with null private key");
         exceptionThrown = false;
         try {
-            AsymmetricKeyEc.importKey(session, (short) 0, "", Arrays.asList(2), Algorithm.EC_P256, Arrays.asList(Capability.SIGN_ECDSA), null);
+            AsymmetricKeyEc.importKey(session, (short) 0, "", Arrays.asList(2), Algorithm.EC_P256, Arrays.asList(Capability.SIGN_ECDSA),
+                                      (byte[]) null);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -188,29 +189,25 @@ public class EcNewKeyTest {
     @Test
     public void testImportKey() throws Exception {
         log.info("TEST START: testImportKey()");
-        importEcKeyTest(Algorithm.EC_P224, "secp224r1", 28, false);
-        importEcKeyTest(Algorithm.EC_P256, "secp256r1", 32, false);
-        importEcKeyTest(Algorithm.EC_P384, "secp384r1", 48, false);
-        importEcKeyTest(Algorithm.EC_P521, "secp521r1", 66, false);
-        importEcKeyTest(Algorithm.EC_K256, "secp256k1", 32, false);
-        importEcKeyTest(Algorithm.EC_BP256, "brainpoolP256r1", 32, true);
-        importEcKeyTest(Algorithm.EC_BP384, "brainpoolP384r1", 48, true);
-        importEcKeyTest(Algorithm.EC_BP512, "brainpoolP512r1", 64, true);
+        importEcKeyTest(Algorithm.EC_P224, "secp224r1", false);
+        importEcKeyTest(Algorithm.EC_P256, "secp256r1", false);
+        importEcKeyTest(Algorithm.EC_P384, "secp384r1", false);
+        importEcKeyTest(Algorithm.EC_P521, "secp521r1", false);
+        importEcKeyTest(Algorithm.EC_K256, "secp256k1", false);
+        importEcKeyTest(Algorithm.EC_BP256, "brainpoolP256r1", true);
+        importEcKeyTest(Algorithm.EC_BP384, "brainpoolP384r1", true);
+        importEcKeyTest(Algorithm.EC_BP512, "brainpoolP512r1", true);
         log.info("TEST END: testImportKey()");
     }
 
-    private void importEcKeyTest(Algorithm algorithm, String curve, int componentLength, boolean brainpool) throws Exception {
+    private void importEcKeyTest(Algorithm algorithm, String curve, boolean brainpool) throws Exception {
         log.info("Test importing EC key with algorithm " + algorithm.getName());
         final List domains = Arrays.asList(2, 5, 8);
         final List capabilities = Arrays.asList(Capability.SIGN_ECDSA);
         final String label = "imported_asym_key";
         final short id = 0x1234;
 
-        if (brainpool) {
-            AsymmetricKeyTestHelper.importEcBrainpoolKey(session, id, label, domains, capabilities, algorithm, curve, componentLength);
-        } else {
-            AsymmetricKeyTestHelper.importEcKey(session, id, label, domains, capabilities, algorithm, curve, componentLength);
-        }
+        AsymmetricKeyTestHelper.importEcKey(session, id, label, domains, capabilities, algorithm, curve, brainpool);
 
         try {
             // Verify key properties

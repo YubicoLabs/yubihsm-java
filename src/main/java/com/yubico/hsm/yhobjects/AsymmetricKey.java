@@ -4,6 +4,7 @@ import com.yubico.hsm.YHSession;
 import com.yubico.hsm.exceptions.*;
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.*;
+import com.yubico.hsm.yhdata.YHObjectInfo;
 import lombok.NonNull;
 
 import javax.crypto.BadPaddingException;
@@ -190,11 +191,12 @@ public class AsymmetricKey extends YHObject {
      * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     * @throws NoSuchProviderException            If the BouncyCastle provider is not found
      */
     public X509Certificate signAttestationCertificate(final YHSession session, final short keyToAttest)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, CertificateException {
+                   IllegalBlockSizeException, CertificateException, NoSuchProviderException {
         return signAttestationCertificate(session, keyToAttest, getId());
     }
 
@@ -219,25 +221,20 @@ public class AsymmetricKey extends YHObject {
      * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     * @throws NoSuchProviderException            If the BouncyCastle provider is not found
      */
     public static X509Certificate signAttestationCertificate(@NonNull final YHSession session, final short keyToAttest, final short attestingKey)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, CertificateException {
+                   IllegalBlockSizeException, CertificateException, NoSuchProviderException {
         if (keyToAttest == 0) {
             throw new IllegalArgumentException("Missing Asymmetric key to attest");
         }
 
-        try {
-            getObjectInfo(session, attestingKey, Type.TYPE_OPAQUE);
-        } catch (YHDeviceException e) {
-            if (e.getYhError().equals(YHError.OBJECT_NOT_FOUND)) {
-                throw new UnsupportedOperationException("To sign attestation certificates, there has to exist a template X509Certificate with ID " +
-                                                        "0x" + Integer.toHexString(attestingKey) + ". Please use the Opaque class to import such a " +
-                                                        "template certificate and try again");
-            } else {
-                throw e;
-            }
+        if(!YHObject.exists(session, attestingKey, Type.TYPE_OPAQUE)) {
+            throw new UnsupportedOperationException("To sign attestation certificates, there has to exist a template X509Certificate with ID " +
+                                                    "0x" + Integer.toHexString(attestingKey) + ". Please use the Opaque class to import such a " +
+                                                    "template certificate and try again");
         }
 
         ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_ID_SIZE);
@@ -245,7 +242,11 @@ public class AsymmetricKey extends YHObject {
         bb.putShort(attestingKey);
 
         byte[] cert = session.sendSecureCmd(Command.SIGN_ATTESTATION_CERTIFICATE, bb.array());
-        return getCertFromBytes(cert);
+
+        YHObjectInfo key = YHObject.getObjectInfo(session, attestingKey, AsymmetricKey.TYPE);
+        boolean isBrainpool = AsymmetricKeyEc.isBrainpoolKeyAlgorithm(key.getAlgorithm());
+
+        return getCertFromBytes(cert, isBrainpool);
     }
 
     /**
@@ -400,9 +401,16 @@ public class AsymmetricKey extends YHObject {
         return sig;
     }
 
-    private static X509Certificate getCertFromBytes(@NonNull final byte[] certBytes) throws CertificateException {
+    private static X509Certificate getCertFromBytes(@NonNull final byte[] certBytes, final boolean brainpool)
+            throws CertificateException, NoSuchProviderException {
         ByteArrayInputStream in = new ByteArrayInputStream(certBytes);
-        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        CertificateFactory cf;
+        if (brainpool) {
+            Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+            cf =  CertificateFactory.getInstance("X.509", "BC");
+        } else {
+            cf = CertificateFactory.getInstance("X.509");
+        }
         return (X509Certificate) cf.generateCertificate(in);
     }
 

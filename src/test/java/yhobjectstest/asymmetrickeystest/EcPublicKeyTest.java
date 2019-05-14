@@ -45,29 +45,23 @@ public class EcPublicKeyTest {
     @Test
     public void testPublicKey() throws Exception {
         log.info("TEST START: testPublicKey()");
-        getEcPublicKeyTest(Algorithm.EC_P224, "secp224r1", 28, false);
-        getEcPublicKeyTest(Algorithm.EC_P256, "secp256r1", 32, false);
-        getEcPublicKeyTest(Algorithm.EC_P384, "secp384r1", 48, false);
-        getEcPublicKeyTest(Algorithm.EC_P521, "secp521r1", 66, false);
-        getEcPublicKeyTest(Algorithm.EC_K256, "secp256k1", 32, false);
-        getEcPublicKeyTest(Algorithm.EC_BP256, "brainpoolP256r1", 32, true);
-        getEcPublicKeyTest(Algorithm.EC_BP384, "brainpoolP384r1", 48, true);
-        getEcPublicKeyTest(Algorithm.EC_BP512, "brainpoolP512r1", 64, true);
+        getEcPublicKeyTest(Algorithm.EC_P224, "secp224r1", false);
+        getEcPublicKeyTest(Algorithm.EC_P256, "secp256r1", false);
+        getEcPublicKeyTest(Algorithm.EC_P384, "secp384r1", false);
+        getEcPublicKeyTest(Algorithm.EC_P521, "secp521r1", false);
+        getEcPublicKeyTest(Algorithm.EC_K256, "secp256k1", false);
+        getEcPublicKeyTest(Algorithm.EC_BP256, "brainpoolP256r1", true);
+        getEcPublicKeyTest(Algorithm.EC_BP384, "brainpoolP384r1", true);
+        getEcPublicKeyTest(Algorithm.EC_BP512, "brainpoolP512r1", true);
         log.info("TEST END: testPublicKey()");
     }
 
 
-    private void getEcPublicKeyTest(Algorithm algorithm, String curve, int componentLength, boolean brainpool) throws Exception {
+    private void getEcPublicKeyTest(Algorithm algorithm, String curve, boolean brainpool) throws Exception {
         log.info("Test retrieving the public key of an EC key with algorithm " + algorithm.getName());
         final short id = 0x1234;
-        KeyPair keypair;
-        if (brainpool) {
-            keypair = AsymmetricKeyTestHelper.importEcBrainpoolKey(session, id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_ECDSA),
-                                                                   algorithm, curve, componentLength);
-        } else {
-            keypair = AsymmetricKeyTestHelper.importEcKey(session, id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_ECDSA), algorithm,
-                                                          curve, componentLength);
-        }
+        KeyPair keypair = AsymmetricKeyTestHelper
+                .importEcKey(session, id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_ECDSA), algorithm, curve, brainpool);
 
         try {
             final AsymmetricKeyEc key = new AsymmetricKeyEc(id, algorithm);

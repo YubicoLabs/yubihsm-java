@@ -48,13 +48,12 @@ public class RsaDecryptTest {
         yubihsm.close();
     }
 
-    //@Test
+    @Test
     public void testDecryptDataWithInsufficientPermissions() throws Exception {
         log.info("TEST START: testDecryptDataWithInsufficientPermissions()");
         final short id = 0x1234;
-        PublicKey pubKey = AsymmetricKeyTestHelper.importRsaKey(session, id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_PKCS,
-                                                                                                                       Capability.SIGN_PSS),
-                                                                Algorithm.RSA_2048, 2048, 128);
+        PublicKey pubKey = AsymmetricKeyTestHelper.importRsaKey(session, id, "", Arrays.asList(2, 5, 8),
+                                                                Arrays.asList(Capability.SIGN_PKCS, Capability.SIGN_PSS), Algorithm.RSA_2048, 2048);
         try {
             AsymmetricKeyRsa key = new AsymmetricKeyRsa(id, Algorithm.RSA_2048);
 
@@ -90,20 +89,20 @@ public class RsaDecryptTest {
         log.info("TEST START: testDecryptPkcs1()");
 
         byte[] data = new byte[0];
-        decryptPkcs1Test(Algorithm.RSA_2048, 2048, 128, data);
-        decryptPkcs1Test(Algorithm.RSA_3072, 3072, 192, data);
-        decryptPkcs1Test(Algorithm.RSA_4096, 4096, 256, data);
+        decryptPkcs1Test(Algorithm.RSA_2048, 2048, data);
+        decryptPkcs1Test(Algorithm.RSA_3072, 3072, data);
+        decryptPkcs1Test(Algorithm.RSA_4096, 4096, data);
 
         data = "This is test data for decryption".getBytes();
-        decryptPkcs1Test(Algorithm.RSA_2048, 2048, 128, data);
-        decryptPkcs1Test(Algorithm.RSA_3072, 3072, 192, data);
-        decryptPkcs1Test(Algorithm.RSA_4096, 4096, 256, data);
+        decryptPkcs1Test(Algorithm.RSA_2048, 2048, data);
+        decryptPkcs1Test(Algorithm.RSA_3072, 3072, data);
+        decryptPkcs1Test(Algorithm.RSA_4096, 4096, data);
 
         data = new byte[244]; // The maximum number of bytes that can be encrypted using javax.crypto
         new Random().nextBytes(data);
-        decryptPkcs1Test(Algorithm.RSA_2048, 2048, 128, data);
-        decryptPkcs1Test(Algorithm.RSA_3072, 3072, 192, data);
-        decryptPkcs1Test(Algorithm.RSA_4096, 4096, 256, data);
+        decryptPkcs1Test(Algorithm.RSA_2048, 2048, data);
+        decryptPkcs1Test(Algorithm.RSA_3072, 3072, data);
+        decryptPkcs1Test(Algorithm.RSA_4096, 4096, data);
 
         log.info("TEST END: testDecryptPkcs1()");
     }
@@ -111,21 +110,21 @@ public class RsaDecryptTest {
     //@Test
     public void testDecryptOaep() throws Exception {
         log.info("TEST START: testDecryptOaep()");
-        decryptOaepTest(Algorithm.RSA_2048, 2048, 128);
-        decryptOaepTest(Algorithm.RSA_3072, 3072, 192);
-        decryptOaepTest(Algorithm.RSA_4096, 4096, 256);
+        decryptOaepTest(Algorithm.RSA_2048, 2048);
+        decryptOaepTest(Algorithm.RSA_3072, 3072);
+        decryptOaepTest(Algorithm.RSA_4096, 4096);
         log.info("TEST END: testDecryptOaep()");
     }
 
     // --------------------------------------------------------------------------------------------------
 
-    private void decryptPkcs1Test(Algorithm keyAlgorithm, int keysize, int componentLength, byte[] data) throws Exception {
+    private void decryptPkcs1Test(Algorithm keyAlgorithm, int keysize, byte[] data) throws Exception {
         log.info("Test decrypting data of length " + data.length + " with RSA key of algorithm " + keyAlgorithm.getName() + " using RSA-PKCS#1v1.5");
 
         final short id = 0x1234;
         PublicKey publicKey =
                 AsymmetricKeyTestHelper.importRsaKey(session, id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.DECRYPT_PKCS), keyAlgorithm,
-                                                     keysize, componentLength);
+                                                     keysize);
 
         try {
             Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
@@ -141,12 +140,12 @@ public class RsaDecryptTest {
         }
     }
 
-    private void decryptOaepTest(Algorithm keyAlgorithm, int keysize, int componentLength) throws Exception {
+    private void decryptOaepTest(Algorithm keyAlgorithm, int keysize) throws Exception {
 
         final short id = 0x1234;
         PublicKey publicKey =
                 AsymmetricKeyTestHelper.importRsaKey(session, id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.DECRYPT_OAEP), keyAlgorithm,
-                                                     keysize, componentLength);
+                                                     keysize);
 
         try {
             AsymmetricKeyRsa key = new AsymmetricKeyRsa(id, keyAlgorithm);

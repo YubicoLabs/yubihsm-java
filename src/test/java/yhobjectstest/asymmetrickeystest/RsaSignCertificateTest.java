@@ -18,9 +18,12 @@ import org.junit.Test;
 import javax.annotation.Nonnull;
 import java.io.StringReader;
 import java.nio.ByteBuffer;
-import java.security.*;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Security;
 import java.security.cert.X509Certificate;
-import java.security.spec.RSAPrivateCrtKeySpec;
+import java.security.interfaces.RSAPrivateKey;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.logging.Logger;
@@ -148,17 +151,33 @@ public class RsaSignCertificateTest {
     @Test
     public void testSigningAttestationCertificate() throws Exception {
         log.info("TEST START: testSigningAttestationCertificate()");
+        signAttestationCert(Algorithm.RSA_2048, 2048, Algorithm.RSA_2048);
+        signAttestationCert(Algorithm.RSA_2048, 2048, Algorithm.RSA_3072);
+        signAttestationCert(Algorithm.RSA_2048, 2048, Algorithm.EC_P224);
+
+        signAttestationCert(Algorithm.RSA_3072, 3072, Algorithm.RSA_3072);
+        signAttestationCert(Algorithm.RSA_3072, 3072, Algorithm.RSA_4096);
+        signAttestationCert(Algorithm.RSA_3072, 3072, Algorithm.EC_P224);
+
+        signAttestationCert(Algorithm.RSA_4096, 4096, Algorithm.RSA_4096);
+        signAttestationCert(Algorithm.RSA_4096, 4096, Algorithm.RSA_2048);
+        signAttestationCert(Algorithm.RSA_4096, 4096, Algorithm.EC_P224);
+        log.info("TEST END: testSigningAttestationCertificate()");
+    }
+
+    private void signAttestationCert(Algorithm key1Algorithm, int key1size, Algorithm key2Algorithm) throws Exception {
+        log.info("Test signing attestation certificate using RSA key with algorithm " + key1Algorithm.getName());
         short attestingKeyid = 0x5678;
         short attestedKeyid = 0x0123;
         try {
 
             PublicKey pubKey = AsymmetricKeyTestHelper.importRsaKey(session, attestingKeyid, "", Arrays.asList(2, 5, 8),
                                                                     Arrays.asList(Capability.SIGN_ATTESTATION_CERTIFICATE),
-                                                                    Algorithm.RSA_2048, 2048, 128);
-            AsymmetricKey attestingKey = new AsymmetricKey(attestingKeyid, Algorithm.RSA_2048);
+                                                                    key1Algorithm, key1size);
+            AsymmetricKey attestingKey = new AsymmetricKey(attestingKeyid, key1Algorithm);
 
 
-            AsymmetricKey.generateAsymmetricKey(session, attestedKeyid, "", Arrays.asList(2, 5, 8), Algorithm.RSA_2048,
+            AsymmetricKey.generateAsymmetricKey(session, attestedKeyid, "", Arrays.asList(2, 5, 8), key2Algorithm,
                                                 Arrays.asList(Capability.SIGN_PKCS));
 
 
@@ -184,30 +203,20 @@ public class RsaSignCertificateTest {
             YHObject.delete(session, attestingKeyid, AsymmetricKey.TYPE);
             YHObject.delete(session, attestingKeyid, Opaque.TYPE);
         }
-        log.info("TEST END: testSigningAttestationCertificate()");
     }
 
     @Test
     public void testSSHCertificateSign() throws Exception {
         log.info("TEST START: testSSHCertificateSign()");
 
-        PrivateKey pk = getRsaPrivateKeyFromPemString(rsaPrivateKey);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        RSAPrivateCrtKeySpec ks = kf.getKeySpec(pk, RSAPrivateCrtKeySpec.class);
-
-        byte[] prime1 = ks.getPrimeP().toByteArray();
-        byte[] prime2 = ks.getPrimeQ().toByteArray();
-
-        prime1 = Arrays.copyOfRange(prime1, prime1.length - 128, prime1.length);
-        prime2 = Arrays.copyOfRange(prime2, prime2.length - 128, prime2.length);
-
+        PrivateKey privkey = getRsaPrivateKeyFromPemString(rsaPrivateKey);
 
         short keyId = 5; // 5 because this is one of the white listed keys in the ssh cert req
         short templateId = 10;
 
         try {
             AsymmetricKeyRsa.importKey(session, keyId, "", Arrays.asList(5), Algorithm.RSA_2048, Arrays.asList(Capability.SIGN_SSH_CERTIFICATE),
-                                       prime1, prime2);
+                                       (RSAPrivateKey) privkey);
 
             Template.importTemplate(session, templateId, "", Arrays.asList(5), Arrays.asList(Capability.SIGN_SSH_CERTIFICATE),
                                     Algorithm.TEMPLATE_SSH, sshTemplate);
@@ -228,6 +237,7 @@ public class RsaSignCertificateTest {
             assertArrayEquals(expectedResultCert, resultCert);
         } finally {
             YHObject.delete(session, keyId, AsymmetricKey.TYPE);
+            YHObject.delete(session, templateId, Template.TYPE);
         }
         log.info("TEST END: testSSHCertificateSign()");
     }

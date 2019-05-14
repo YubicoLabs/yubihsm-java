@@ -159,9 +159,9 @@ public class RsaNewKeyTest {
     @Test
     public void testImportKey() throws Exception {
         log.info("TEST START: testImportKey()");
-        importRsaKeyTest(Algorithm.RSA_2048, 2048, 128);
-        importRsaKeyTest(Algorithm.RSA_3072, 3072, 192);
-        importRsaKeyTest(Algorithm.RSA_4096, 4096, 256);
+        importRsaKeyTest(Algorithm.RSA_2048, 2048);
+        importRsaKeyTest(Algorithm.RSA_3072, 3072);
+        importRsaKeyTest(Algorithm.RSA_4096, 4096);
         log.info("TEST END: testImportKey()");
     }
 
@@ -195,7 +195,7 @@ public class RsaNewKeyTest {
         }
     }
 
-    private void importRsaKeyTest(Algorithm algorithm, int keysize, int componentLength) throws Exception {
+    private void importRsaKeyTest(Algorithm algorithm, int keysize) throws Exception {
         log.info("Test importing an RSA key with algorithm " + algorithm.getName());
 
         final List domains = Arrays.asList(2, 5, 8);
@@ -203,7 +203,7 @@ public class RsaNewKeyTest {
         final String label = "imported_asym_key";
         final short id = 0x1234;
 
-        AsymmetricKeyTestHelper.importRsaKey(session, id, label, domains, capabilities, algorithm, keysize, componentLength);
+        AsymmetricKeyTestHelper.importRsaKey(session, id, label, domains, capabilities, algorithm, keysize);
 
         try {
             // Verify key property

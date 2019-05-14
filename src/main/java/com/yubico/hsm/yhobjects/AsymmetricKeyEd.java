@@ -9,6 +9,7 @@ import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
 import lombok.NonNull;
+import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -36,6 +37,37 @@ public class AsymmetricKeyEd extends AsymmetricKey {
         setId(id);
         setType(TYPE);
         setKeyAlgorithm(keyAlgorithm);
+    }
+
+    /**
+     * Imports a user generated ED key into the YubiHSM
+     *
+     * @param session              An authenticated session to communicate with the device over
+     * @param id                   The desired Object ID of the imported ED key. Set to 0 to have it generated
+     * @param label                The label of the imported ED key
+     * @param domains              The domains where the imported ED key will be accessible
+     * @param keyAlgorithm         The algorithm used to generate the imported ED key
+     * @param capabilities         The actions that can be performed using the imported ED key
+     * @param privateKeyParameters The private key to import.
+     * @return ID of the imported ED key on the device
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     */
+    public static short importKey(final YHSession session, final short id, final String label, @NonNull final List<Integer> domains,
+                                  @NonNull final Algorithm keyAlgorithm, final List<Capability> capabilities, @NonNull final
+                                  Ed25519PrivateKeyParameters privateKeyParameters)
+            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
+                   YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
+                   IllegalBlockSizeException {
+        return importKey(session, id, label, domains, keyAlgorithm, capabilities, privateKeyParameters.getEncoded());
     }
 
     /**

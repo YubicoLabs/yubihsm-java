@@ -3,6 +3,7 @@ package com.yubico.hsm.yhobjects;
 
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.exceptions.*;
+import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
@@ -14,7 +15,9 @@ import javax.crypto.NoSuchPaddingException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.*;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.RSAPrivateCrtKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.List;
 import java.util.logging.Logger;
@@ -38,6 +41,51 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
         setId(id);
         setType(TYPE);
         setKeyAlgorithm(keyAlgorithm);
+    }
+
+    /**
+     * Imports a user generated RSA key into the YubiHSM
+     *
+     * @param session      An authenticated session to communicate with the device over
+     * @param id           The desired Object ID of the imported RSA key. Set to 0 to have it generated
+     * @param label        The label of the imported RSA key
+     * @param domains      The domains where the imported RSA key will be accessible
+     * @param keyAlgorithm The algorithm used to generate the imported RSA key
+     * @param capabilities The actions that can be performed using the imported RSA key
+     * @param privateKey   The private key to import
+     * @return ID of the imported RSA key on the device
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     * @throws UnsupportedAlgorithmException      If the specified key algorithm is not an RSA algorithm
+     * @throws InvalidKeySpecException            If parsing the private key fails
+     */
+    public static short importKey(final YHSession session, final short id, final String label, @NonNull final List<Integer> domains,
+                                  @NonNull final Algorithm keyAlgorithm, final List<Capability> capabilities, @NonNull final RSAPrivateKey privateKey)
+            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
+                   YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
+                   IllegalBlockSizeException, UnsupportedAlgorithmException, InvalidKeySpecException {
+
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        RSAPrivateCrtKeySpec ks = kf.getKeySpec(privateKey, RSAPrivateCrtKeySpec.class);
+
+        final int componentLength = getBlockSize(keyAlgorithm) / 2;
+        byte[] p = Utils.getUnsignedByteArrayFromBigInteger(ks.getPrimeP(), componentLength);
+        byte[] q = Utils.getUnsignedByteArrayFromBigInteger(ks.getPrimeQ(), componentLength);
+        if (p.length != componentLength || q.length != componentLength) {
+            throw new InvalidKeyException(
+                    "Failed to obtain primes of length " + componentLength + " bytes from the private key. Consider specifying the " +
+                    "private key primes in byte arrays of " + componentLength + " bytes each");
+        }
+
+        return importKey(session, id, label, domains, keyAlgorithm, capabilities, p, q);
     }
 
     /**

@@ -122,7 +122,8 @@ public class AsymmetricKeyEdTest {
         // Test importing an ED key without specifying the private key
         exceptionThrown = false;
         try {
-            AsymmetricKeyEd.importKey(session, (short) 0, "", Arrays.asList(2), Algorithm.EC_P256, Arrays.asList(Capability.SIGN_EDDSA), null);
+            AsymmetricKeyEd
+                    .importKey(session, (short) 0, "", Arrays.asList(2), Algorithm.EC_P256, Arrays.asList(Capability.SIGN_EDDSA), (byte[]) null);
         } catch (IllegalArgumentException e) {
             exceptionThrown = true;
         }
@@ -216,7 +217,7 @@ public class AsymmetricKeyEdTest {
         Ed25519PrivateKeyParameters privateKey = (Ed25519PrivateKeyParameters) asymmetricCipherKeyPair.getPrivate();
         Ed25519PublicKeyParameters publicKey = (Ed25519PublicKeyParameters) asymmetricCipherKeyPair.getPublic();
 
-        AsymmetricKeyEd.importKey(session, id, label, domains, Algorithm.EC_ED25519, capabilities, privateKey.getEncoded());
+        AsymmetricKeyEd.importKey(session, id, label, domains, Algorithm.EC_ED25519, capabilities, privateKey);
         return publicKey;
     }
 

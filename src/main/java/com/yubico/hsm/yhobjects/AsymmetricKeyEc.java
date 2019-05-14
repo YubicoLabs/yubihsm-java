@@ -14,6 +14,7 @@ import javax.crypto.NoSuchPaddingException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.*;
+import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.*;
 import java.util.Arrays;
@@ -38,6 +39,52 @@ public class AsymmetricKeyEc extends AsymmetricKey {
         setKeyAlgorithm(keyAlgorithm);
     }
 
+    /**
+     * @param algorithm
+     * @return True if the algorithm is one of {{@link Algorithm.EC_BP256}}, {{@link Algorithm.EC_BP384}} or {{@link Algorithm.EC_BP512}}. False
+     * otherwise
+     */
+    public static boolean isBrainpoolKeyAlgorithm(@NonNull final Algorithm algorithm) {
+        return algorithm.equals(Algorithm.EC_BP256) || algorithm.equals(Algorithm.EC_BP384) || algorithm.equals(Algorithm.EC_BP512);
+    }
+
+    /**
+     * Imports a user generated EC key into the YubiHSM
+     *
+     * @param session      An authenticated session to communicate with the device over
+     * @param id           The desired Object ID of the imported EC key. Set to 0 to have it generated
+     * @param label        The label of the imported EC key
+     * @param domains      The domains where the imported EC key will be accessible
+     * @param keyAlgorithm The algorithm used to generate the imported EC key
+     * @param capabilities The actions that can be performed using the imported EC key
+     * @param privateKey   The private key to import
+     * @return ID of the imported EC key on the device
+     * @throws NoSuchAlgorithmException           If the encryption/decryption fails
+     * @throws YHDeviceException                  If the device returns an error
+     * @throws YHInvalidResponseException         If the response from the device cannot be parsed
+     * @throws YHConnectionException              If the connection to the device fails
+     * @throws InvalidKeyException                If the encryption/decryption fails
+     * @throws YHAuthenticationException          If the session authentication fails
+     * @throws NoSuchPaddingException             If the encryption/decryption fails
+     * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
+     * @throws BadPaddingException                If the encryption/decryption fails
+     * @throws IllegalBlockSizeException          If the encryption/decryption fails
+     * @throws UnsupportedAlgorithmException      If the key algorithm is not recognized.
+     */
+    public static short importKey(final YHSession session, final short id, final String label, @NonNull final List<Integer> domains,
+                                  @NonNull final Algorithm keyAlgorithm, final List<Capability> capabilities, @NonNull final ECPrivateKey privateKey)
+            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
+                   YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
+                   IllegalBlockSizeException, UnsupportedAlgorithmException {
+        final int keyLength = getEcComponentLength(keyAlgorithm);
+        byte[] d = Utils.getUnsignedByteArrayFromBigInteger(privateKey.getS(), keyLength);
+        if(d.length != keyLength) {
+            throw new InvalidKeyException("Failed to obtain " + keyLength + " bytes from the private key. Consider specifying the private key in a " +
+                                          "byte array of " + keyLength + " bytes");
+        }
+
+        return importKey(session, id, label, domains, keyAlgorithm, capabilities, d);
+    }
 
     /**
      * Imports a user generated EC key into the YubiHSM
@@ -313,10 +360,6 @@ public class AsymmetricKeyEc extends AsymmetricKey {
             return "brainpoolP512r1";
         }
         throw new UnsupportedAlgorithmException(algorithm.getName() + " algorithm is not a supported EC key algorithm");
-    }
-
-    private boolean isBrainpoolKeyAlgorithm(@NonNull final Algorithm algorithm) {
-        return algorithm.equals(Algorithm.EC_BP256) || algorithm.equals(Algorithm.EC_BP384) || algorithm.equals(Algorithm.EC_BP512);
     }
 
     private byte[] getUncompressedEcPublicKey(PublicKey publicKey, int length) {

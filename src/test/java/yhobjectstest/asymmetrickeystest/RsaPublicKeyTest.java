@@ -44,17 +44,17 @@ public class RsaPublicKeyTest {
     @Test
     public void testPublicKey() throws Exception {
         log.info("TEST START: testPublicKey()");
-        getRsaPublicKeyTest(Algorithm.RSA_2048, 2048, 128);
-        getRsaPublicKeyTest(Algorithm.RSA_3072, 3072, 192);
-        getRsaPublicKeyTest(Algorithm.RSA_4096, 4096, 256);
+        getRsaPublicKeyTest(Algorithm.RSA_2048, 2048);
+        getRsaPublicKeyTest(Algorithm.RSA_3072, 3072);
+        getRsaPublicKeyTest(Algorithm.RSA_4096, 4096);
         log.info("TEST END: testPublicKey()");
     }
 
-    private void getRsaPublicKeyTest(Algorithm algorithm, int keysize, int componentLength) throws Exception {
+    private void getRsaPublicKeyTest(Algorithm algorithm, int keysize) throws Exception {
         log.info("Test retrieving the public part of an RSA key with algorithm " + algorithm.getName());
         short id = 0x1234;
         PublicKey pubKey = AsymmetricKeyTestHelper.importRsaKey(session, id, "", Arrays.asList(2, 5), Arrays.asList(Capability.SIGN_PSS), algorithm,
-                                                                keysize, componentLength);
+                                                                keysize);
 
         try {
             AsymmetricKeyRsa key = new AsymmetricKeyRsa(id, algorithm);

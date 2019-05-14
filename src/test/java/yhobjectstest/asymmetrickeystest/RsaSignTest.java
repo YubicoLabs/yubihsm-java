@@ -57,7 +57,7 @@ public class RsaSignTest {
 
         short id = 0x1234;
         PublicKey pubKey = AsymmetricKeyTestHelper.importRsaKey(session, id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_PKCS),
-                                                                Algorithm.RSA_2048, 2048, 128);
+                                                                Algorithm.RSA_2048, 2048);
         try {
             final AsymmetricKeyRsa key = new AsymmetricKeyRsa(id, Algorithm.RSA_2048);
 
@@ -81,23 +81,23 @@ public class RsaSignTest {
     public void testSignData() throws Exception {
         log.info("TEST START: testSignData()");
 
-        signPkcs1Test(Algorithm.RSA_2048, 2048, 128);
-        signPkcs1Test(Algorithm.RSA_3072, 3072, 192);
-        signPkcs1Test(Algorithm.RSA_4096, 4096, 256);
+        signPkcs1Test(Algorithm.RSA_2048, 2048);
+        signPkcs1Test(Algorithm.RSA_3072, 3072);
+        signPkcs1Test(Algorithm.RSA_4096, 4096);
 
-        signPssTest(Algorithm.RSA_2048, 2048, 128);
-        signPssTest(Algorithm.RSA_3072, 3072, 192);
-        signPssTest(Algorithm.RSA_4096, 4096, 256);
+        signPssTest(Algorithm.RSA_2048, 2048);
+        signPssTest(Algorithm.RSA_3072, 3072);
+        signPssTest(Algorithm.RSA_4096, 4096);
 
         log.info("TEST END: testSignData()");
     }
 
     // ---------------------------------------------------------------------------------
 
-    private void signPkcs1Test(Algorithm keyAlgorithm, int keysize, int componentLength) throws Exception {
+    private void signPkcs1Test(Algorithm keyAlgorithm, int keysize) throws Exception {
         short id = 0x1234;
         PublicKey pubKey = AsymmetricKeyTestHelper.importRsaKey(session, id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_PKCS),
-                                                                keyAlgorithm, keysize, componentLength);
+                                                                keyAlgorithm, keysize);
         try {
             AsymmetricKeyRsa key = new AsymmetricKeyRsa(id, keyAlgorithm);
 
@@ -134,10 +134,10 @@ public class RsaSignTest {
         assertTrue(sig.verify(signature));
     }
 
-    private void signPssTest(Algorithm keyAlgorithm, int keysize, int componentLength) throws Exception {
+    private void signPssTest(Algorithm keyAlgorithm, int keysize) throws Exception {
         short id = 0x1234;
         PublicKey pubKey = AsymmetricKeyTestHelper.importRsaKey(session, id, "", Arrays.asList(2, 5, 8), Arrays.asList(Capability.SIGN_PSS),
-                                                                keyAlgorithm, keysize, componentLength);
+                                                                keyAlgorithm, keysize);
 
         try {
             AsymmetricKeyRsa key = new AsymmetricKeyRsa(id, keyAlgorithm);

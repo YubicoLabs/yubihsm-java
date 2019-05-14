@@ -16,10 +16,9 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.RSAPrivateCrtKeySpec;
-import java.util.Arrays;
 import java.util.List;
 
 public class AsymmetricKeyTestHelper {
@@ -56,90 +55,37 @@ public class AsymmetricKeyTestHelper {
     }
 
     public static PublicKey importRsaKey(YHSession session, short id, String label, List<Integer> domains, List<Capability> capabilities,
-                                         Algorithm algorithm,
-                                         int keysize,
-                                         int componentLength)
+                                         Algorithm algorithm, int keysize)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException, InvalidKeySpecException, UnsupportedAlgorithmException {
-        byte[] p;
-        byte[] q;
-        PublicKey publicKey;
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+        kpg.initialize(keysize);
+        KeyPair keypair = kpg.generateKeyPair();
 
-        // Sometimes, the prime numbers byte array is not exactly the expected length. When it is longer, it starts with 0 bytes
-        // TODO Find out why and how to avoid it (it seems to be a java.security thing)
-        do {
-            KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-            kpg.initialize(keysize);
-            KeyPair keypair = kpg.generateKeyPair();
-            publicKey = keypair.getPublic();
+        AsymmetricKeyRsa.importKey(session, id, label, domains, algorithm, capabilities, (RSAPrivateKey) keypair.getPrivate());
 
-            KeyFactory kf = KeyFactory.getInstance("RSA");
-            RSAPrivateCrtKeySpec ks = kf.getKeySpec(keypair.getPrivate(), RSAPrivateCrtKeySpec.class);
-
-            p = ks.getPrimeP().toByteArray();
-            q = ks.getPrimeQ().toByteArray();
-
-        } while (p.length < componentLength);
-
-        if (p.length > componentLength) {
-            p = Arrays.copyOfRange(p, p.length - componentLength, p.length);
-            q = Arrays.copyOfRange(q, q.length - componentLength, q.length);
-        }
-
-        AsymmetricKeyRsa.importKey(session, id, label, domains, algorithm, capabilities, p, q);
-
-        return publicKey;
+        return keypair.getPublic();
     }
 
     public static KeyPair importEcKey(YHSession session, short id, String label, List<Integer> domains, List<Capability> capabilities,
-                                      Algorithm algorithm, String curve, int componentLength)
+                                      Algorithm algorithm, String curve, boolean brainpool)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, UnsupportedAlgorithmException {
-        byte[] d;
-        KeyPair keypair;
-
-        // Sometimes, the prime numbers byte array is not exactly the expected length. When it is longer, it starts with 0 bytes
-        // TODO Find out why and how to avoid it (it seems to be a java.security thing)
-        do {
-            KeyPairGenerator generator = KeyPairGenerator.getInstance("EC");
-            generator.initialize(new ECGenParameterSpec(curve));
-            keypair = generator.generateKeyPair();
-            ECPrivateKey privateKey = (ECPrivateKey) keypair.getPrivate();
-            d = privateKey.getS().toByteArray();
-        } while (d.length < componentLength);
-        if (d.length > componentLength) {
-            d = Arrays.copyOfRange(d, d.length - componentLength, d.length);
-        }
-
-        AsymmetricKeyEc.importKey(session, id, label, domains, algorithm, capabilities, d);
-        return keypair;
-    }
-
-    public static KeyPair importEcBrainpoolKey(YHSession session, short id, String label, List<Integer> domains, List<Capability> capabilities,
-                                               Algorithm algorithm, String curve, int componentLength)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
-                   InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
-                   IllegalBlockSizeException, NoSuchProviderException, UnsupportedAlgorithmException {
-        byte[] d;
-        KeyPair keypair;
-
-        // Sometimes, the prime numbers byte array is not exactly the expected length. When it is longer, it starts with 0 bytes
-        // TODO Find out why and how to avoid it (it seems to be a java.security thing)
-        do {
+                   IllegalBlockSizeException, UnsupportedAlgorithmException, NoSuchProviderException {
+        KeyPairGenerator generator;
+        if (brainpool) {
             Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-            KeyPairGenerator generator = KeyPairGenerator.getInstance("EC", "BC");
-            generator.initialize(new ECGenParameterSpec(curve));
-            keypair = generator.generateKeyPair();
-            ECPrivateKey privateKey = (ECPrivateKey) keypair.getPrivate();
-            d = privateKey.getS().toByteArray();
-        } while (d.length < componentLength);
-        if (d.length > componentLength) {
-            d = Arrays.copyOfRange(d, d.length - componentLength, d.length);
+            generator = KeyPairGenerator.getInstance("EC", "BC");
+        } else {
+            generator = KeyPairGenerator.getInstance("EC");
         }
+        generator.initialize(new ECGenParameterSpec(curve));
+        KeyPair keypair = generator.generateKeyPair();
 
-        AsymmetricKeyEc.importKey(session, id, label, domains, algorithm, capabilities, d);
+        ECPrivateKey privateKey = (ECPrivateKey) keypair.getPrivate();
+        AsymmetricKeyEc.importKey(session, id, label, domains, algorithm, capabilities, privateKey);
+
         return keypair;
     }
 }
