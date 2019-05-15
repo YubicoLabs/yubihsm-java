@@ -21,7 +21,6 @@ import java.security.InvalidKeyException;
 import java.security.InvalidParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
@@ -65,9 +64,9 @@ public class AuthenticationKey extends YHObject {
      */
     public AuthenticationKey(final short id, char[] password) throws InvalidKeySpecException, NoSuchAlgorithmException {
         super(id, TYPE);
-        List<byte[]> keys = deriveSecretKey(password);
-        encryptionKey = keys.get(0);
-        macKey = keys.get(1);
+        Object[] keys = deriveSecretKey(password);
+        encryptionKey = (byte[]) keys[0];
+        macKey = (byte[]) keys[1];
     }
 
     /**
@@ -84,7 +83,7 @@ public class AuthenticationKey extends YHObject {
         return macKey;
     }
 
-    private static List<byte[]> deriveSecretKey(@NonNull char[] password) throws InvalidKeySpecException, NoSuchAlgorithmException {
+    private static Object[] deriveSecretKey(@NonNull char[] password) throws InvalidKeySpecException, NoSuchAlgorithmException {
         if (password.length == 0) {
             throw new IllegalArgumentException("Missing password for derivation of authentication key");
         }
@@ -95,9 +94,9 @@ public class AuthenticationKey extends YHObject {
         SecretKey key = keyFactory.generateSecret(keySpec);
         final byte[] keybytes = key.getEncoded();
 
-        ArrayList<byte[]> keys = new ArrayList<byte[]>();
-        keys.add(Arrays.copyOfRange(keybytes, 0, KEY_SIZE));
-        keys.add(Arrays.copyOfRange(keybytes, KEY_SIZE, keybytes.length));
+        Object[] keys = new Object[2];
+        keys[0] = Arrays.copyOfRange(keybytes, 0, KEY_SIZE);
+        keys[1] = Arrays.copyOfRange(keybytes, KEY_SIZE, keybytes.length);
 
         Arrays.fill(password, 'c');
         return keys;
@@ -215,9 +214,9 @@ public class AuthenticationKey extends YHObject {
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, InvalidKeySpecException {
-        List<byte[]> secretKey = deriveSecretKey(password);
-        byte[] encKey = secretKey.get(0);
-        byte[] macKey = secretKey.get(1);
+        Object[] secretKeys = deriveSecretKey(password);
+        byte[] encKey = (byte[]) secretKeys[0];
+        byte[] macKey = (byte[]) secretKeys[1];
         short newid = importAuthenticationKey(session, id, label, domains, keyAlgorithm, capabilities, delegatedCapabilities, encKey, macKey);
 
         Arrays.fill(password, 'c');
@@ -302,9 +301,9 @@ public class AuthenticationKey extends YHObject {
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, InvalidKeySpecException {
-        List<byte[]> secretKey = deriveSecretKey(password);
-        byte[] encKey = secretKey.get(0);
-        byte[] macKey = secretKey.get(1);
+        Object[] secretKeys = deriveSecretKey(password);
+        byte[] encKey = (byte[]) secretKeys[0];
+        byte[] macKey = (byte[]) secretKeys[1];
         changeAuthenticationKey(session, id, encKey, macKey);
 
         Arrays.fill(password, 'c');

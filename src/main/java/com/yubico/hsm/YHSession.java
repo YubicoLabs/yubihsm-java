@@ -9,6 +9,7 @@ import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Command;
 import com.yubico.hsm.yhconcepts.YHError;
 import com.yubico.hsm.yhobjects.AuthenticationKey;
+import com.yubico.hsm.yhobjects.YHObject;
 import lombok.NonNull;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
@@ -43,8 +44,16 @@ public class YHSession {
     private final byte KEY_RMAC = 0x07;
     private final byte CARD_CRYPTOGRAM = 0x00;
     private final byte HOST_CRYPTOGRAM = 0x01;
-    private final int BLOCK_SIZE = 16;
-    private final int HALF_BLOCK_SIZE = 8;
+
+    private final int PADDING_BLOCK_SIZE = 16;
+    private final int CHALLENGE_SIZE = 16;
+    private final int HALF_CHALLENGE_SIZE = 8;
+    private final int SESSION_KEY_SIZE = 16;
+    private final int MESSAGE_MAC_SIZE = 8;
+    private final int SESSION_COUNTER_SIZE = 16;
+    private final byte MIN_SESSION_ID = 0;
+    private final byte MAX_SESSION_ID = 15;
+    private final int SESSION_ID_SIZE = 1;
 
     private YubiHsm yubihsm;
     @NonNull private AuthenticationKey authenticationKey;
@@ -57,13 +66,13 @@ public class YHSession {
     private long lowCounter;
     private long highCounter;
 
-    public YHSession(final YubiHsm hsm, final short authKeyId, char[] password) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public YHSession(@NonNull final YubiHsm hsm, final short authKeyId, char[] password) throws NoSuchAlgorithmException, InvalidKeySpecException {
         yubihsm = hsm;
         authenticationKey = new AuthenticationKey(authKeyId, password);
         init();
     }
 
-    public YHSession(final YubiHsm hsm, final short authKeyId, final byte[] encryptionKey, final byte[] macKey) {
+    public YHSession(@NonNull final YubiHsm hsm, final short authKeyId, final byte[] encryptionKey, final byte[] macKey) {
         yubihsm = hsm;
         authenticationKey = new AuthenticationKey(authKeyId, encryptionKey, macKey);
         init();
@@ -104,8 +113,7 @@ public class YHSession {
      * @throws YHAuthenticationException  If authenticating the session fails
      */
     public void authenticateSession()
-            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException,
-                   YHAuthenticationException {
+            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, YHAuthenticationException {
 
         if (status == SessionStatus.AUTHENTICATED) {
             log.fine("Session " + getSessionID() + " already authenticated. Doing nothing");
@@ -116,31 +124,32 @@ public class YHSession {
             throw new YHAuthenticationException("Authentication key is needed to open a session to the device");
         }
 
-        byte[] challenge = SecureRandom.getInstanceStrong().generateSeed(8);
-        byte[] responseData = getCreateSessionResponse(challenge);
-
+        // Create session
+        byte[] hostChallenge = SecureRandom.getInstanceStrong().generateSeed(HALF_CHALLENGE_SIZE);
+        Object[] deviceResponse = createSessionAndGetResponse(hostChallenge);
+        byte[] deviceChallenge = (byte[]) deviceResponse[0];
+        byte[] deviceCryptogram = (byte[]) deviceResponse[1];
 
         // Assemble 16 byte challenge consisting of the 8 random bytes sent to the device followed by the 8 bytes received from the device
-        challenge = getSessionAuthenticationChallenge(challenge, Arrays.copyOfRange(responseData, 1, 1 + 8));
+        byte[] challenge = getSessionAuthenticationChallenge(hostChallenge, deviceChallenge);
         log.finer("Authenticating session context: " + Utils.getPrintableBytes(challenge));
 
         deriveSessionKeys(challenge);
-        verifyCardCryptogram(Arrays.copyOfRange(responseData, 9, 9 + 8), challenge);
+        verifyDeviceCryptogram(deviceCryptogram, challenge);
 
-        // Send AuthenticateSession command
-        byte[] inputData = getSessionAuthenticateMessageToMac(challenge);
-        sessionChain = getMac(sessionMacKey, new byte[16], inputData, BLOCK_SIZE);
-        inputData = getAuthenticateSessionInputData(inputData, sessionChain);
-        log.finer("Authenticate Session data: " + Utils.getPrintableBytes(inputData));
-        responseData = yubihsm.getBackend().transceive(inputData);
+        // Derive a host cryptogram
+        byte[] hostCryptogram = deriveKey(sessionMacKey, HOST_CRYPTOGRAM, challenge, HALF_CHALLENGE_SIZE);
+        log.finer("Host cryptogram: " + Utils.getPrintableBytes(hostCryptogram));
+
+        // Authenticate the session
+        byte[] authenticateSessionMessage = getAuthenticateSessionMessage(hostCryptogram);
+        log.finer("Authenticate Session data: " + Utils.getPrintableBytes(authenticateSessionMessage));
+        byte[] authenticateSessionResponse = yubihsm.getBackend().transceive(authenticateSessionMessage);
 
         // Parse the response
-        responseData = CommandUtils.getResponseData(Command.AUTHENTICATE_SESSION, responseData);
-        log.finer("Authenticate Session response data: " + Utils.getPrintableBytes(responseData));
-        if (responseData.length > 0) {
-            log.severe("Received a non empty response from device");
-            throw new YHInvalidResponseException(YHError.AUTHENTICATION_FAILED);
-        }
+        authenticateSessionResponse = CommandUtils.getResponseData(Command.AUTHENTICATE_SESSION, authenticateSessionResponse);
+        log.finer("Authenticate Session response data: " + Utils.getPrintableBytes(authenticateSessionResponse));
+        CommandUtils.verifyResponseLength(Command.AUTHENTICATE_SESSION, authenticateSessionResponse.length, 0);
 
         status = SessionStatus.AUTHENTICATED;
         lowCounter = 1;
@@ -149,7 +158,7 @@ public class YHSession {
     /**
      * Sends an encrypted message over this authenticated session to the device and returns the device's response.
      *
-     * @param message The message to send
+     * @param message The plain text message to send to the device (typically consists of a complete command message )
      * @return The message response in plain text (aka decrypted)
      * @throws YHAuthenticationException          If the session authentication fails
      * @throws NoSuchPaddingException             If the encryption/decryption fails
@@ -166,6 +175,7 @@ public class YHSession {
             throws YHAuthenticationException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException,
                    InvalidKeyException, BadPaddingException, IllegalBlockSizeException, YHConnectionException, YHInvalidResponseException,
                    YHDeviceException {
+
         if (status != SessionStatus.AUTHENTICATED) {
             if (status == SessionStatus.NOT_INITIALIZED || status == SessionStatus.CREATED) {
                 authenticateSession();
@@ -174,46 +184,78 @@ public class YHSession {
             }
         }
 
-        // Add necessary padding to the message
-        log.finer("Sending message: " + Utils.getPrintableBytes(message));
-        byte[] msg = Utils.addPadding(message, BLOCK_SIZE);
-        log.finer("Plain text message: " + Utils.getPrintableBytes(msg));
-
-        // Encrypt the message
+        // Setup the secret key for this message
         SecretKey key = new SecretKeySpec(sessionEncKey, "AES");
         byte[] iv = getIv(key);
-        msg = getEncryptedMessage(msg, key, iv, Cipher.ENCRYPT_MODE);
-        log.finer("Encrypted message: " + Utils.getPrintableBytes(msg));
 
-        // Calculate message MAC
-        msg = getMessageToMac(msg);
-        byte[] nextSessionChain = getMac(sessionMacKey, sessionChain, msg, BLOCK_SIZE);
+        // Add padding
+        log.finer("Sending message: " + Utils.getPrintableBytes(message));
+        byte[] paddedMsg = Utils.addPadding(message, PADDING_BLOCK_SIZE);
+        log.finer("Plain text message: " + Utils.getPrintableBytes(paddedMsg));
 
-        // Add the message MAC to the message and send it
-        ByteBuffer bb = ByteBuffer.allocate(msg.length + 8);
-        bb.put(msg);
-        bb.put(nextSessionChain, 0, 8);
-        msg = bb.array();
-        byte[] rawResponse = yubihsm.getBackend().transceive(msg);
+        // Encrypt message
+        byte[] encryptedMsg = getCipherMessage(paddedMsg, key, iv, Cipher.ENCRYPT_MODE);
+        log.finer("Encrypted message: " + Utils.getPrintableBytes(encryptedMsg));
 
-        // Verify response and get the encrypted message response. The encrypted response is the output of the command in the sent message (aka.
-        // stripped off the session ID and the trailing MAC bytes)
-        verifyResponseMac(rawResponse, nextSessionChain);
+        // Assemble session message command without the MAC
+        byte[] sessionMsgNoMac = getSessionMessageNoMac(encryptedMsg);
+
+        // Assemble session message command with the MAC
+        byte[] nextSessionChain = getMac(sessionMacKey, sessionChain, sessionMsgNoMac);
+        byte[] sessionMessageWithMac = getSessionMessageWithMac(sessionMsgNoMac, nextSessionChain);
+
+        // Send session message command
+        byte[] sessionMsgResp = yubihsm.getBackend().transceive(sessionMessageWithMac);
+
+        // Verify response mac
+        verifyResponseMac(sessionMsgResp, nextSessionChain);
         log.fine("Response MAC successfully verified");
-        byte[] resp = getCommandResponse(rawResponse);
-        log.finer("Encrypted response: " + Utils.getPrintableBytes(resp));
 
-        // Decrypt the message response and remove the padding from the plain text response
-        resp = getEncryptedMessage(resp, key, iv, Cipher.DECRYPT_MODE);
-        log.finer("Plain text response: " + Utils.getPrintableBytes(resp));
-        resp = Utils.removePadding(resp, BLOCK_SIZE);
-        log.finer("Unpadded plain text response: " + Utils.getPrintableBytes(resp));
+        // Extract command response message (encrypted)
+        byte[] encryptedResp = getSessionMessageResponse(sessionMsgResp);
+        log.finer("Encrypted response: " + Utils.getPrintableBytes(encryptedMsg));
 
-        incrementCounter();
+        // Decrypt command response message
+        byte[] decryptedResp = getCipherMessage(encryptedResp, key, iv, Cipher.DECRYPT_MODE);
+        log.finer("Plain text response: " + Utils.getPrintableBytes(decryptedResp));
+
+        // Remove padding from command response message
+        byte[] unpaddedResp = Utils.removePadding(decryptedResp, PADDING_BLOCK_SIZE);
+        log.finer("Unpadded plain text response: " + Utils.getPrintableBytes(unpaddedResp));
+
+        incrementSessionCounter();
         sessionChain = nextSessionChain;
 
-        return resp;
+        // Return unpadded plain text command response message
+        return unpaddedResp;
     }
+
+    /**
+     * Sends a command to the device and gets a response over an authenticated session
+     *
+     * @param cmd  The command to send
+     * @param data The input to the command
+     * @return The output of the command
+     * @throws NoSuchAlgorithmException           If message encryption or decryption fails
+     * @throws YHDeviceException                  If the device return an error
+     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
+     * @throws YHConnectionException              If the connections to the device fails
+     * @throws InvalidKeyException                If message encryption or decryption fails
+     * @throws YHAuthenticationException          If the session or message authentication fails
+     * @throws NoSuchPaddingException             If message encryption or decryption fails
+     * @throws InvalidAlgorithmParameterException If message encryption or decryption fails
+     * @throws BadPaddingException                If message encryption or decryption fails
+     * @throws IllegalBlockSizeException          If message encryption or decryption fails
+     */
+    public byte[] sendSecureCmd(@NonNull final Command cmd, final byte[] data)
+            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
+                   YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
+                   IllegalBlockSizeException {
+
+        byte[] resp = secureTransceive(CommandUtils.getTransceiveMessage(cmd, data == null ? new byte[0] : data));
+        return CommandUtils.getResponseData(cmd, resp);
+    }
+
 
     /**
      * Closes this session with the device
@@ -243,7 +285,6 @@ public class YHSession {
             byte[] response = secureTransceive(closeSessionMsg);
             byte[] responseData = CommandUtils.getResponseData(Command.CLOSE_SESSION, response);
             if (responseData.length == 0) {
-                sessionID = (byte) 0;
                 status = SessionStatus.CLOSED;
             } else {
                 final String err = "Received unexpected response from YubiHsm";
@@ -253,7 +294,7 @@ public class YHSession {
 
         } catch (YHDeviceException e) {
             if (e.getYhError().equals(YHError.INVALID_SESSION)) {
-                log.info("Session " + sessionID + " no longer valid");
+                log.info("Session " + sessionID + " is not valid");
             } else {
                 throw e;
             }
@@ -263,73 +304,63 @@ public class YHSession {
         }
     }
 
-    /**
-     * Sends a command to the device and gets a response over an authenticated session
-     *
-     * @param cmd  The command to send
-     * @param data The input to the command
-     * @return The output of the command
-     * @throws NoSuchAlgorithmException           If message encryption or decryption fails
-     * @throws YHDeviceException                  If the device return an error
-     * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
-     * @throws YHConnectionException              If the connections to the device fails
-     * @throws InvalidKeyException                If message encryption or decryption fails
-     * @throws YHAuthenticationException          If the session or message authentication fails
-     * @throws NoSuchPaddingException             If message encryption or decryption fails
-     * @throws InvalidAlgorithmParameterException If message encryption or decryption fails
-     * @throws BadPaddingException                If message encryption or decryption fails
-     * @throws IllegalBlockSizeException          If message encryption or decryption fails
-     */
-    public byte[] sendSecureCmd(@NonNull final Command cmd, final byte[] data)
-            throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
-                   YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
-                   IllegalBlockSizeException {
-
-        if (status != YHSession.SessionStatus.AUTHENTICATED) {
-            authenticateSession();
-        }
-
-        byte[] resp = secureTransceive(CommandUtils.getTransceiveMessage(cmd, data == null ? new byte[0] : data));
-        return CommandUtils.getResponseData(cmd, resp);
-    }
-
 
     /// Help methods
+
+    private byte[] getSessionMessageNoMac(@NonNull byte[] encMessage) {
+        int sessionMsgLength = SESSION_ID_SIZE + encMessage.length + MESSAGE_MAC_SIZE;
+        int macMessageLength = CommandUtils.COMMAND_ID_SIZE + CommandUtils.COMMAND_INPUT_LENGTH_SIZE + SESSION_ID_SIZE + encMessage.length;
+
+        ByteBuffer bb = ByteBuffer.allocate(macMessageLength);
+        bb.put(Command.SESSION_MESSAGE.getId()).putShort((short) sessionMsgLength);
+        bb.put(getSessionID());
+        bb.put(encMessage);
+        return bb.array();
+    }
+
+    private byte[] getSessionMessageWithMac(@NonNull byte[] sessionMsgNoMac, @NonNull byte[] sessionChain) {
+        if(sessionChain.length < MESSAGE_MAC_SIZE) {
+            throw new IllegalArgumentException("Session chain is too small to contain a " + MESSAGE_MAC_SIZE + " bytes MAC");
+        }
+        byte[] mac = Arrays.copyOfRange(sessionChain, 0, MESSAGE_MAC_SIZE);
+
+        ByteBuffer bb = ByteBuffer.allocate(sessionMsgNoMac.length + MESSAGE_MAC_SIZE);
+        bb.put(sessionMsgNoMac);
+        bb.put(mac);
+        return bb.array();
+    }
 
     /**
      * Sends CreateSession command to the device and returns a response
      *
-     * @param challenge 8 random bytes generated by the host
-     * @return The device response for CreateSession command
+     * @param hostChallenge 8 random bytes generated by the host
+     * @return Two byte arrays, the first one is the device challenge and the other is the device cryptogram
      * @throws YHInvalidResponseException If the response from the device cannot be parsed
      * @throws YHConnectionException      If the connection to the device fails
      * @throws YHDeviceException          If the device returns an error code
      * @throws YHAuthenticationException  If the session ID returned by the device is invalid (aka not in the range 0-15)
      */
-    private byte[] getCreateSessionResponse(final byte[] challenge)
+    private Object[] createSessionAndGetResponse(@NonNull final byte[] hostChallenge)
             throws YHInvalidResponseException, YHConnectionException, YHDeviceException, YHAuthenticationException {
-        byte[] inputData = getCreateSessionInputData(challenge);
-        log.finer("Create Session data: " + Utils.getPrintableBytes(inputData));
-        byte[] responseData = yubihsm.sendCmd(Command.CREATE_SESSION, inputData);
-        log.finer("Create Session response data: " + responseData);
-
-        // Set the session ID if successful
-        setSessionID(responseData[0]);
-        log.fine("Created session with SessionID: " + sessionID);
-        return responseData;
-    }
-
-    /**
-     * Assembles the input data of the CreateSession command.
-     *
-     * @param hostChallenge 8 random bytes representing the host's part of the challenge that will be used for authenticating the session
-     * @return 10 bytes input to the CreateSession command: 2 byte Authentication Key ID + 8 bytes `hostChallenge`
-     */
-    private byte[] getCreateSessionInputData(@NonNull final byte[] hostChallenge) {
-        ByteBuffer bb = ByteBuffer.allocate(10);
+        ByteBuffer bb = ByteBuffer.allocate(YHObject.OBJECT_ID_SIZE + hostChallenge.length);
         bb.putShort(authenticationKey.getId());
         bb.put(hostChallenge);
-        return bb.array();
+        byte[] msg = bb.array();
+
+        log.finer("Create Session data: " + Utils.getPrintableBytes(msg));
+        byte[] resp = yubihsm.sendCmd(Command.CREATE_SESSION, msg);
+        log.finer("Create Session response data: " + Utils.getPrintableBytes(resp));
+        CommandUtils.verifyResponseLength(Command.CREATE_SESSION, resp.length, 1 + CHALLENGE_SIZE);
+
+        // Set the session ID if successful
+        setSessionID(resp[0]);
+        status = SessionStatus.CREATED;
+        log.fine("Created session with SessionID: " + sessionID);
+
+        Object[] ret = new Object[2];
+        ret[0] = Arrays.copyOfRange(resp, 1, 1 + HALF_CHALLENGE_SIZE); // Device challenge
+        ret[1] = Arrays.copyOfRange(resp, 1 + HALF_CHALLENGE_SIZE, resp.length); // Device cryptogram
+        return ret;
     }
 
     /**
@@ -339,9 +370,8 @@ public class YHSession {
      * @throws YHAuthenticationException If the specified session ID is not in the range 0-15
      */
     private void setSessionID(final byte b) throws YHAuthenticationException {
-        if (b >= ((byte) 0) && b < ((byte) 16)) { // Session ID is between 0 to 15
+        if (b >= MIN_SESSION_ID && b <= MAX_SESSION_ID) { // Session ID is between 0 to 15
             sessionID = b;
-            status = SessionStatus.CREATED;
         } else {
             throw new YHAuthenticationException("Failed to obtain a valid session ID from the device");
         }
@@ -357,10 +387,12 @@ public class YHSession {
      */
     private byte[] getSessionAuthenticationChallenge(@NonNull final byte[] hostChallenge, @NonNull final byte[] deviceChallenge)
             throws YHAuthenticationException {
-        if (hostChallenge.length != 8 || deviceChallenge.length != 8) {
-            throw new YHAuthenticationException("Either the host challenge or the device challenge is not 8 bytes long");
+        if (hostChallenge.length != HALF_CHALLENGE_SIZE || deviceChallenge.length != HALF_CHALLENGE_SIZE) {
+            throw new YHAuthenticationException("Either the host challenge or the device challenge is not " + HALF_CHALLENGE_SIZE + " bytes long. " +
+                                                "Host challenge: " + Utils.getPrintableBytes(hostChallenge) + ". Device challenge: " +
+                                                Utils.getPrintableBytes(deviceChallenge));
         }
-        ByteBuffer ret = ByteBuffer.allocate(16);
+        ByteBuffer ret = ByteBuffer.allocate(CHALLENGE_SIZE);
         ret.put(hostChallenge);
         ret.put(deviceChallenge);
         return ret.array();
@@ -372,73 +404,61 @@ public class YHSession {
      * @param challenge 16 bytes challenge consisting of 8 bytes generated by the host + 8 bytes received from the device
      */
     private void deriveSessionKeys(final byte[] challenge) {
-        sessionEncKey = deriveKey(authenticationKey.getEncryptionKey(), KEY_ENC, challenge, BLOCK_SIZE * 8);
-        sessionMacKey = deriveKey(authenticationKey.getMacKey(), KEY_MAC, challenge, BLOCK_SIZE * 8);
-        sessionRMacKey = deriveKey(authenticationKey.getMacKey(), KEY_RMAC, challenge, BLOCK_SIZE * 8);
+        sessionEncKey = deriveKey(authenticationKey.getEncryptionKey(), KEY_ENC, challenge, SESSION_KEY_SIZE);
+        sessionMacKey = deriveKey(authenticationKey.getMacKey(), KEY_MAC, challenge, SESSION_KEY_SIZE);
+        sessionRMacKey = deriveKey(authenticationKey.getMacKey(), KEY_RMAC, challenge, SESSION_KEY_SIZE);
     }
 
     /**
-     * Verifies the cryptogram received from the device by comparing it with a cryptogram generated using challenge
+     * Verifies the cryptogram received from the device by comparing it with a cryptogram generated using `challenge`
      *
-     * @param cardCryptogram 8 bytes cryptogram received from the device
-     * @param challenge      16 bytes challenge consisting of 8 bytes generated by the host + 8 bytes received from the device
+     * @param deviceCryptogram 8 bytes cryptogram received from the device
+     * @param challenge        16 bytes challenge consisting of 8 bytes generated by the host + 8 bytes received from the device
      * @throws YHAuthenticationException If the device cryptogram does not match the generated cryptogram
      */
-    private void verifyCardCryptogram(@NonNull final byte[] cardCryptogram, final byte[] challenge)
+    private void verifyDeviceCryptogram(@NonNull final byte[] deviceCryptogram, final byte[] challenge)
             throws YHAuthenticationException {
-        log.finer("Card cryptogram: " + Utils.getPrintableBytes(cardCryptogram));
-        byte[] generatedCryptogram = deriveKey(sessionMacKey, CARD_CRYPTOGRAM, challenge, HALF_BLOCK_SIZE * 8);
-        if (!Arrays.equals(generatedCryptogram, cardCryptogram)) {
+        log.finer("Card cryptogram: " + Utils.getPrintableBytes(deviceCryptogram));
+        byte[] generatedCryptogram = deriveKey(sessionMacKey, CARD_CRYPTOGRAM, challenge, HALF_CHALLENGE_SIZE);
+        if (!Arrays.equals(generatedCryptogram, deviceCryptogram)) {
             throw new YHAuthenticationException(YHError.AUTHENTICATION_FAILED);
         }
         log.fine("Card cryptogram successfully verified");
     }
 
-    /**
-     * Assembles a message that will be used to calculate its MAC value and sent as a part of the AuthenticateSession command
-     *
-     * @param challenge 16 bytes challenge consisting of 8 bytes generated by the host + 8 bytes received from the device
-     * @return 12 bytes array: 1 byte AuthenticateSession command + 2 bytes length of the input data of the AuthenticateSession command + 1 byte
-     * session ID + 8 bytes cryptogram generated by the host
-     */
-    private byte[] getSessionAuthenticateMessageToMac(final byte[] challenge) {
-        // Derive a host cryptogram
-        byte[] hostCryptogram = deriveKey(sessionMacKey, HOST_CRYPTOGRAM, challenge, HALF_BLOCK_SIZE * 8);
-        log.finer("Host cryptogram: " + Utils.getPrintableBytes(hostCryptogram));
+    private byte[] getAuthenticateSessionMessage(@NonNull final byte[] hostCryptogram) {
+        // Count data lengths
+        // The part of the message to mac: authentication session command + command input data length + session ID + host cryptogram
+        int macMsgLength = CommandUtils.COMMAND_ID_SIZE + CommandUtils.COMMAND_INPUT_LENGTH_SIZE + SESSION_ID_SIZE + hostCryptogram.length;
 
-        // Get the message MAC
-        ByteBuffer msg = ByteBuffer.allocate(12);
-        msg.put(Command.AUTHENTICATE_SESSION.getId());
-        msg.putShort((short) (17)); // 1 byte sessionID + 8 byte host cryptogram + 8 bytes MAC
-        msg.put(sessionID);
-        msg.put(hostCryptogram);
-        return msg.array();
-    }
+        // Construct the message that will be MAC:ed
+        ByteBuffer bb = ByteBuffer.allocate(macMsgLength);
+        bb.put(Command.AUTHENTICATE_SESSION.getId());
+        bb.putShort((short) (SESSION_ID_SIZE + hostCryptogram.length + MESSAGE_MAC_SIZE));
+        bb.put(sessionID);
+        bb.put(hostCryptogram);
+        byte[] msg = bb.array();
 
-    /**
-     * Assembles the input data of the AuthenticateSession command
-     *
-     * @param message 12 bytes message (output of getSessionAuthenticateMessageToMac() )
-     * @param fullMac 16 bytes MAC value of message
-     * @return 20 bytes: 12 bytes `message` + first 8 bytes of `fullMac`
-     */
-    private byte[] getAuthenticateSessionInputData(@NonNull final byte[] message, @NonNull final byte[] fullMac) {
-        ByteBuffer data = ByteBuffer.allocate(20);
-        data.put(message);
-        data.put(Arrays.copyOfRange(fullMac, 0, 8));
-        return data.array();
+        // Calculate MAC of the message content
+        sessionChain = getMac(sessionMacKey, new byte[CHALLENGE_SIZE], msg);
+        byte[] msgMac = Arrays.copyOfRange(sessionChain, 0, MESSAGE_MAC_SIZE);
+
+        // Add the MAC to the message content
+        bb = ByteBuffer.allocate(macMsgLength + MESSAGE_MAC_SIZE);
+        bb.put(msg);
+        bb.put(msgMac);
+        return bb.array();
     }
 
     /**
      * Calculate the MAC value of an input
      *
-     * @param key       Key used to calculate the MAC
-     * @param chain     16 bytes
-     * @param input     Data to calculate its MAC
-     * @param macLength Length of the MAC value
-     * @return The MAC value of input
+     * @param key   Key used to calculate the MAC
+     * @param chain 16 bytes
+     * @param input Data to calculate its MAC
+     * @return 16 bytes MAC
      */
-    private byte[] getMac(final byte[] key, byte[] chain, @NonNull byte[] input, final int macLength) {
+    private byte[] getMac(@NonNull final byte[] key, byte[] chain, @NonNull byte[] input) {
         log.finer("Mac input: " + Utils.getPrintableBytes(chain) + " " + Utils.getPrintableBytes(input));
         CipherParameters params = new KeyParameter(key);
         BlockCipher cipher = new AESEngine();
@@ -448,7 +468,7 @@ public class YHSession {
             mac.update(chain, 0, chain.length);
         }
         mac.update(input, 0, input.length);
-        byte[] out = new byte[macLength];
+        byte[] out = new byte[MESSAGE_MAC_SIZE * 2];
         mac.doFinal(out, 0);
         log.finer("Full MAC: " + Utils.getPrintableBytes(out));
         return out;
@@ -457,35 +477,34 @@ public class YHSession {
     /**
      * Derives a short lived value from a long term key
      *
-     * @param key       A long term key to use to derive a short lived value
-     * @param type      Type of the derived key
-     * @param challenge 16 bytes challenge consisting of 8 bytes generated by the host + 8 bytes received from the device
-     * @param length    Length of the value to generate
+     * @param longTermKey A long term key to use to derive a short lived value
+     * @param type        Type of the derived key
+     * @param challenge   16 bytes challenge consisting of 8 bytes generated by the host + 8 bytes received from the device
+     * @param length      Length of the value to generate
      * @return The first bytes of the derived value. The length of these bytes depend on `length`
      */
-    private byte[] deriveKey(final byte[] key, final byte type, @NonNull final byte[] challenge, final int length) {
+    private byte[] deriveKey(final byte[] longTermKey, final byte type, @NonNull final byte[] challenge, final int length) {
 
-        if (length != BLOCK_SIZE * 8 && length != HALF_BLOCK_SIZE * 8) {
-            throw new InvalidParameterException("Length of the derived key must be either " + BLOCK_SIZE + " or " + HALF_BLOCK_SIZE + " bytes long");
+        if (length != SESSION_KEY_SIZE && length != (SESSION_KEY_SIZE / 2)) {
+            throw new InvalidParameterException("Length of the derived key must be either " + SESSION_KEY_SIZE + " or " + (SESSION_KEY_SIZE / 2) +
+                                                " bytes long");
         }
 
-        ByteBuffer input = ByteBuffer.allocate(BLOCK_SIZE * 2);
+        int macMsgLength = 11 + 1 + 1 + 2 + 1 + challenge.length; // 11 0 bytes + 1 byte type + 1 0 byte + 2 bytes length + 1 1 byte + challenge
+        ByteBuffer input = ByteBuffer.allocate(macMsgLength);
         input.put(new byte[11]);
         input.put(type);
         input.put((byte) 0);
-        input.putShort((short) length);
+        input.putShort((short) (length * 8));
         input.put((byte) 1);
         input.put(challenge);
-        byte[] mac = getMac(key, null, input.array(), length);
-        return Arrays.copyOfRange(mac, 0, length / 8); //getFirstBytes(mac, length / 8);
+        byte[] mac = getMac(longTermKey, null, input.array());
+        return Arrays.copyOfRange(mac, 0, length);
     }
 
     private byte[] getIv(@NonNull final SecretKey key)
             throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
-        ByteBuffer bb = ByteBuffer.allocate(16);
-        bb.putLong(highCounter);
-        bb.putLong(lowCounter);
-        byte[] ivCounter = bb.array();
+        byte[] ivCounter = getSessionCounter();
         log.finer("IV counter: " + Utils.getPrintableBytes(ivCounter));
 
         Cipher cipher = Cipher.getInstance("AES/ECB/NoPadding");
@@ -495,7 +514,7 @@ public class YHSession {
         return iv;
     }
 
-    private byte[] getEncryptedMessage(@NonNull final byte[] message, @NonNull final SecretKey encKey, @NonNull final byte[] iv, final int mode)
+    private byte[] getCipherMessage(@NonNull final byte[] message, @NonNull final SecretKey encKey, @NonNull final byte[] iv, final int mode)
             throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException,
                    IllegalBlockSizeException, BadPaddingException {
         Cipher cipher = Cipher.getInstance("AES/CBC/NOPADDING");
@@ -504,34 +523,21 @@ public class YHSession {
     }
 
     /**
-     * Assembles the part of the message whose MAC will be calculated to be sent to the device over the authenticated session
+     * Verifies the response from the device by comparing the response MAC with a MAC generated using `challenge`
      *
-     * @param encMessage The encrypted message to sent to the device
-     * @return Byte array whose MAC value will be calculated: 1 byte SessionMessage command + 2 bytes length of the input to the SessionMessage
-     * command + 1 byte sessionID + `encMessage`
-     */
-    private byte[] getMessageToMac(@NonNull final byte[] encMessage) {
-        int lengthToMac = 1 + encMessage.length + 8; // sessionID + length of encrypted message + mac
-        ByteBuffer bb = ByteBuffer.allocate(3 + 1 + encMessage.length);
-        bb.put(Command.SESSION_MESSAGE.getId()).putShort((short) lengthToMac);
-        bb.put(getSessionID());
-        bb.put(encMessage);
-        return bb.array();
-    }
-
-    /**
-     * Verifies the MAC in the response to the SessionMessage command
-     *
-     * @param rawResponse
+     * @param response Contains the response MAC as its last 8 bytes
      * @param challenge
-     * @throws YHAuthenticationException If verification fails
+     * @throws YHAuthenticationException If response authentication fails
      */
-    private void verifyResponseMac(@NonNull final byte[] rawResponse, final byte[] challenge) throws YHAuthenticationException {
-        byte[] macInResponse = Arrays.copyOfRange(rawResponse, rawResponse.length - 8, rawResponse.length);
-        byte[] rmacToCalculate = Arrays.copyOfRange(rawResponse, 0, rawResponse.length - 8);
-        byte[] fullResponseMac = getMac(sessionRMacKey, challenge, rmacToCalculate, BLOCK_SIZE);
-        byte[] rmac = Arrays.copyOfRange(fullResponseMac, 0, 8);
-        if (!Arrays.equals(rmac, macInResponse)) {
+    private void verifyResponseMac(@NonNull final byte[] response, final byte[] challenge) throws YHAuthenticationException {
+        if(response.length < MESSAGE_MAC_SIZE) {
+            throw new IllegalArgumentException("Response is too short to contain a " + MESSAGE_MAC_SIZE + " bytes MAC");
+        }
+        byte[] respMac = Arrays.copyOfRange(response, response.length - MESSAGE_MAC_SIZE, response.length);
+        byte[] respMacMsg = Arrays.copyOfRange(response, 0, response.length - MESSAGE_MAC_SIZE);
+        byte[] fullResponseMac = getMac(sessionRMacKey, challenge, respMacMsg);
+        byte[] rmac = Arrays.copyOfRange(fullResponseMac, 0, MESSAGE_MAC_SIZE);
+        if (!Arrays.equals(rmac, respMac)) {
             throw new YHAuthenticationException("Incorrect MAC");
         }
     }
@@ -544,7 +550,7 @@ public class YHSession {
      * @throws YHInvalidResponseException If the session ID returned by the device does not match this session ID
      * @throws YHDeviceException          If the device had returned an error code
      */
-    private byte[] getCommandResponse(final byte[] rawResponse)
+    private byte[] getSessionMessageResponse(final byte[] rawResponse)
             throws YHInvalidResponseException, YHDeviceException {
         byte[] resp = CommandUtils.getResponseData(Command.SESSION_MESSAGE, rawResponse);
         if (resp[0] != sessionID) {
@@ -553,17 +559,24 @@ public class YHSession {
 
         // extract the response to the command
         // Response: 1 byte session ID + response to the command + 8 bytes MAC
-        return Arrays.copyOfRange(resp, 1, resp.length - 8);
+        return Arrays.copyOfRange(resp, 1, resp.length - MESSAGE_MAC_SIZE);
     }
 
     /**
      * Adds 1 to the session counter
      */
-    private void incrementCounter() {
+    private void incrementSessionCounter() {
         if (lowCounter == 0xFFFFFFFFFFFFFFFFL) {
             highCounter++;
         }
         lowCounter++;
+    }
+
+    private byte[] getSessionCounter() {
+        ByteBuffer bb = ByteBuffer.allocate(SESSION_COUNTER_SIZE);
+        bb.putLong(highCounter);
+        bb.putLong(lowCounter);
+        return bb.array();
     }
 
 }

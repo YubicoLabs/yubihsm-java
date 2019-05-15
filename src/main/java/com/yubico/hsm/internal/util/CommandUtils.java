@@ -12,6 +12,8 @@ import java.util.logging.Logger;
 public class CommandUtils {
     private static Logger log = Logger.getLogger(CommandUtils.class.getName());
 
+    public static final int COMMAND_ID_SIZE = 1;
+    public static final int COMMAND_INPUT_LENGTH_SIZE = 2;
 
     /**
      * Add the command code and the length of the data in front of the data
@@ -94,4 +96,18 @@ public class CommandUtils {
         return true;
     }
 
+    /**
+     * @param cmd
+     * @param responseLength
+     * @param expectedLength
+     * @throws YHInvalidResponseException If the the response length does not match the expected length
+     */
+    public static void verifyResponseLength(@NonNull final Command cmd, final int responseLength, final int expectedLength)
+            throws YHInvalidResponseException {
+        if (responseLength != expectedLength) {
+            throw new YHInvalidResponseException(
+                    "Response to " + cmd.getName() + " command expected to contains " + expectedLength + " bytes, but was " +
+                    responseLength + " bytes instead");
+        }
+    }
 }
