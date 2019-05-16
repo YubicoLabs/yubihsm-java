@@ -36,6 +36,16 @@ public class YHObject {
     public static final int OBJECT_ALGORITHM_SIZE = 1;
     public static final int OBJECT_CAPABILITIES_SIZE = 8;
     public static final int OBJECT_DELEGATED_CAPABILITIES_SIZE = 8;
+    public static final int OBJECT_SEQUENCE_SIZE = 1;
+
+    protected final int HASH_LENGTH_FOR_SHA1 = 20;
+    protected final int HASH_LENGTH_FOR_SHA256 = 32;
+    protected final int HASH_LENGTH_FOR_SHA384 = 48;
+    protected final int HASH_LENGTH_FOR_SHA512 = 64;
+
+    protected static final int KEY_LENGTH_FOR_AES128 = 16;
+    protected static final int KEY_LENGTH_FOR_AES192 = 24;
+    protected static final int KEY_LENGTH_FOR_AES256 = 32;
 
 
     private short id;
@@ -184,10 +194,11 @@ public class YHObject {
 
         byte[] cmdMessage = baos.toByteArray();
         byte[] response = session.sendSecureCmd(Command.LIST_OBJECTS, cmdMessage);
-        if (response.length % 4 != 0) {
+        int itemSize = OBJECT_ID_SIZE + OBJECT_TYPE_SIZE + OBJECT_SEQUENCE_SIZE;
+        if (response.length % itemSize != 0) {
             log.finer(Command.LIST_OBJECTS.getName() + " response: " + Utils.getPrintableBytes(response));
             throw new YHInvalidResponseException("Expecting length of response to " + Command.LIST_OBJECTS.getName() + " command to be a multiple " +
-                                                 "of 4 but have received " + response.length + " bytes instead");
+                                                 "of " + itemSize + " but have received " + response.length + " bytes instead");
         }
         ByteBuffer bb = ByteBuffer.wrap(response);
         List<YHObjectInfo> ret = new ArrayList<YHObjectInfo>();
@@ -244,7 +255,7 @@ public class YHObject {
 
         log.finer("Deleting " + type.getName() + " " + String.format("0x%02x", objectID));
 
-        ByteBuffer bb = ByteBuffer.allocate(3);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_TYPE_SIZE);
         bb.putShort(objectID);
         bb.put(type.getId());
         try {
@@ -305,7 +316,7 @@ public class YHObject {
 
         log.finer("Getting object info for " + type.getName() + " " + String.format("0x%02X", objectID));
 
-        ByteBuffer bb = ByteBuffer.allocate(3);
+        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_TYPE_SIZE);
         bb.putShort(objectID);
         bb.put(type.getId());
         byte[] response = session.sendSecureCmd(Command.GET_OBJECT_INFO, bb.array());

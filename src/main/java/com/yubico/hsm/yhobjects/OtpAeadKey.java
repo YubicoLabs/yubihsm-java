@@ -353,13 +353,13 @@ public class OtpAeadKey extends YHObject {
 
     private static int getOtpAeadKeyLength(@NonNull final Algorithm algorithm) throws UnsupportedAlgorithmException {
         if (algorithm.equals(Algorithm.AES128_YUBICO_OTP)) {
-            return 16;
+            return KEY_LENGTH_FOR_AES128;
         }
         if (algorithm.equals(Algorithm.AES192_YUBICO_OTP)) {
-            return 24;
+            return KEY_LENGTH_FOR_AES192;
         }
         if (algorithm.equals(Algorithm.AES256_YUBICO_OTP)) {
-            return 32;
+            return KEY_LENGTH_FOR_AES256;
         }
         throw new UnsupportedAlgorithmException("Algorithm " + algorithm.toString() + " is not a supported OTP AEAD key algorithm");
     }

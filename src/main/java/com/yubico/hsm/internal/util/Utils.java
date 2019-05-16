@@ -15,6 +15,8 @@ import java.util.logging.Logger;
 public class Utils {
     static Logger log = Logger.getLogger(Utils.class.getName());
 
+    private static final byte PADDING_FIRST_BYTE = (byte) 0x80;
+
     /**
      * Returns a String representation of a byte array. Each individual byte is represented in hexadecimal format and every 8 bytes are grouped
      * together
@@ -46,7 +48,7 @@ public class Utils {
     public static byte[] addPadding(final @NonNull byte[] ba, final int blockSize) {
         int padLength = blockSize - (ba.length % blockSize);
         byte[] ret = Arrays.copyOf(ba, ba.length + padLength);
-        ret[ba.length] = (byte) 0x80;
+        ret[ba.length] = PADDING_FIRST_BYTE;
         return ret;
     }
 
@@ -59,15 +61,16 @@ public class Utils {
      */
     public static byte[] removePadding(@NonNull final byte[] ba, final int blockSize) {
         if (ba.length % blockSize != 0) {
-            log.fine("Byte array was not padded. Doing nothing");
+            log.warning("Byte array was not padded. Doing nothing");
             return ba;
         }
         int index = ba.length - 1;
         while (ba[index] == 0) {
             index--;
         }
-        if (ba[index] != (byte) 0x80) {
+        if (ba[index] != PADDING_FIRST_BYTE) {
             // input has no padding
+            log.warning("No padding pattern found in byte array. Doing nothing");
             return ba;
         }
 

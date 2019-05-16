@@ -28,6 +28,10 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
     private final int RSA_PUBKEY_EXPONENT = 65537;
     private final int SIGN_PSS_SALT_LENGTH = 2;
 
+    private static final int BLOCK_SIZE_FOR_RSA2048 = 256;
+    private static final int BLOCK_SIZE_FOR_RSA3072 = 384;
+    private static final int BLOCK_SIZE_FOR_RSA4096 = 512;
+
     /**
      * Creates an AsymmetriKeyRsa object
      *
@@ -379,11 +383,11 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
      */
     private static int getBlockSize(@NonNull final Algorithm algorithm) throws UnsupportedAlgorithmException {
         if (algorithm.equals(Algorithm.RSA_2048)) {
-            return 256;
+            return BLOCK_SIZE_FOR_RSA2048;
         } else if (algorithm.equals(Algorithm.RSA_3072)) {
-            return 384;
+            return BLOCK_SIZE_FOR_RSA3072;
         } else if (algorithm.equals(Algorithm.RSA_4096)) {
-            return 512;
+            return BLOCK_SIZE_FOR_RSA4096;
         } else {
             throw new UnsupportedAlgorithmException("Unsupported RSA Algorithm: " + algorithm.toString());
         }
@@ -394,16 +398,16 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
      */
     private int getHashLength(@NonNull final Algorithm algorithm) throws UnsupportedAlgorithmException {
         if (algorithm.equals(Algorithm.RSA_MGF1_SHA1) || algorithm.equals(Algorithm.RSA_OAEP_SHA1)) {
-            return 20;
+            return HASH_LENGTH_FOR_SHA1;
         }
         if (algorithm.equals(Algorithm.RSA_MGF1_SHA256) || algorithm.equals(Algorithm.RSA_OAEP_SHA256)) {
-            return 32;
+            return HASH_LENGTH_FOR_SHA256;
         }
         if (algorithm.equals(Algorithm.RSA_MGF1_SHA384) || algorithm.equals(Algorithm.RSA_OAEP_SHA384)) {
-            return 48;
+            return HASH_LENGTH_FOR_SHA384;
         }
         if (algorithm.equals(Algorithm.RSA_MGF1_SHA512) || algorithm.equals(Algorithm.RSA_OAEP_SHA512)) {
-            return 64;
+            return HASH_LENGTH_FOR_SHA512;
         }
         throw new UnsupportedAlgorithmException("Unsupported hash algorithm to use for MGF1");
     }

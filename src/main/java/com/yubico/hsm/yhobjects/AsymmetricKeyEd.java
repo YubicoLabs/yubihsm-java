@@ -24,6 +24,8 @@ import java.util.logging.Logger;
 public class AsymmetricKeyEd extends AsymmetricKey {
     private static Logger log = Logger.getLogger(AsymmetricKeyEd.class.getName());
 
+    private static final int ED_KEY_SIZE = 32;
+
     /**
      * Creates an AsymmetriKeyEd object
      *
@@ -165,8 +167,8 @@ public class AsymmetricKeyEd extends AsymmetricKey {
             throw new IllegalArgumentException("Key algorithm must be a supported ED algorithm");
         }
 
-        if (k.length != 32) {
-            throw new IllegalArgumentException("Invalid parameter. Expected private key integer k that is " + 32 + " bytes long, but" +
+        if (k.length != ED_KEY_SIZE) {
+            throw new IllegalArgumentException("Invalid parameter. Expected private key integer k that is " + ED_KEY_SIZE + " bytes long, but" +
                                                " was " + k.length + " bytes");
         }
     }

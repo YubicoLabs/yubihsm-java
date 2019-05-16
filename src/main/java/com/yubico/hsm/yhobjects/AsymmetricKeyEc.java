@@ -24,6 +24,21 @@ import java.util.logging.Logger;
 public class AsymmetricKeyEc extends AsymmetricKey {
     private static Logger log = Logger.getLogger(AsymmetricKeyEc.class.getName());
 
+    private static final int COMPONENT_LENGTH_FOR_224 = 28;
+    private static final int COMPONENT_LENGTH_FOR_256 = 32;
+    private static final int COMPONENT_LENGTH_FOR_384 = 48;
+    private static final int COMPONENT_LENGTH_FOR_512 = 64;
+    private static final int COMPONENT_LENGTH_FOR_521 = 66;
+
+    private final String EC_CURVE_P224 = "secp224r1";
+    private final String EC_CURVE_P256 = "secp256r1";
+    private final String EC_CURVE_P384 = "secp384r1";
+    private final String EC_CURVE_P521 = "secp521r1";
+    private final String EC_CURVE_K256 = "secp256k1";
+    private final String EC_CURVE_BP256 = "brainpoolP256r1";
+    private final String EC_CURVE_BP384 = "brainpoolP384r1";
+    private final String EC_CURVE_BP512 = "brainpoolP512r1";
+
     /**
      * Creates an AsymmetriKeyEc object
      *
@@ -320,15 +335,15 @@ public class AsymmetricKeyEc extends AsymmetricKey {
      */
     private static int getEcComponentLength(@NonNull final Algorithm algorithm) throws UnsupportedAlgorithmException {
         if (algorithm.equals(Algorithm.EC_P224)) {
-            return 28;
+            return COMPONENT_LENGTH_FOR_224;
         } else if (algorithm.equals(Algorithm.EC_P256) || algorithm.equals(Algorithm.EC_K256) || algorithm.equals(Algorithm.EC_BP256)) {
-            return 32;
+            return COMPONENT_LENGTH_FOR_256;
         } else if (algorithm.equals(Algorithm.EC_P384) || algorithm.equals(Algorithm.EC_BP384)) {
-            return 48;
+            return COMPONENT_LENGTH_FOR_384;
         } else if (algorithm.equals(Algorithm.EC_BP512)) {
-            return 64;
+            return COMPONENT_LENGTH_FOR_512;
         } else if (algorithm.equals(Algorithm.EC_P521)) {
-            return 66;
+            return COMPONENT_LENGTH_FOR_521;
         } else {
             throw new UnsupportedAlgorithmException("Unsupported EC algorithm: " + algorithm.toString());
         }
@@ -336,28 +351,28 @@ public class AsymmetricKeyEc extends AsymmetricKey {
 
     private String getCurveFromAlgorithm(@NonNull final Algorithm algorithm) throws UnsupportedAlgorithmException {
         if (algorithm.equals(Algorithm.EC_P224)) {
-            return "secp224r1";
+            return EC_CURVE_P224;
         }
         if (algorithm.equals(Algorithm.EC_P256)) {
-            return "secp256r1";
+            return EC_CURVE_P256;
         }
         if (algorithm.equals(Algorithm.EC_P384)) {
-            return "secp384r1";
+            return EC_CURVE_P384;
         }
         if (algorithm.equals(Algorithm.EC_P521)) {
-            return "secp521r1";
+            return EC_CURVE_P521;
         }
         if (algorithm.equals(Algorithm.EC_K256)) {
-            return "secp256k1";
+            return EC_CURVE_K256;
         }
         if (algorithm.equals(Algorithm.EC_BP256)) {
-            return "brainpoolP256r1";
+            return EC_CURVE_BP256;
         }
         if (algorithm.equals(Algorithm.EC_BP384)) {
-            return "brainpoolP384r1";
+            return EC_CURVE_BP384;
         }
         if (algorithm.equals(Algorithm.EC_BP512)) {
-            return "brainpoolP512r1";
+            return EC_CURVE_BP512;
         }
         throw new UnsupportedAlgorithmException(algorithm.getName() + " algorithm is not a supported EC key algorithm");
     }

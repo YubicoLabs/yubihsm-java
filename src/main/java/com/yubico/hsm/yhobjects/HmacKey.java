@@ -238,16 +238,16 @@ public class HmacKey extends YHObject {
 
     private int getSignatureLength(@NonNull final Algorithm keyAlgorithm) throws UnsupportedAlgorithmException {
         if (keyAlgorithm.equals(Algorithm.HMAC_SHA1)) {
-            return 20;
+            return HASH_LENGTH_FOR_SHA1;
         }
         if (keyAlgorithm.equals(Algorithm.HMAC_SHA256)) {
-            return 32;
+            return HASH_LENGTH_FOR_SHA256;
         }
         if (keyAlgorithm.equals(Algorithm.HMAC_SHA384)) {
-            return 48;
+            return HASH_LENGTH_FOR_SHA384;
         }
         if (keyAlgorithm.equals(Algorithm.HMAC_SHA512)) {
-            return 64;
+            return HASH_LENGTH_FOR_SHA512;
         }
         throw new UnsupportedAlgorithmException(keyAlgorithm.getName() + " is not a supported HMAC key algorithm");
     }

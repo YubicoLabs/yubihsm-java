@@ -385,13 +385,13 @@ public class WrapKey extends YHObject {
 
     private static int getWrapKeyLength(@NonNull final Algorithm algorithm) throws UnsupportedAlgorithmException {
         if (algorithm.equals(Algorithm.AES128_CCM_WRAP)) {
-            return 16;
+            return KEY_LENGTH_FOR_AES128;
         }
         if (algorithm.equals(Algorithm.AES192_CCM_WRAP)) {
-            return 24;
+            return KEY_LENGTH_FOR_AES192;
         }
         if (algorithm.equals(Algorithm.AES256_CCM_WRAP)) {
-            return 32;
+            return KEY_LENGTH_FOR_AES256;
         }
         throw new UnsupportedAlgorithmException("Algorithm " + algorithm.toString() + " is not a Wrap key algorithm");
     }

@@ -31,6 +31,11 @@ public class AsymmetricKey extends YHObject {
     private static final int SSH_CERT_REQUEST_TIMESTAMP_LENGTH = 4;
     private static final int SSH_CERT_REQUEST_SIGNATURE_LENGTH = 256;
 
+    private final String HASH_ALGORITHM_SHA1 = "SHA-1";
+    private final String HASH_ALGORITHM_SHA256 = "SHA-256";
+    private final String HASH_ALGORITHM_SHA384 = "SHA-384";
+    private final String HASH_ALGORITHM_SHA512 = "SHA-512";
+
     private Algorithm keyAlgorithm;
 
     protected AsymmetricKey() {}
@@ -458,16 +463,16 @@ public class AsymmetricKey extends YHObject {
         MessageDigest digest;
         if (algorithm.equals(Algorithm.RSA_PKCS1_SHA1) || algorithm.equals(Algorithm.RSA_MGF1_SHA1) ||
             algorithm.equals(Algorithm.EC_ECDSA_SHA1) || algorithm.equals(Algorithm.RSA_OAEP_SHA1)) {
-            digest = MessageDigest.getInstance("SHA-1");
+            digest = MessageDigest.getInstance(HASH_ALGORITHM_SHA1);
         } else if (algorithm.equals(Algorithm.RSA_PKCS1_SHA256) || algorithm.equals(Algorithm.RSA_MGF1_SHA256) ||
                    algorithm.equals(Algorithm.EC_ECDSA_SHA256) || algorithm.equals(Algorithm.RSA_OAEP_SHA256)) {
-            digest = MessageDigest.getInstance("SHA-256");
+            digest = MessageDigest.getInstance(HASH_ALGORITHM_SHA256);
         } else if (algorithm.equals(Algorithm.RSA_PKCS1_SHA384) || algorithm.equals(Algorithm.RSA_MGF1_SHA384) ||
                    algorithm.equals(Algorithm.EC_ECDSA_SHA384) || algorithm.equals(Algorithm.RSA_OAEP_SHA384)) {
-            digest = MessageDigest.getInstance("SHA-384");
+            digest = MessageDigest.getInstance(HASH_ALGORITHM_SHA384);
         } else if (algorithm.equals(Algorithm.RSA_PKCS1_SHA512) || algorithm.equals(Algorithm.RSA_MGF1_SHA512) ||
                    algorithm.equals(Algorithm.EC_ECDSA_SHA512) || algorithm.equals(Algorithm.RSA_OAEP_SHA512)) {
-            digest = MessageDigest.getInstance("SHA-512");
+            digest = MessageDigest.getInstance(HASH_ALGORITHM_SHA512);
         } else {
             throw new UnsupportedAlgorithmException(algorithm.toString() + " algorithm is not supported for hashing data");
         }
