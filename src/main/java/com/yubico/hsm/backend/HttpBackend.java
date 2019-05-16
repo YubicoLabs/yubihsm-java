@@ -98,43 +98,9 @@ public class HttpBackend implements Backend {
         byte[] response;
         HttpURLConnection conn = getConnection();
         try {
-            try {
-                OutputStream out = conn.getOutputStream();
-                out.write(message);
-                out.flush();
-                out.close();
-            } catch (IOException e1) {
-                throw new YHConnectionException(e1);
-            }
-
-            BufferedInputStream bin;
-            try {
-                final int httpRespCode = conn.getResponseCode();
-                if (httpRespCode == HttpURLConnection.HTTP_OK) {
-                    log.finer("Received HTTP response OK");
-                    bin = new BufferedInputStream(conn.getInputStream());
-                } else {
-                    log.info("Received HTTP error response " + httpRespCode);
-                    bin = new BufferedInputStream(conn.getErrorStream());
-                }
-            } catch (IOException e) {
-                throw new YHConnectionException(e);
-            }
-
-            byte[] buffer = new byte[MAX_MESSAGE_SIZE];
-            int len;
-            try {
-                len = bin.read(buffer);
-                bin.close();
-            } catch (IOException e) {
-                throw new YHConnectionException(e);
-            }
-
-            if(len < 0) {
-                throw new YHConnectionException();
-            }
-            response = Arrays.copyOfRange(buffer, 0, len);
-
+            sendHttpRequestMessage(conn, message);
+            BufferedInputStream bin = getConnectionInputStream(conn);
+            response = getHttpResponse(bin);
         } finally {
             close();
         }
@@ -151,6 +117,53 @@ public class HttpBackend implements Backend {
             connection.disconnect();
             connection = null;
         }
+    }
+
+    private void sendHttpRequestMessage(@NonNull final HttpURLConnection connection, @NonNull final byte[] message) throws YHConnectionException {
+        try {
+            OutputStream out = connection.getOutputStream();
+            out.write(message);
+            out.flush();
+            out.close();
+        } catch (IOException e1) {
+            log.severe("Failed to send message to device");
+            throw new YHConnectionException(e1);
+        }
+    }
+
+    private BufferedInputStream getConnectionInputStream(@NonNull final HttpURLConnection connection) throws YHConnectionException {
+        BufferedInputStream bin;
+        try {
+            final int httpRespCode = connection.getResponseCode();
+            if (httpRespCode == HttpURLConnection.HTTP_OK) {
+                log.finer("Received HTTP response OK");
+                bin = new BufferedInputStream(connection.getInputStream());
+            } else {
+                log.info("Received HTTP error response " + httpRespCode);
+                bin = new BufferedInputStream(connection.getErrorStream());
+            }
+        } catch (IOException e) {
+            log.severe("Failed to obtain HTTP connection input stream");
+            throw new YHConnectionException(e);
+        }
+        return bin;
+    }
+
+    private byte[] getHttpResponse(@NonNull final BufferedInputStream bin) throws YHConnectionException {
+        byte[] buffer = new byte[MAX_MESSAGE_SIZE];
+        int len;
+        try {
+            len = bin.read(buffer);
+            bin.close();
+            if(len < 0) {
+                log.severe("Failed to read HTTP response from device");
+                throw new YHConnectionException();
+            }
+        } catch (IOException e) {
+            log.severe("Failed to read HTTP response from device");
+            throw new YHConnectionException(e);
+        }
+        return Arrays.copyOfRange(buffer, 0, len);
     }
 
 }
