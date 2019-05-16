@@ -2,6 +2,7 @@ package com.yubico.hsm.yhobjects;
 
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.exceptions.*;
+import com.yubico.hsm.internal.util.CommandUtils;
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
@@ -86,11 +87,7 @@ public class Template extends YHObject {
         bb.put(templateData);
 
         byte[] resp = session.sendSecureCmd(Command.PUT_TEMPLATE, bb.array());
-        if (resp.length != OBJECT_ID_SIZE) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.PUT_TEMPLATE.getName() + " command expected to contains " + OBJECT_ID_SIZE + " bytes, but was " +
-                    resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.PUT_TEMPLATE, resp.length, OBJECT_ID_SIZE);
 
         bb = ByteBuffer.wrap(resp);
         id = bb.getShort();

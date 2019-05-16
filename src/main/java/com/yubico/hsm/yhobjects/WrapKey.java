@@ -2,6 +2,7 @@ package com.yubico.hsm.yhobjects;
 
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.exceptions.*;
+import com.yubico.hsm.internal.util.CommandUtils;
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
@@ -89,11 +90,7 @@ public class WrapKey extends YHObject {
         bb.putLong(Utils.getLongFromCapabilities(delegatedCapabilities));
 
         byte[] resp = session.sendSecureCmd(Command.GENERATE_WRAP_KEY, bb.array());
-        if (resp.length != OBJECT_ID_SIZE) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.GENERATE_WRAP_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE + " bytes, but was " +
-                    resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.GENERATE_WRAP_KEY, resp.length, OBJECT_ID_SIZE);
 
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
@@ -146,11 +143,7 @@ public class WrapKey extends YHObject {
         bb.put(wrapKey);
 
         byte[] resp = session.sendSecureCmd(Command.PUT_WRAP_KEY, bb.array());
-        if (resp.length != OBJECT_ID_SIZE) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.PUT_WRAP_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE + " bytes, but was " +
-                    resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.PUT_WRAP_KEY, resp.length, OBJECT_ID_SIZE);
 
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
@@ -358,11 +351,7 @@ public class WrapKey extends YHObject {
         bb.put(wrappedObject);
 
         byte[] resp = session.sendSecureCmd(Command.IMPORT_WRAPPED, bb.array());
-        if (resp.length != IMPORT_WRAPPED_RESPONSE_LENGTH) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.IMPORT_WRAPPED.getName() + " command expected to contains " + IMPORT_WRAPPED_RESPONSE_LENGTH + " " +
-                    "bytes, but was " + resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.IMPORT_WRAPPED, resp.length, IMPORT_WRAPPED_RESPONSE_LENGTH);
 
         bb = ByteBuffer.wrap(resp);
         Type type = Type.forId(bb.get());

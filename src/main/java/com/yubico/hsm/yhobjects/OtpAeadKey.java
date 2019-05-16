@@ -2,6 +2,7 @@ package com.yubico.hsm.yhobjects;
 
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.exceptions.*;
+import com.yubico.hsm.internal.util.CommandUtils;
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
@@ -91,11 +92,7 @@ public class OtpAeadKey extends YHObject {
         bb.putInt(nonceId);
 
         byte[] resp = session.sendSecureCmd(Command.GENERATE_OTP_AEAD_KEY, bb.array());
-        if (resp.length != OBJECT_ID_SIZE) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.GENERATE_OTP_AEAD_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE + " bytes, but was" +
-                    " " + resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.GENERATE_OTP_AEAD_KEY, resp.length, OBJECT_ID_SIZE);
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
 
@@ -148,11 +145,7 @@ public class OtpAeadKey extends YHObject {
         bb.put(key);
 
         byte[] resp = session.sendSecureCmd(Command.PUT_OTP_AEAD_KEY, bb.array());
-        if (resp.length != OBJECT_ID_SIZE) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.PUT_OTP_AEAD_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE + " bytes, but was " +
-                    resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.PUT_OTP_AEAD_KEY, resp.length, OBJECT_ID_SIZE);
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
 
@@ -200,11 +193,7 @@ public class OtpAeadKey extends YHObject {
         bb.put(otpPrivateId);
 
         byte[] resp = session.sendSecureCmd(Command.CREATE_OTP_AEAD, bb.array());
-        if (resp.length != OTP_AEAD_LENGTH) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.CREATE_OTP_AEAD.getName() + " command is expected to be " + OTP_AEAD_LENGTH + " bytes " +
-                    "long but was " + resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.CREATE_OTP_AEAD, resp.length, OTP_AEAD_LENGTH);
 
         log.info("Created Yubico OTP AEAD using key with ID 0x" + Integer.toHexString(getId()));
         log.fine("Created Yubico OTP AEAD " + Utils.getPrintableBytes(resp) + " using key with key with ID 0x" + Integer.toHexString(getId()));
@@ -236,11 +225,7 @@ public class OtpAeadKey extends YHObject {
         bb.putShort(getId());
 
         byte[] resp = session.sendSecureCmd(Command.RANDOMIZE_OTP_AEAD, bb.array());
-        if (resp.length != OTP_AEAD_LENGTH) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.RANDOMIZE_OTP_AEAD.getName() + " command is expected to be " + OTP_AEAD_LENGTH +
-                    " bytes long but was " + resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.RANDOMIZE_OTP_AEAD, resp.length, OTP_AEAD_LENGTH);
 
         log.info("Created Yubico OTP AEAD using random data and key with ID 0x" + Integer.toHexString(getId()));
         return resp;
@@ -286,11 +271,7 @@ public class OtpAeadKey extends YHObject {
         bb.put(otp);
 
         byte[] resp = session.sendSecureCmd(Command.DECRYPT_OTP, bb.array());
-        if (resp.length != DECRYPT_OTP_RESPONSE_LENGTH) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.DECRYPT_OTP.getName() + " command is expected to be " + DECRYPT_OTP_RESPONSE_LENGTH +
-                    " bytes long but was " + resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.DECRYPT_OTP, resp.length, DECRYPT_OTP_RESPONSE_LENGTH);
 
         bb = ByteBuffer.wrap(resp);
         YubicoOtpData otpData = new YubicoOtpData(Short.reverseBytes(bb.getShort()), bb.get(), bb.get(), Short.reverseBytes(bb.getShort()));
@@ -337,11 +318,7 @@ public class OtpAeadKey extends YHObject {
         bb.put(nonceAead);
 
         byte[] resp = session.sendSecureCmd(Command.REWRAP_OTP_AEAD, bb.array());
-        if (resp.length != OTP_AEAD_LENGTH) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.REWRAP_OTP_AEAD.getName() + " command is expected to be " + OTP_AEAD_LENGTH +
-                    " bytes long but was " + resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.REWRAP_OTP_AEAD, resp.length, OTP_AEAD_LENGTH);
 
         log.info("Re-wrapped Yubico OTP using key with ID 0x" + Integer.toHexString(keyIdTo));
         return resp;

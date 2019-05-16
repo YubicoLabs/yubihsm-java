@@ -4,6 +4,7 @@ import com.yubico.hsm.exceptions.YHAuthenticationException;
 import com.yubico.hsm.exceptions.YHConnectionException;
 import com.yubico.hsm.exceptions.YHDeviceException;
 import com.yubico.hsm.exceptions.YHInvalidResponseException;
+import com.yubico.hsm.internal.util.CommandUtils;
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Command;
 import com.yubico.hsm.yhconcepts.DeviceOption;
@@ -26,6 +27,8 @@ import java.util.logging.Logger;
 
 public class YHCore {
     private static Logger log = Logger.getLogger(YHCore.class.getName());
+
+    private static final int DEVICE_OPTION_VALUE_SIZE = 1;
 
     /**
      * Sends the Echo command with `data` as the input over an authenticated session
@@ -72,9 +75,7 @@ public class YHCore {
                    YHInvalidResponseException, IllegalBlockSizeException {
         log.info("Resetting the YubiHSM");
         byte[] resp = session.sendSecureCmd(Command.RESET_DEVICE, new byte[0]);
-        if (resp.length != 0) {
-            throw new YHInvalidResponseException("Expecting empty response. Found: " + Utils.getPrintableBytes(resp));
-        }
+        CommandUtils.verifyResponseLength(Command.RESET_DEVICE, resp.length, 0);
     }
 
     /**
@@ -101,7 +102,9 @@ public class YHCore {
         log.info("Getting " + length + " random bytes from the device");
         ByteBuffer data = ByteBuffer.allocate(2);
         data.putShort((short) length);
-        return session.sendSecureCmd(Command.GET_PSEUDO_RANDOM, data.array());
+        byte[] resp = session.sendSecureCmd(Command.GET_PSEUDO_RANDOM, data.array());
+        CommandUtils.verifyResponseLength(Command.GET_PSEUDO_RANDOM, resp.length, length);
+        return resp;
     }
 
     /**
@@ -125,9 +128,7 @@ public class YHCore {
         ByteBuffer data = ByteBuffer.allocate(1);
         data.put(DeviceOption.FORCE_AUDIT.getTag());
         byte[] resp = session.sendSecureCmd(Command.GET_OPTION, data.array());
-        if (resp.length != 1) {
-            throw new YHInvalidResponseException("Response to GetForceAudit command is expected to be 1 byte long, but was " + resp.length);
-        }
+        CommandUtils.verifyResponseLength(Command.GET_OPTION, resp.length, DEVICE_OPTION_VALUE_SIZE);
         DeviceOptionValue ret = DeviceOptionValue.forValue(resp[0]);
         log.info("Got device setting for " + DeviceOption.FORCE_AUDIT.getDescription() + ": " + ret.getDescription());
         return ret;
@@ -158,9 +159,7 @@ public class YHCore {
         data.putShort((short) 1);
         data.put(forceAuditValue.getValue());
         byte[] resp = session.sendSecureCmd(Command.SET_OPTION, data.array());
-        if (resp.length != 0) {
-            throw new YHInvalidResponseException("Response to SetForceAudit command is expected to be empty, but was " + resp.length);
-        }
+        CommandUtils.verifyResponseLength(Command.SET_OPTION, resp.length, 0);
         log.info("Set device setting for " + DeviceOption.FORCE_AUDIT.getDescription() + " to " + forceAuditValue.getDescription());
     }
 
@@ -219,9 +218,7 @@ public class YHCore {
         data.put(commandValueBytes);
         try {
             byte[] resp = session.sendSecureCmd(Command.SET_OPTION, data.array());
-            if (resp.length != 0) {
-                throw new YHInvalidResponseException("Response to SetCommandAudit command is expected to be empty, but was " + resp.length);
-            }
+            CommandUtils.verifyResponseLength(Command.SET_OPTION, resp.length, 0);
         } catch (YHDeviceException e) {
             if (e.getYhError().equals(YHError.INVALID_DATA)) {
                 String fixedCommands = getFixedAuditCommands(session, commandValueMap);
@@ -318,7 +315,8 @@ public class YHCore {
                    YHInvalidResponseException, IllegalBlockSizeException {
         ByteBuffer data = ByteBuffer.allocate(2);
         data.putShort(index);
-        session.sendSecureCmd(Command.SET_LOG_INDEX, data.array());
+        byte[] resp = session.sendSecureCmd(Command.SET_LOG_INDEX, data.array());
+        CommandUtils.verifyResponseLength(Command.SET_LOG_INDEX, resp.length, 0);
         log.info("Set log index to " + index);
     }
 }

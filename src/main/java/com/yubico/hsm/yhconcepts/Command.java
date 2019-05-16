@@ -132,6 +132,9 @@ public enum Command {
      * Return the expected response code in case of a successful execution of this command
      */
     public byte getCommandResponse() {
+        if (id == ERROR.id) {
+            return id;
+        }
         return (byte) (id | 0x80);
     }
 

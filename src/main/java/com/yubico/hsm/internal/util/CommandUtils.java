@@ -7,6 +7,7 @@ import com.yubico.hsm.yhconcepts.YHError;
 import lombok.NonNull;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 public class CommandUtils {
@@ -15,6 +16,12 @@ public class CommandUtils {
     public static final int COMMAND_ID_SIZE = 1;
     public static final int COMMAND_INPUT_LENGTH_SIZE = 2;
 
+    private static final int RESPONSE_CODE_INDEX = 0;
+    private static final int RESPONSE_LENGTH_INDEX = 1;
+    private static final int RESPONSE_DATA_INDEX = 3;
+    private static final int ERROR_RESPONSE_LENGTH = 4;
+    private static final byte[] ERROR_RESPONSE_START = {Command.ERROR.getId(), (byte) 0, (byte) 1};
+
     /**
      * Add the command code and the length of the data in front of the data
      *
@@ -22,9 +29,9 @@ public class CommandUtils {
      * @param data The input to the command
      * @return A byte array in the form: [command code (1 byte), length of data (2 bytes), data]
      */
-    public static byte[] getTransceiveMessage(@NonNull final Command cmd, final byte[] data) {
+    public static byte[] getFullCommandMessage(@NonNull final Command cmd, final byte[] data) {
         final int dl = data != null ? data.length : 0;
-        ByteBuffer ret = ByteBuffer.allocate(dl + 3);
+        ByteBuffer ret = ByteBuffer.allocate(COMMAND_ID_SIZE + COMMAND_INPUT_LENGTH_SIZE + dl);
         ret.put(cmd.getId());
         ret.putShort((short) dl);
         if (dl > 0) {
@@ -44,56 +51,91 @@ public class CommandUtils {
      */
     public static byte[] getResponseData(@NonNull final Command cmd, @NonNull final byte[] response)
             throws YHDeviceException, YHInvalidResponseException {
-        byte respCode = response[0];
+        byte respCode = getResponseCode(response);
         if (respCode == cmd.getCommandResponse()) {
             log.fine("Received response from device for " + cmd.getName());
-        } else if (isErrorResponse(response)) {
-            final YHError error = YHError.forId(response[3]);
-            log.severe("Device returned error code: " + error.toString());
-            throw new YHDeviceException(error);
         } else {
-            final String err = "Unrecognized response: " + Utils.getPrintableBytes(response);
+            final YHError error = getResponseErrorCode(response);
+            if (error != null) {
+                log.severe("Device returned error code: " + error.toString());
+                throw new YHDeviceException(error);
+            } else {
+                final String err = "Unrecognized response: " + Utils.getPrintableBytes(response);
+                log.severe(err);
+                throw new YHInvalidResponseException(err);
+            }
+        }
+
+        int expectedDataLength = getCommandResponseLength(response);
+        int actualDataLength = response.length - COMMAND_ID_SIZE - COMMAND_INPUT_LENGTH_SIZE;
+        if (actualDataLength != expectedDataLength) {
+            final String err =
+                    "Unexpected length of response from device. According to device response, the command response should be " +
+                    expectedDataLength + " bytes long, but the actual received data was " + actualDataLength;
             log.severe(err);
             throw new YHInvalidResponseException(err);
         }
 
-        int expectedDataLength = (response[2] & 0xFF) | ((response[1] & 0xFF) << 8);
-        int dataLength = response.length - 3;
-        if (dataLength != expectedDataLength) {
-            final String err = "Unexpected length of response from device. Expected " + expectedDataLength + ", found " + dataLength;
-            log.severe(err);
-            throw new YHInvalidResponseException(err);
+        byte[] ret = new byte[0];
+        if (actualDataLength > 0) {
+            ret = Arrays.copyOfRange(response, RESPONSE_DATA_INDEX, response.length);
         }
-
-        if (dataLength > 0) {
-            ByteBuffer res = ByteBuffer.allocate(dataLength);
-            res.put(response, 3, dataLength);
-            return res.array();
-        }
-        return new byte[0];
+        return ret;
     }
 
     /**
      * Returns whether data is actually an error message as defined by the YubiHSM.
-     * <p>
-     * The data contains an error if it is 4 bytes long and the first 3 bytes are: 0x7f 0x00 0x01
      *
-     * @param data The data to check
-     * @return True if data contains an error code. False otherwise
+     * @param deviceResponse
+     * @return True if the first 3 bytes of the device response are: 0x7f 0x00 0x01 (The fourth byte is the error code). False otherwise
      */
-    public static boolean isErrorResponse(final byte[] data) {
-        if (data == null || data.length != 4) {
+    public static boolean isErrorResponse(final byte[] deviceResponse) {
+        if (deviceResponse == null && deviceResponse.length != ERROR_RESPONSE_LENGTH) {
             return false;
         }
-
-        byte[] errResp = {Command.ERROR.getId(), (byte) 0, (byte) 1};
-        for (int i = 0; i < errResp.length; i++) {
-            if (data[i] != errResp[i]) {
+        for (int i = 0; i < ERROR_RESPONSE_START.length; i++) {
+            if (deviceResponse[i] != ERROR_RESPONSE_START[i]) {
                 return false;
             }
         }
-
         return true;
+    }
+
+    /**
+     * @param deviceResponse
+     * @return The error code contained in `deviceResponse` if there is one. Null otherwise
+     */
+    public static YHError getResponseErrorCode(final byte[] deviceResponse) {
+        YHError ret = null;
+        if (isErrorResponse(deviceResponse)) {
+            ret = YHError.forId(deviceResponse[RESPONSE_DATA_INDEX]);
+        }
+        return ret;
+    }
+
+    /**
+     * @param deviceResponse
+     * @return The first byte of `deviceResponse` (where the response code is expected to be)
+     */
+    public static byte getResponseCode(@NonNull final byte[] deviceResponse) {
+        if (deviceResponse.length == 0) {
+            throw new IllegalArgumentException("Device response did not contain any data");
+        }
+        return deviceResponse[RESPONSE_CODE_INDEX];
+    }
+
+    /**
+     * Returns the length of the data contained in `deviceResponse`
+     *
+     * @param deviceResponse
+     * @return The length of the data is stated in the second and third byte of `deviceResponse`
+     */
+    public static int getCommandResponseLength(@NonNull final byte[] deviceResponse) {
+        int shortSize = Short.SIZE / 8; // the size of a short object in bytes
+        if (deviceResponse.length < RESPONSE_LENGTH_INDEX + shortSize) {
+            throw new IllegalArgumentException("Device response is too short to contain the length data at index " + RESPONSE_LENGTH_INDEX);
+        }
+        return (deviceResponse[RESPONSE_LENGTH_INDEX + 1] & 0xFF) | ((deviceResponse[RESPONSE_LENGTH_INDEX] & 0xFF) << 8);
     }
 
     /**

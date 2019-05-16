@@ -52,7 +52,7 @@ public class YubiHsm {
     public byte[] sendCmd(final Command cmd, final byte[] data)
             throws YHInvalidResponseException, YHConnectionException, YHDeviceException {
 
-        final byte[] msg = CommandUtils.getTransceiveMessage(cmd, data);
+        final byte[] msg = CommandUtils.getFullCommandMessage(cmd, data);
         byte[] response = backend.transceive(msg);
         return CommandUtils.getResponseData(cmd, response);
     }

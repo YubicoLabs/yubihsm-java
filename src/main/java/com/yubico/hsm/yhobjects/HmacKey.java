@@ -2,6 +2,7 @@ package com.yubico.hsm.yhobjects;
 
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.exceptions.*;
+import com.yubico.hsm.internal.util.CommandUtils;
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
@@ -89,11 +90,7 @@ public class HmacKey extends YHObject {
         bb.put(keyAlgorithm.getId());
 
         byte[] resp = session.sendSecureCmd(Command.GENERATE_HMAC_KEY, bb.array());
-        if (resp.length != OBJECT_ID_SIZE) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.GENERATE_HMAC_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE + " bytes, but was " +
-                    resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.GENERATE_HMAC_KEY, resp.length, OBJECT_ID_SIZE);
 
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
@@ -144,11 +141,7 @@ public class HmacKey extends YHObject {
         bb.put(hmacKey);
 
         byte[] resp = session.sendSecureCmd(Command.PUT_HMAC_KEY, bb.array());
-        if (resp.length != OBJECT_ID_SIZE) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.PUT_HMAC_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE + " bytes, but was " +
-                    resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.PUT_HMAC_KEY, resp.length, OBJECT_ID_SIZE);
 
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
@@ -189,11 +182,7 @@ public class HmacKey extends YHObject {
 
         byte[] hmac = session.sendSecureCmd(Command.SIGN_HMAC, bb.array());
         int expectedSigLength = getSignatureLength(getKeyAlgorithm());
-        if (hmac.length != expectedSigLength) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.SIGN_HMAC.getName() + " command expected to contain " + expectedSigLength + " bytes but was " +
-                    hmac.length + " bytes long instead");
-        }
+        CommandUtils.verifyResponseLength(Command.SIGN_HMAC, hmac.length, expectedSigLength);
         log.fine("HMAC from YubiHSM: " + Utils.getPrintableBytes(hmac));
         return hmac;
     }
@@ -235,17 +224,16 @@ public class HmacKey extends YHObject {
         bb.put(sig);
         bb.put(data);
         byte[] resp = session.sendSecureCmd(Command.VERIFY_HMAC, bb.array());
-        if (resp.length != 1) {
-            throw new YHInvalidResponseException("Expecting 1 byte response to " + Command.VERIFY_HMAC.getName() + " command. But received " +
-                                                 "response was: " + Utils.getPrintableBytes(resp));
-        }
+        CommandUtils.verifyResponseLength(Command.VERIFY_HMAC, resp.length, 1);
 
+        boolean ret = false;
         if (resp[0] == (byte) 0x01) {
             log.info("HMAC verification successful");
-            return true;
+            ret = true;
+        } else {
+            log.info("HMAC verification failed");
         }
-        log.info("HMAC verification failed");
-        return false;
+        return ret;
     }
 
     private int getSignatureLength(@NonNull final Algorithm keyAlgorithm) throws UnsupportedAlgorithmException {

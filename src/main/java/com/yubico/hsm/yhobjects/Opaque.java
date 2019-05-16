@@ -5,6 +5,7 @@ import com.yubico.hsm.exceptions.YHAuthenticationException;
 import com.yubico.hsm.exceptions.YHConnectionException;
 import com.yubico.hsm.exceptions.YHDeviceException;
 import com.yubico.hsm.exceptions.YHInvalidResponseException;
+import com.yubico.hsm.internal.util.CommandUtils;
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
@@ -130,11 +131,7 @@ public class Opaque extends YHObject {
         bb.put(opaqueData);
 
         byte[] resp = session.sendSecureCmd(Command.PUT_OPAQUE, bb.array());
-        if (resp.length != OBJECT_ID_SIZE) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.PUT_OPAQUE.getName() + " command expected to contains " + OBJECT_ID_SIZE + " bytes, but was " +
-                    resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.PUT_OPAQUE, resp.length, OBJECT_ID_SIZE);
 
         bb = ByteBuffer.wrap(resp);
         id = bb.getShort();

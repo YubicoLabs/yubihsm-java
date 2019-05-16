@@ -252,7 +252,7 @@ public class YHSession {
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
 
-        byte[] resp = secureTransceive(CommandUtils.getTransceiveMessage(cmd, data == null ? new byte[0] : data));
+        byte[] resp = secureTransceive(CommandUtils.getFullCommandMessage(cmd, data == null ? new byte[0] : data));
         return CommandUtils.getResponseData(cmd, resp);
     }
 

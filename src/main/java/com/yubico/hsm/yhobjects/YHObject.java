@@ -5,6 +5,7 @@ import com.yubico.hsm.exceptions.YHAuthenticationException;
 import com.yubico.hsm.exceptions.YHConnectionException;
 import com.yubico.hsm.exceptions.YHDeviceException;
 import com.yubico.hsm.exceptions.YHInvalidResponseException;
+import com.yubico.hsm.internal.util.CommandUtils;
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhdata.YHObjectInfo;
@@ -247,7 +248,8 @@ public class YHObject {
         bb.putShort(objectID);
         bb.put(type.getId());
         try {
-            session.sendSecureCmd(Command.DELETE_OBJECT, bb.array());
+            byte[] resp = session.sendSecureCmd(Command.DELETE_OBJECT, bb.array());
+            CommandUtils.verifyResponseLength(Command.DELETE_OBJECT, resp.length, 0);
         } catch (YHDeviceException e) {
             if (!YHError.OBJECT_NOT_FOUND.equals(e.getYhError())) {
                 throw e;

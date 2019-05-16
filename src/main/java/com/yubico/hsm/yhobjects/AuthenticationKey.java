@@ -5,6 +5,7 @@ import com.yubico.hsm.exceptions.YHAuthenticationException;
 import com.yubico.hsm.exceptions.YHConnectionException;
 import com.yubico.hsm.exceptions.YHDeviceException;
 import com.yubico.hsm.exceptions.YHInvalidResponseException;
+import com.yubico.hsm.internal.util.CommandUtils;
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
@@ -166,11 +167,7 @@ public class AuthenticationKey extends YHObject {
         bb.put(macKey);
 
         byte[] resp = session.sendSecureCmd(Command.PUT_AUTHENTICATION_KEY, bb.array());
-        if (resp.length != OBJECT_ID_SIZE) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.PUT_AUTHENTICATION_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE +
-                    " bytes, but was " + resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.PUT_AUTHENTICATION_KEY, resp.length, OBJECT_ID_SIZE);
 
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
@@ -260,11 +257,7 @@ public class AuthenticationKey extends YHObject {
         bb.put(encryptionKey);
         bb.put(macKey);
         byte[] resp = session.sendSecureCmd(Command.CHANGE_AUTHENTICATION_KEY, bb.array());
-        if (resp.length != OBJECT_ID_SIZE) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.PUT_AUTHENTICATION_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE +
-                    " bytes, but was " + resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.CHANGE_AUTHENTICATION_KEY, resp.length, OBJECT_ID_SIZE);
 
         bb = ByteBuffer.wrap(resp);
         short changedId = bb.getShort();

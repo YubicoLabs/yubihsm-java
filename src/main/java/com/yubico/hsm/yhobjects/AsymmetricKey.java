@@ -2,8 +2,12 @@ package com.yubico.hsm.yhobjects;
 
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.exceptions.*;
+import com.yubico.hsm.internal.util.CommandUtils;
 import com.yubico.hsm.internal.util.Utils;
-import com.yubico.hsm.yhconcepts.*;
+import com.yubico.hsm.yhconcepts.Algorithm;
+import com.yubico.hsm.yhconcepts.Capability;
+import com.yubico.hsm.yhconcepts.Command;
+import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhdata.YHObjectInfo;
 import lombok.NonNull;
 
@@ -71,7 +75,7 @@ public class AsymmetricKey extends YHObject {
      */
     public static boolean isEcAlgorithm(final Algorithm algorithm) {
         List<Algorithm> ecAlgorithsms = Arrays.asList(Algorithm.EC_P256, Algorithm.EC_P384, Algorithm.EC_P521, Algorithm.EC_K256, Algorithm.EC_BP256,
-                                           Algorithm.EC_BP384, Algorithm.EC_BP512, Algorithm.EC_P224);
+                                                      Algorithm.EC_BP384, Algorithm.EC_BP512, Algorithm.EC_P224);
         return ecAlgorithsms.contains(algorithm);
     }
 
@@ -121,12 +125,7 @@ public class AsymmetricKey extends YHObject {
         bb.put(keyAlgorithm.getId());
 
         byte[] resp = session.sendSecureCmd(Command.GENERATE_ASYMMETRIC_KEY, bb.array());
-        if (resp.length != OBJECT_ID_SIZE) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.GENERATE_ASYMMETRIC_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE +
-                    " bytes, but was " +
-                    resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.GENERATE_ASYMMETRIC_KEY, resp.length, OBJECT_ID_SIZE);
 
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
@@ -231,7 +230,7 @@ public class AsymmetricKey extends YHObject {
             throw new IllegalArgumentException("Missing Asymmetric key to attest");
         }
 
-        if(!YHObject.exists(session, attestingKey, Type.TYPE_OPAQUE)) {
+        if (!YHObject.exists(session, attestingKey, Type.TYPE_OPAQUE)) {
             throw new UnsupportedOperationException("To sign attestation certificates, there has to exist a template X509Certificate with ID " +
                                                     "0x" + Integer.toHexString(attestingKey) + ". Please use the Opaque class to import such a " +
                                                     "template certificate and try again");
@@ -407,7 +406,7 @@ public class AsymmetricKey extends YHObject {
         CertificateFactory cf;
         if (brainpool) {
             Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-            cf =  CertificateFactory.getInstance("X.509", "BC");
+            cf = CertificateFactory.getInstance("X.509", "BC");
         } else {
             cf = CertificateFactory.getInstance("X.509");
         }
@@ -442,11 +441,8 @@ public class AsymmetricKey extends YHObject {
         }
 
         byte[] resp = session.sendSecureCmd(Command.PUT_ASYMMETRIC_KEY, bb.array());
-        if (resp.length != OBJECT_ID_SIZE) {
-            throw new YHInvalidResponseException(
-                    "Response to " + Command.PUT_ASYMMETRIC_KEY.getName() + " command expected to contains " + OBJECT_ID_SIZE + " bytes, but " +
-                    "was " + resp.length + " bytes instead");
-        }
+        CommandUtils.verifyResponseLength(Command.PUT_ASYMMETRIC_KEY, resp.length, OBJECT_ID_SIZE);
+
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
 
