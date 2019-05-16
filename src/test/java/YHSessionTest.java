@@ -64,6 +64,7 @@ public class YHSessionTest {
         assertEquals((byte) -1, session3.getSessionID());
         assertEquals(YHSession.SessionStatus.NOT_INITIALIZED, session3.getStatus());
 
+        boolean exceptionThrown = false;
         try {
             session3.authenticateSession();
         } catch (Exception e) {
@@ -71,16 +72,21 @@ public class YHSessionTest {
                        (e instanceof YHAuthenticationException));
             YHAuthenticationException exp = (YHAuthenticationException) e;
             assertEquals(YHError.AUTHENTICATION_FAILED, exp.getYhError());
+            exceptionThrown = true;
         }
+        assertTrue(exceptionThrown);
 
         session2.closeSession();
         assertEquals(YHSession.SessionStatus.CLOSED, session2.getStatus());
+        exceptionThrown = false;
         try {
             session2.authenticateSession();
         } catch (Exception e) {
             assertTrue("Expected YHAuthenticationException. Instead got " + e.getClass().getName(),
                        (e instanceof YHAuthenticationException));
+            exceptionThrown = true;
         }
+        assertTrue(exceptionThrown);
 
         byte[] data = new byte[32];
         new Random().nextBytes(data);

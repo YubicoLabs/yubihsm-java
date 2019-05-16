@@ -117,7 +117,7 @@ public class AuthenticationKey extends YHObject {
      */
     public void destroyKeys() {
         destroysKeys(encryptionKey, macKey);
-        log.info("Destroyed long term encryption key and MAC key from cache");
+        log.info("Destroyed long term encryption key and MAC key");
     }
 
     /**

@@ -102,7 +102,6 @@ public class YHSession {
         return authenticationKey.getId();
     }
 
-
     /**
      * Creates and authenticates a session with the device
      *
@@ -176,12 +175,12 @@ public class YHSession {
                    InvalidKeyException, BadPaddingException, IllegalBlockSizeException, YHConnectionException, YHInvalidResponseException,
                    YHDeviceException {
 
-        if (status != SessionStatus.AUTHENTICATED) {
-            if (status == SessionStatus.NOT_INITIALIZED || status == SessionStatus.CREATED) {
-                authenticateSession();
-            } else {
-                throw new YHAuthenticationException("Session needs to be authenticated to send secure messages to the device");
-            }
+        if (status == SessionStatus.CLOSED) {
+            throw new YHAuthenticationException("Session is not valid");
+        }
+
+        if (status != SessionStatus.AUTHENTICATED || !areSessionKeysInitialized()) {
+            authenticateSession();
         }
 
         // Setup the secret key for this message
@@ -281,17 +280,8 @@ public class YHSession {
         }
 
         try {
-            byte[] closeSessionMsg = {Command.CLOSE_SESSION.getId(), (byte) 0, (byte) 0};
-            byte[] response = secureTransceive(closeSessionMsg);
-            byte[] responseData = CommandUtils.getResponseData(Command.CLOSE_SESSION, response);
-            if (responseData.length == 0) {
-                status = SessionStatus.CLOSED;
-            } else {
-                final String err = "Received unexpected response from YubiHsm";
-                log.fine(err + ": " + Utils.getPrintableBytes(response));
-                throw new YHInvalidResponseException(err);
-            }
-
+            byte[] resp = sendSecureCmd(Command.CLOSE_SESSION, null);
+            CommandUtils.verifyResponseLength(Command.CLOSE_SESSION, resp.length, 0);
         } catch (YHDeviceException e) {
             if (e.getYhError().equals(YHError.INVALID_SESSION)) {
                 log.info("Session " + sessionID + " is not valid");
@@ -299,13 +289,34 @@ public class YHSession {
                 throw e;
             }
         } finally {
+            destroySessionKeys();
             authenticationKey.destroyKeys();
             authenticationKey = null;
         }
+        status = SessionStatus.CLOSED;
     }
 
 
     /// Help methods
+
+    private void destroySessionKeys() {
+        if (sessionEncKey != null) {
+            Arrays.fill(sessionEncKey, (byte) 0x00);
+        }
+        if (sessionMacKey != null) {
+            Arrays.fill(sessionMacKey, (byte) 0x00);
+        }
+        if (sessionRMacKey != null) {
+            Arrays.fill(sessionRMacKey, (byte) 0x00);
+        }
+        log.info("Destroyed the session encryption key, MAC key and RMAC key");
+    }
+
+    private boolean areSessionKeysInitialized() {
+        return sessionEncKey != null && sessionEncKey.length > 0 &&
+               sessionMacKey != null && sessionMacKey.length > 0 &&
+               sessionRMacKey != null && sessionRMacKey.length > 0;
+    }
 
     private byte[] getSessionMessageNoMac(@NonNull byte[] encMessage) {
         int sessionMsgLength = SESSION_ID_SIZE + encMessage.length + MESSAGE_MAC_SIZE;
@@ -319,7 +330,7 @@ public class YHSession {
     }
 
     private byte[] getSessionMessageWithMac(@NonNull byte[] sessionMsgNoMac, @NonNull byte[] sessionChain) {
-        if(sessionChain.length < MESSAGE_MAC_SIZE) {
+        if (sessionChain.length < MESSAGE_MAC_SIZE) {
             throw new IllegalArgumentException("Session chain is too small to contain a " + MESSAGE_MAC_SIZE + " bytes MAC");
         }
         byte[] mac = Arrays.copyOfRange(sessionChain, 0, MESSAGE_MAC_SIZE);
@@ -525,12 +536,12 @@ public class YHSession {
     /**
      * Verifies the response from the device by comparing the response MAC with a MAC generated using `challenge`
      *
-     * @param response Contains the response MAC as its last 8 bytes
+     * @param response  Contains the response MAC as its last 8 bytes
      * @param challenge
      * @throws YHAuthenticationException If response authentication fails
      */
     private void verifyResponseMac(@NonNull final byte[] response, final byte[] challenge) throws YHAuthenticationException {
-        if(response.length < MESSAGE_MAC_SIZE) {
+        if (response.length < MESSAGE_MAC_SIZE) {
             throw new IllegalArgumentException("Response is too short to contain a " + MESSAGE_MAC_SIZE + " bytes MAC");
         }
         byte[] respMac = Arrays.copyOfRange(response, response.length - MESSAGE_MAC_SIZE, response.length);
