@@ -10,6 +10,7 @@ import com.yubico.hsm.yhdata.YHObjectInfo;
 import com.yubico.hsm.yhdata.YubicoOtpData;
 import com.yubico.hsm.yhobjects.OtpAeadKey;
 import com.yubico.hsm.yhobjects.YHObject;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -19,12 +20,11 @@ import javax.annotation.Nonnull;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.*;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
+@Slf4j
 public class OtpAeadKeyTest {
-    Logger log = Logger.getLogger(OtpAeadKeyTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;

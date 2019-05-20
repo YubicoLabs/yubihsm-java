@@ -10,6 +10,7 @@ import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhdata.YHObjectInfo;
 import com.yubico.hsm.yhobjects.AuthenticationKey;
 import com.yubico.hsm.yhobjects.YHObject;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -18,13 +19,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@Slf4j
 public class AuthenticationKeyTest {
-    Logger log = Logger.getLogger(AuthenticationKeyTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;

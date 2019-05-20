@@ -2,6 +2,7 @@ import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.yhdata.DeviceInfo;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -9,13 +10,12 @@ import org.junit.Test;
 import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@Slf4j
 public class YubiHsmTest {
-    private static Logger log = Logger.getLogger(YubiHsmTest.class.getName());
 
     private static YubiHsm yubihsm;
 

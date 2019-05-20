@@ -7,6 +7,7 @@ import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -19,10 +20,9 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.*;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
+@Slf4j
 public class AsymmetricKeyEc extends AsymmetricKey {
-    private static Logger log = Logger.getLogger(AsymmetricKeyEc.class.getName());
 
     private static final int COMPONENT_LENGTH_FOR_224 = 28;
     private static final int COMPONENT_LENGTH_FOR_256 = 32;

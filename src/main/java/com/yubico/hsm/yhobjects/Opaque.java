@@ -12,6 +12,7 @@ import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
 import com.yubico.hsm.yhconcepts.Type;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -27,10 +28,9 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
+@Slf4j
 public class Opaque extends YHObject {
-    private static Logger log = Logger.getLogger(Opaque.class.getName());
 
     public static final Type TYPE = Type.TYPE_OPAQUE;
     public static final int MAX_OPAQUE_DATA_LENGTH = 1968;

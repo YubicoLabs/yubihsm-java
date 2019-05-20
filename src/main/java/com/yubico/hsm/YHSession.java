@@ -11,6 +11,7 @@ import com.yubico.hsm.yhconcepts.YHError;
 import com.yubico.hsm.yhobjects.AuthenticationKey;
 import com.yubico.hsm.yhobjects.YHObject;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.engines.AESEngine;
@@ -24,13 +25,12 @@ import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
-import java.util.logging.Logger;
 
 /**
  * Class to handle communication with the device over an authenticated session
  */
+@Slf4j
 public class YHSession {
-    Logger log = Logger.getLogger(YHSession.class.getName());
 
     public enum SessionStatus {
         NOT_INITIALIZED,
@@ -115,7 +115,7 @@ public class YHSession {
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, YHAuthenticationException {
 
         if (status == SessionStatus.AUTHENTICATED) {
-            log.fine("Session " + getSessionID() + " already authenticated. Doing nothing");
+            log.debug("Session " + getSessionID() + " already authenticated. Doing nothing");
             return;
         }
 
@@ -131,23 +131,23 @@ public class YHSession {
 
         // Assemble 16 byte challenge consisting of the 8 random bytes sent to the device followed by the 8 bytes received from the device
         byte[] challenge = getSessionAuthenticationChallenge(hostChallenge, deviceChallenge);
-        log.finer("Authenticating session context: " + Utils.getPrintableBytes(challenge));
+        log.debug("Authenticating session context: " + Utils.getPrintableBytes(challenge));
 
         deriveSessionKeys(challenge);
         verifyDeviceCryptogram(deviceCryptogram, challenge);
 
         // Derive a host cryptogram
         byte[] hostCryptogram = deriveKey(sessionMacKey, HOST_CRYPTOGRAM, challenge, HALF_CHALLENGE_SIZE);
-        log.finer("Host cryptogram: " + Utils.getPrintableBytes(hostCryptogram));
+        log.debug("Host cryptogram: " + Utils.getPrintableBytes(hostCryptogram));
 
         // Authenticate the session
         byte[] authenticateSessionMessage = getAuthenticateSessionMessage(hostCryptogram);
-        log.finer("Authenticate Session data: " + Utils.getPrintableBytes(authenticateSessionMessage));
+        log.debug("Authenticate Session data: " + Utils.getPrintableBytes(authenticateSessionMessage));
         byte[] authenticateSessionResponse = yubihsm.getBackend().transceive(authenticateSessionMessage);
 
         // Parse the response
         authenticateSessionResponse = CommandUtils.getResponseData(Command.AUTHENTICATE_SESSION, authenticateSessionResponse);
-        log.finer("Authenticate Session response data: " + Utils.getPrintableBytes(authenticateSessionResponse));
+        log.debug("Authenticate Session response data: " + Utils.getPrintableBytes(authenticateSessionResponse));
         CommandUtils.verifyResponseLength(Command.AUTHENTICATE_SESSION, authenticateSessionResponse.length, 0);
 
         status = SessionStatus.AUTHENTICATED;
@@ -188,13 +188,13 @@ public class YHSession {
         byte[] iv = getIv(key);
 
         // Add padding
-        log.finer("Sending message: " + Utils.getPrintableBytes(message));
+        log.debug("Sending message: " + Utils.getPrintableBytes(message));
         byte[] paddedMsg = Utils.addPadding(message, PADDING_BLOCK_SIZE);
-        log.finer("Plain text message: " + Utils.getPrintableBytes(paddedMsg));
+        log.debug("Plain text message: " + Utils.getPrintableBytes(paddedMsg));
 
         // Encrypt message
         byte[] encryptedMsg = getCipherMessage(paddedMsg, key, iv, Cipher.ENCRYPT_MODE);
-        log.finer("Encrypted message: " + Utils.getPrintableBytes(encryptedMsg));
+        log.debug("Encrypted message: " + Utils.getPrintableBytes(encryptedMsg));
 
         // Assemble session message command without the MAC
         byte[] sessionMsgNoMac = getSessionMessageNoMac(encryptedMsg);
@@ -208,19 +208,19 @@ public class YHSession {
 
         // Verify response mac
         verifyResponseMac(sessionMsgResp, nextSessionChain);
-        log.fine("Response MAC successfully verified");
+        log.debug("Response MAC successfully verified");
 
         // Extract command response message (encrypted)
         byte[] encryptedResp = getSessionMessageResponse(sessionMsgResp);
-        log.finer("Encrypted response: " + Utils.getPrintableBytes(encryptedMsg));
+        log.debug("Encrypted response: " + Utils.getPrintableBytes(encryptedMsg));
 
         // Decrypt command response message
         byte[] decryptedResp = getCipherMessage(encryptedResp, key, iv, Cipher.DECRYPT_MODE);
-        log.finer("Plain text response: " + Utils.getPrintableBytes(decryptedResp));
+        log.debug("Plain text response: " + Utils.getPrintableBytes(decryptedResp));
 
         // Remove padding from command response message
         byte[] unpaddedResp = Utils.removePadding(decryptedResp, PADDING_BLOCK_SIZE);
-        log.finer("Unpadded plain text response: " + Utils.getPrintableBytes(unpaddedResp));
+        log.debug("Unpadded plain text response: " + Utils.getPrintableBytes(unpaddedResp));
 
         incrementSessionCounter();
         sessionChain = nextSessionChain;
@@ -358,15 +358,15 @@ public class YHSession {
         bb.put(hostChallenge);
         byte[] msg = bb.array();
 
-        log.finer("Create Session data: " + Utils.getPrintableBytes(msg));
+        log.debug("Create Session data: " + Utils.getPrintableBytes(msg));
         byte[] resp = yubihsm.sendCmd(Command.CREATE_SESSION, msg);
-        log.finer("Create Session response data: " + Utils.getPrintableBytes(resp));
+        log.debug("Create Session response data: " + Utils.getPrintableBytes(resp));
         CommandUtils.verifyResponseLength(Command.CREATE_SESSION, resp.length, 1 + CHALLENGE_SIZE);
 
         // Set the session ID if successful
         setSessionID(resp[0]);
         status = SessionStatus.CREATED;
-        log.fine("Created session with SessionID: " + sessionID);
+        log.debug("Created session with SessionID: " + sessionID);
 
         Object[] ret = new Object[2];
         ret[0] = Arrays.copyOfRange(resp, 1, 1 + HALF_CHALLENGE_SIZE); // Device challenge
@@ -429,12 +429,12 @@ public class YHSession {
      */
     private void verifyDeviceCryptogram(@NonNull final byte[] deviceCryptogram, final byte[] challenge)
             throws YHAuthenticationException {
-        log.finer("Card cryptogram: " + Utils.getPrintableBytes(deviceCryptogram));
+        log.debug("Card cryptogram: " + Utils.getPrintableBytes(deviceCryptogram));
         byte[] generatedCryptogram = deriveKey(sessionMacKey, CARD_CRYPTOGRAM, challenge, HALF_CHALLENGE_SIZE);
         if (!Arrays.equals(generatedCryptogram, deviceCryptogram)) {
             throw new YHAuthenticationException(YHError.AUTHENTICATION_FAILED);
         }
-        log.fine("Card cryptogram successfully verified");
+        log.debug("Card cryptogram successfully verified");
     }
 
     private byte[] getAuthenticateSessionMessage(@NonNull final byte[] hostCryptogram) {
@@ -470,7 +470,7 @@ public class YHSession {
      * @return 16 bytes MAC
      */
     private byte[] getMac(@NonNull final byte[] key, byte[] chain, @NonNull byte[] input) {
-        log.finer("Mac input: " + Utils.getPrintableBytes(chain) + " " + Utils.getPrintableBytes(input));
+        log.debug("Mac input: " + Utils.getPrintableBytes(chain) + " " + Utils.getPrintableBytes(input));
         CipherParameters params = new KeyParameter(key);
         BlockCipher cipher = new AESEngine();
         CMac mac = new CMac(cipher);
@@ -481,7 +481,7 @@ public class YHSession {
         mac.update(input, 0, input.length);
         byte[] out = new byte[MESSAGE_MAC_SIZE * 2];
         mac.doFinal(out, 0);
-        log.finer("Full MAC: " + Utils.getPrintableBytes(out));
+        log.debug("Full MAC: " + Utils.getPrintableBytes(out));
         return out;
     }
 
@@ -516,12 +516,12 @@ public class YHSession {
     private byte[] getIv(@NonNull final SecretKey key)
             throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         byte[] ivCounter = getSessionCounter();
-        log.finer("IV counter: " + Utils.getPrintableBytes(ivCounter));
+        log.debug("IV counter: " + Utils.getPrintableBytes(ivCounter));
 
         Cipher cipher = Cipher.getInstance("AES/ECB/NoPadding");
         cipher.init(Cipher.ENCRYPT_MODE, key);
         byte[] iv = cipher.doFinal(ivCounter);
-        log.finer("IV: " + Utils.getPrintableBytes(iv));
+        log.debug("IV: " + Utils.getPrintableBytes(iv));
         return iv;
     }
 

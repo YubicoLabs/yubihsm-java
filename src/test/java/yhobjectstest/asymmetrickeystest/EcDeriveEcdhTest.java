@@ -10,6 +10,7 @@ import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhobjects.AsymmetricKey;
 import com.yubico.hsm.yhobjects.AsymmetricKeyEc;
 import com.yubico.hsm.yhobjects.YHObject;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -22,12 +23,11 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECPoint;
 import java.util.Arrays;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.assertArrayEquals;
 
+@Slf4j
 public class EcDeriveEcdhTest {
-    Logger log = Logger.getLogger(EcDeriveEcdhTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;

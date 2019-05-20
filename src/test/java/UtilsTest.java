@@ -1,5 +1,6 @@
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Capability;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -7,12 +8,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
+@Slf4j
 public class UtilsTest {
-    Logger log = Logger.getLogger(YHSessionTest.class.getName());
 
     @Test
     public void testPadding() {

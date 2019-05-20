@@ -7,14 +7,13 @@ import com.yubico.hsm.exceptions.YHInvalidResponseException;
 import com.yubico.hsm.internal.util.CommandUtils;
 import com.yubico.hsm.yhconcepts.Command;
 import com.yubico.hsm.yhdata.DeviceInfo;
-
-import java.util.logging.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * This class handles commands and command packages for communication with the device. It also implements basic YubiHSM commands
  */
+@Slf4j
 public class YubiHsm {
-    private Logger log = Logger.getLogger(YubiHsm.class.getName());
 
     private Backend backend;
 
@@ -81,7 +80,7 @@ public class YubiHsm {
     public DeviceInfo getDeviceInfo() throws YHConnectionException, YHInvalidResponseException, YHDeviceException {
         byte[] data = sendCmd(Command.DEVICE_INFO, new byte[0]);
         DeviceInfo info = new DeviceInfo(data);
-        log.fine("Got device info: " + info.toString());
+        log.debug("Got device info: " + info.toString());
         return info;
 
     }

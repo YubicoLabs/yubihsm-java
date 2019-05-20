@@ -8,9 +8,10 @@ import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Origin;
 import com.yubico.hsm.yhconcepts.Type;
+import com.yubico.hsm.yhdata.YHObjectInfo;
 import com.yubico.hsm.yhobjects.Template;
 import com.yubico.hsm.yhobjects.YHObject;
-import com.yubico.hsm.yhdata.YHObjectInfo;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -18,12 +19,11 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
+@Slf4j
 public class TemplateTest {
-    Logger log = Logger.getLogger(TemplateTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;

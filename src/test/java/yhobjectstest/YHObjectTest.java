@@ -15,6 +15,7 @@ import com.yubico.hsm.yhobjects.AsymmetricKey;
 import com.yubico.hsm.yhobjects.HmacKey;
 import com.yubico.hsm.yhobjects.WrapKey;
 import com.yubico.hsm.yhobjects.YHObject;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -22,12 +23,11 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
+@Slf4j
 public class YHObjectTest {
-    Logger log = Logger.getLogger(YHObjectTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;

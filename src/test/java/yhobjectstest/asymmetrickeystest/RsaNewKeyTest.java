@@ -10,6 +10,7 @@ import com.yubico.hsm.yhdata.YHObjectInfo;
 import com.yubico.hsm.yhobjects.AsymmetricKey;
 import com.yubico.hsm.yhobjects.AsymmetricKeyRsa;
 import com.yubico.hsm.yhobjects.YHObject;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -20,12 +21,11 @@ import java.security.KeyPairGenerator;
 import java.security.spec.RSAPrivateCrtKeySpec;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
+@Slf4j
 public class RsaNewKeyTest {
-    Logger log = Logger.getLogger(RsaNewKeyTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;

@@ -11,6 +11,7 @@ import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhconcepts.YHError;
 import com.yubico.hsm.yhobjects.AsymmetricKeyEc;
 import com.yubico.hsm.yhobjects.YHObject;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -21,13 +22,12 @@ import java.security.Security;
 import java.security.Signature;
 import java.util.Arrays;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@Slf4j
 public class EcSignTest {
-    Logger log = Logger.getLogger(EcSignTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;

@@ -3,19 +3,21 @@ package com.yubico.hsm.backend;
 import com.yubico.hsm.exceptions.YHConnectionException;
 import com.yubico.hsm.internal.util.Utils;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.logging.Logger;
 
 /**
  * Handles connection to the YubiHSM over HTTP
  */
+@Slf4j
 public class HttpBackend implements Backend {
-    private Logger log = Logger.getLogger(HttpBackend.class.getName());
 
     private final String DEFAULT_URL = "http://localhost:12345/connector/api";
     private final int DEFAULT_TIMEOUT = 0;
@@ -62,7 +64,7 @@ public class HttpBackend implements Backend {
      */
     private HttpURLConnection getConnection() throws YHConnectionException {
         if (connection == null) {
-            log.finer("Opening HTTP connection to the device");
+            log.debug("Opening HTTP connection to the device");
             HttpURLConnection conn;
             try {
                 conn = (HttpURLConnection) url.openConnection();
@@ -88,12 +90,12 @@ public class HttpBackend implements Backend {
     @Override
     public byte[] transceive(@NonNull byte[] message) throws YHConnectionException {
 
-        if(message.length > MAX_MESSAGE_SIZE) {
+        if (message.length > MAX_MESSAGE_SIZE) {
             throw new IllegalArgumentException("The message to send is too long. The message can at most be " + MAX_MESSAGE_SIZE + " bytes long but" +
                                                " was " + message.length + " bytes");
         }
 
-        log.finest("SEND >> " + Utils.getPrintableBytes(message));
+        log.debug("SEND >> " + Utils.getPrintableBytes(message));
 
         byte[] response;
         HttpURLConnection conn = getConnection();
@@ -104,7 +106,7 @@ public class HttpBackend implements Backend {
         } finally {
             close();
         }
-        log.finest("RECEIVE: " + Utils.getPrintableBytes(response));
+        log.debug("RECEIVE: " + Utils.getPrintableBytes(response));
         return response;
     }
 
@@ -126,7 +128,7 @@ public class HttpBackend implements Backend {
             out.flush();
             out.close();
         } catch (IOException e1) {
-            log.severe("Failed to send message to device");
+            log.error("Failed to send message to device");
             throw new YHConnectionException(e1);
         }
     }
@@ -136,14 +138,14 @@ public class HttpBackend implements Backend {
         try {
             final int httpRespCode = connection.getResponseCode();
             if (httpRespCode == HttpURLConnection.HTTP_OK) {
-                log.finer("Received HTTP response OK");
+                log.debug("Received HTTP response OK");
                 bin = new BufferedInputStream(connection.getInputStream());
             } else {
-                log.info("Received HTTP error response " + httpRespCode);
+                log.debug("Received HTTP error response " + httpRespCode);
                 bin = new BufferedInputStream(connection.getErrorStream());
             }
         } catch (IOException e) {
-            log.severe("Failed to obtain HTTP connection input stream");
+            log.error("Failed to obtain HTTP connection input stream");
             throw new YHConnectionException(e);
         }
         return bin;
@@ -155,12 +157,12 @@ public class HttpBackend implements Backend {
         try {
             len = bin.read(buffer);
             bin.close();
-            if(len < 0) {
-                log.severe("Failed to read HTTP response from device");
+            if (len < 0) {
+                log.error("Failed to read HTTP response from device");
                 throw new YHConnectionException();
             }
         } catch (IOException e) {
-            log.severe("Failed to read HTTP response from device");
+            log.error("Failed to read HTTP response from device");
             throw new YHConnectionException(e);
         }
         return Arrays.copyOfRange(buffer, 0, len);

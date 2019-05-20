@@ -8,6 +8,7 @@ import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -20,10 +21,9 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPrivateCrtKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.List;
-import java.util.logging.Logger;
 
+@Slf4j
 public class AsymmetricKeyRsa extends AsymmetricKey {
-    private static Logger log = Logger.getLogger(AsymmetricKeyRsa.class.getName());
 
     private final int RSA_PUBKEY_EXPONENT = 65537;
     private final int SIGN_PSS_SALT_LENGTH = 2;

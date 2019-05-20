@@ -14,11 +14,9 @@ plugins {
 dependencies {
 
     compileOnly 'org.projectlombok:lombok:1.18.2'
-    
-    compile (
-        'org.bouncycastle:bcpkix-jdk15on:1.61'
-    )
 
+    compile ('org.slf4j:slf4j-api:1.7.25')
+    compile ('org.bouncycastle:bcpkix-jdk15on:1.61')
 
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation 'com.google.guava:guava:23.0'

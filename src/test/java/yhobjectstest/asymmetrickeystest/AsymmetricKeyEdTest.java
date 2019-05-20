@@ -10,6 +10,7 @@ import com.yubico.hsm.yhdata.YHObjectInfo;
 import com.yubico.hsm.yhobjects.AsymmetricKey;
 import com.yubico.hsm.yhobjects.AsymmetricKeyEd;
 import com.yubico.hsm.yhobjects.YHObject;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.Signer;
 import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator;
@@ -25,12 +26,11 @@ import java.security.SecureRandom;
 import java.security.Security;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
+@Slf4j
 public class AsymmetricKeyEdTest {
-    Logger log = Logger.getLogger(AsymmetricKeyEdTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;

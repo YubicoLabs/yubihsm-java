@@ -5,18 +5,18 @@ import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.yhdata.LogData;
 import com.yubico.hsm.yhdata.LogEntry;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
+@Slf4j
 public class YHCoreTest {
-    Logger log = Logger.getLogger(YHCoreTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;

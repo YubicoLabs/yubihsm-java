@@ -11,6 +11,7 @@ import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhdata.YHObjectInfo;
 import com.yubico.hsm.yhobjects.Opaque;
 import com.yubico.hsm.yhobjects.YHObject;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Base64;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -23,12 +24,11 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
+@Slf4j
 public class OpaqueTest {
-    Logger log = Logger.getLogger(OpaqueTest.class.getName());
 
     private final String testCertificate = "-----BEGIN CERTIFICATE-----\n" +
                                            "MIIDMzCCAhugAwIBAgIIV9+4OgOubr4wDQYJKoZIhvcNAQELBQAwGzEZMBcGA1UE\n" +

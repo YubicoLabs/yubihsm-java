@@ -10,6 +10,7 @@ import com.yubico.hsm.yhconcepts.Command;
 import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhdata.YubicoOtpData;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -20,10 +21,9 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
+@Slf4j
 public class OtpAeadKey extends YHObject {
-    private static Logger log = Logger.getLogger(OtpAeadKey.class.getName());
 
     public static final Type TYPE = Type.TYPE_OTP_AEAD_KEY;
 
@@ -183,7 +183,7 @@ public class OtpAeadKey extends YHObject {
             throw new IllegalArgumentException("OTP private ID must be " + CREATE_OTP_PRIVATE_ID_LENGTH + " bytes long");
         }
 
-        log.fine("Creating Yubico OTP AEAD using OTP key " + Utils.getPrintableBytes(otpKey) + " and OTP private ID " +
+        log.debug("Creating Yubico OTP AEAD using OTP key " + Utils.getPrintableBytes(otpKey) + " and OTP private ID " +
                  Utils.getPrintableBytes(otpPrivateId) + " and using key with ID 0x" + Integer.toHexString(getId()));
 
         ByteBuffer bb =
@@ -196,7 +196,7 @@ public class OtpAeadKey extends YHObject {
         CommandUtils.verifyResponseLength(Command.CREATE_OTP_AEAD, resp.length, OTP_AEAD_LENGTH);
 
         log.info("Created Yubico OTP AEAD using key with ID 0x" + Integer.toHexString(getId()));
-        log.fine("Created Yubico OTP AEAD " + Utils.getPrintableBytes(resp) + " using key with key with ID 0x" + Integer.toHexString(getId()));
+        log.debug("Created Yubico OTP AEAD " + Utils.getPrintableBytes(resp) + " using key with key with ID 0x" + Integer.toHexString(getId()));
         return resp;
     }
 
@@ -262,7 +262,7 @@ public class OtpAeadKey extends YHObject {
             throw new IllegalArgumentException("OTP must be " + OTP_LENGTH + " bytes long but was " + otp.length + " bytes instead");
         }
 
-        log.fine("Decrypting Yubico OTP AEAD " + Utils.getPrintableBytes(nonceAead) + " with OTP " + Utils.getPrintableBytes(otp) + " using OTP " +
+        log.debug("Decrypting Yubico OTP AEAD " + Utils.getPrintableBytes(nonceAead) + " with OTP " + Utils.getPrintableBytes(otp) + " using OTP " +
                  "AEAD key with ID 0x" + Integer.toHexString(getId()));
 
         ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OTP_AEAD_LENGTH + OTP_LENGTH);
@@ -309,7 +309,7 @@ public class OtpAeadKey extends YHObject {
                     "OTP AEAD key must be " + OTP_AEAD_LENGTH + " bytes long but was " + nonceAead.length + " bytes instead");
         }
 
-        log.fine("Re-wrapping Yubico OTP AEAD " + Utils.getPrintableBytes(nonceAead) + " that was produced using key 0x" +
+        log.debug("Re-wrapping Yubico OTP AEAD " + Utils.getPrintableBytes(nonceAead) + " that was produced using key 0x" +
                  Integer.toHexString(keyIdFrom) + ". Key 0x" + Integer.toHexString(keyIdTo) + " will be used for re-wrapping");
 
         ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_ID_SIZE + OTP_AEAD_LENGTH);

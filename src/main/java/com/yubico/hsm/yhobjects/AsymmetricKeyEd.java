@@ -9,6 +9,7 @@ import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
 
 import javax.crypto.BadPaddingException;
@@ -19,10 +20,9 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import java.util.logging.Logger;
 
+@Slf4j
 public class AsymmetricKeyEd extends AsymmetricKey {
-    private static Logger log = Logger.getLogger(AsymmetricKeyEd.class.getName());
 
     private static final int ED_KEY_SIZE = 32;
 

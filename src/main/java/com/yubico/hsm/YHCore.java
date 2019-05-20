@@ -13,6 +13,7 @@ import com.yubico.hsm.yhconcepts.YHError;
 import com.yubico.hsm.yhdata.LogData;
 import com.yubico.hsm.yhdata.LogEntry;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -23,10 +24,9 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
+@Slf4j
 public class YHCore {
-    private static Logger log = Logger.getLogger(YHCore.class.getName());
 
     private static final int DEVICE_OPTION_VALUE_SIZE = 1;
 

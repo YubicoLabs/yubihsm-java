@@ -9,18 +9,18 @@ import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhobjects.AsymmetricKeyRsa;
 import com.yubico.hsm.yhobjects.YHObject;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.security.PublicKey;
 import java.util.Arrays;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 
+@Slf4j
 public class RsaPublicKeyTest {
-    Logger log = Logger.getLogger(RsaPublicKeyTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;

@@ -10,6 +10,7 @@ import com.yubico.hsm.yhconcepts.Command;
 import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhdata.WrapData;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -20,10 +21,9 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
+@Slf4j
 public class WrapKey extends YHObject {
-    private static Logger log = Logger.getLogger(WrapKey.class.getName());
 
     public static final Type TYPE = Type.TYPE_WRAP_KEY;
 
@@ -174,7 +174,7 @@ public class WrapKey extends YHObject {
                    InvalidAlgorithmParameterException, YHAuthenticationException, YHInvalidResponseException, BadPaddingException,
                    IllegalBlockSizeException {
         Utils.checkEmptyByteArray(data, "The data to wrap must be at least 1 byte long");
-        log.finer("Wrapping the data: " + Utils.getPrintableBytes(data) + " with Wrap key 0x" + Integer.toHexString(getId()));
+        log.debug("Wrapping the data: " + Utils.getPrintableBytes(data) + " with Wrap key 0x" + Integer.toHexString(getId()));
 
         ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + data.length);
         bb.putShort(getId());
@@ -182,7 +182,7 @@ public class WrapKey extends YHObject {
 
         byte[] resp = session.sendSecureCmd(Command.WRAP_DATA, bb.array());
         WrapData wd = new WrapData(resp, true);
-        log.finer("Got wrapped data: " + wd.toString());
+        log.debug("Got wrapped data: " + wd.toString());
         return wd;
     }
 
@@ -242,7 +242,7 @@ public class WrapKey extends YHObject {
         }
         Utils.checkEmptyByteArray(wrappedData, "The wrapped data must be at least 1 byte long");
 
-        log.finer("Unwrapping the data: [nonce] " + Utils.getPrintableBytes(nonce) + " - [wrapped data] " + Utils.getPrintableBytes(wrappedData) +
+        log.debug("Unwrapping the data: [nonce] " + Utils.getPrintableBytes(nonce) + " - [wrapped data] " + Utils.getPrintableBytes(wrappedData) +
                   " - [mac] " + Utils.getPrintableBytes(mac) + " using Wrap key 0x" + Integer.toHexString(getId()));
 
         ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + WrapData.NONCE_LENGTH + wrappedData.length + WrapData.MAC_LENGTH);
@@ -252,7 +252,7 @@ public class WrapKey extends YHObject {
         bb.put(mac);
 
         byte[] unwrapped = session.sendSecureCmd(Command.UNWRAP_DATA, bb.array());
-        log.finer("Got unwrapped data: " + Utils.getPrintableBytes(unwrapped));
+        log.debug("Got unwrapped data: " + Utils.getPrintableBytes(unwrapped));
         return unwrapped;
     }
 
@@ -289,7 +289,7 @@ public class WrapKey extends YHObject {
         byte[] resp = session.sendSecureCmd(Command.EXPORT_WRAPPED, bb.array());
         WrapData wrapData = new WrapData(resp, false);
 
-        log.finer("Got wrapped object: " + wrapData.toString());
+        log.debug("Got wrapped object: " + wrapData.toString());
         return wrapData;
     }
 

@@ -6,13 +6,13 @@ import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.Command;
 import com.yubico.hsm.yhconcepts.DeviceOptionValue;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
@@ -21,8 +21,8 @@ import static org.junit.Assert.*;
  * To run his test, remove its exclusion from build.gradle and then run:
  *   >> gradle test -Dtest.single=OptionsTest 
  */
+@Slf4j
 public class OptionsTest {
-    private static Logger log = Logger.getLogger(OptionsTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;

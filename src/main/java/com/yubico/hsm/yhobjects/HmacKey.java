@@ -9,6 +9,7 @@ import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
 import com.yubico.hsm.yhconcepts.Type;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -19,10 +20,9 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
+@Slf4j
 public class HmacKey extends YHObject {
-    private static Logger log = Logger.getLogger(HmacKey.class.getName());
 
     public static final Type TYPE = Type.TYPE_HMAC_KEY;
     public static final int MAX_KEY_LENGTH_SHA1_SHA256 = 64;
@@ -174,7 +174,7 @@ public class HmacKey extends YHObject {
         Utils.checkEmptyByteArray(data, "The data to sign must be at least 1 byte long");
 
         log.info("Performing HMAC signing using HMAC key 0x" + Integer.toHexString(getId()));
-        log.fine("HMAC data: " + Utils.getPrintableBytes(data));
+        log.debug("HMAC data: " + Utils.getPrintableBytes(data));
 
         ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + data.length);
         bb.putShort(getId());
@@ -183,7 +183,7 @@ public class HmacKey extends YHObject {
         byte[] hmac = session.sendSecureCmd(Command.SIGN_HMAC, bb.array());
         int expectedSigLength = getSignatureLength(getKeyAlgorithm());
         CommandUtils.verifyResponseLength(Command.SIGN_HMAC, hmac.length, expectedSigLength);
-        log.fine("HMAC from YubiHSM: " + Utils.getPrintableBytes(hmac));
+        log.debug("HMAC from YubiHSM: " + Utils.getPrintableBytes(hmac));
         return hmac;
     }
 
@@ -217,7 +217,7 @@ public class HmacKey extends YHObject {
         }
 
         log.info("Verifying HMAC signature using HMAC key 0x" + Integer.toHexString(getId()));
-        log.fine("[HMAC]" + Utils.getPrintableBytes(sig) + " - [HMAC data]" + Utils.getPrintableBytes(data));
+        log.debug("[HMAC]" + Utils.getPrintableBytes(sig) + " - [HMAC data]" + Utils.getPrintableBytes(data));
 
         ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + sig.length + data.length);
         bb.putShort(getId());

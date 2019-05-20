@@ -1,6 +1,5 @@
 package yhobjectstest;
 
-import yhobjectstest.asymmetrickeystest.AsymmetricKeyTestHelper;
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
@@ -14,9 +13,11 @@ import com.yubico.hsm.yhobjects.AsymmetricKey;
 import com.yubico.hsm.yhobjects.Opaque;
 import com.yubico.hsm.yhobjects.WrapKey;
 import com.yubico.hsm.yhobjects.YHObject;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import yhobjectstest.asymmetrickeystest.AsymmetricKeyTestHelper;
 
 import java.io.ByteArrayInputStream;
 import java.security.SecureRandom;
@@ -25,12 +26,11 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
+@Slf4j
 public class WrapKeyTest {
-    Logger log = Logger.getLogger(WrapKeyTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;

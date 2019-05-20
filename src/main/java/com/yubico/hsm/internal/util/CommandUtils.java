@@ -5,13 +5,13 @@ import com.yubico.hsm.exceptions.YHInvalidResponseException;
 import com.yubico.hsm.yhconcepts.Command;
 import com.yubico.hsm.yhconcepts.YHError;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.logging.Logger;
 
+@Slf4j
 public class CommandUtils {
-    private static Logger log = Logger.getLogger(CommandUtils.class.getName());
 
     public static final int COMMAND_ID_SIZE = 1;
     public static final int COMMAND_INPUT_LENGTH_SIZE = 2;
@@ -53,15 +53,15 @@ public class CommandUtils {
             throws YHDeviceException, YHInvalidResponseException {
         byte respCode = getResponseCode(response);
         if (respCode == cmd.getCommandResponse()) {
-            log.fine("Received response from device for " + cmd.getName());
+            log.debug("Received response from device for " + cmd.getName());
         } else {
             final YHError error = getResponseErrorCode(response);
             if (error != null) {
-                log.severe("Device returned error code: " + error.toString());
+                log.error("Device returned error code: " + error.toString());
                 throw new YHDeviceException(error);
             } else {
                 final String err = "Unrecognized response: " + Utils.getPrintableBytes(response);
-                log.severe(err);
+                log.error(err);
                 throw new YHInvalidResponseException(err);
             }
         }
@@ -72,7 +72,7 @@ public class CommandUtils {
             final String err =
                     "Unexpected length of response from device. According to device response, the command response should be " +
                     expectedDataLength + " bytes long, but the actual received data was " + actualDataLength;
-            log.severe(err);
+            log.error(err);
             throw new YHInvalidResponseException(err);
         }
 

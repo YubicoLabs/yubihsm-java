@@ -5,15 +5,15 @@ import com.yubico.hsm.yhconcepts.Command;
 import com.yubico.hsm.yhconcepts.DeviceOptionValue;
 import com.yubico.hsm.yhobjects.YHObject;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.InvalidParameterException;
 import java.util.*;
-import java.util.logging.Logger;
 
+@Slf4j
 public class Utils {
-    static Logger log = Logger.getLogger(Utils.class.getName());
 
     private static final byte PADDING_FIRST_BYTE = (byte) 0x80;
 
@@ -61,7 +61,7 @@ public class Utils {
      */
     public static byte[] removePadding(@NonNull final byte[] ba, final int blockSize) {
         if (ba.length % blockSize != 0) {
-            log.warning("Byte array was not padded. Doing nothing");
+            log.warn("Byte array was not padded. Doing nothing");
             return ba;
         }
         int index = ba.length - 1;
@@ -70,7 +70,7 @@ public class Utils {
         }
         if (ba[index] != PADDING_FIRST_BYTE) {
             // input has no padding
-            log.warning("No padding pattern found in byte array. Doing nothing");
+            log.warn("No padding pattern found in byte array. Doing nothing");
             return ba;
         }
 

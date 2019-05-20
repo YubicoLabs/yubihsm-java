@@ -5,6 +5,7 @@ import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.exceptions.YHAuthenticationException;
 import com.yubico.hsm.yhconcepts.YHError;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -12,12 +13,11 @@ import org.junit.Test;
 import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
+@Slf4j
 public class YHSessionTest {
-    Logger log = Logger.getLogger(YHSessionTest.class.getName());
 
     private static YubiHsm yubihsm;
 

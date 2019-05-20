@@ -11,6 +11,7 @@ import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhconcepts.YHError;
 import com.yubico.hsm.yhobjects.AsymmetricKeyRsa;
 import com.yubico.hsm.yhobjects.YHObject;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -22,12 +23,11 @@ import java.security.SecureRandom;
 import java.security.Security;
 import java.util.Arrays;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
+@Slf4j
 public class RsaDecryptTest {
-    Logger log = Logger.getLogger(RsaDecryptTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;

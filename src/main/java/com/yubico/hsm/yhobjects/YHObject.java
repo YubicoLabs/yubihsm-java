@@ -10,6 +10,7 @@ import com.yubico.hsm.internal.util.Utils;
 import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhdata.YHObjectInfo;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -24,10 +25,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.logging.Logger;
 
+@Slf4j
 public class YHObject {
-    private static Logger log = Logger.getLogger(YHObject.class.getName());
 
     public static final int OBJECT_ID_SIZE = 2;
     public static final int OBJECT_TYPE_SIZE = 1;
@@ -187,7 +187,7 @@ public class YHObject {
                     }
                 }
             } catch (IOException e) {
-                log.severe("Failed to construct input message to the " + Command.LIST_OBJECTS.getName() + " command");
+                log.error("Failed to construct input message to the " + Command.LIST_OBJECTS.getName() + " command");
                 throw e;
             }
         }
@@ -196,7 +196,7 @@ public class YHObject {
         byte[] response = session.sendSecureCmd(Command.LIST_OBJECTS, cmdMessage);
         int itemSize = OBJECT_ID_SIZE + OBJECT_TYPE_SIZE + OBJECT_SEQUENCE_SIZE;
         if (response.length % itemSize != 0) {
-            log.finer(Command.LIST_OBJECTS.getName() + " response: " + Utils.getPrintableBytes(response));
+            log.debug(Command.LIST_OBJECTS.getName() + " response: " + Utils.getPrintableBytes(response));
             throw new YHInvalidResponseException("Expecting length of response to " + Command.LIST_OBJECTS.getName() + " command to be a multiple " +
                                                  "of " + itemSize + " but have received " + response.length + " bytes instead");
         }
@@ -205,7 +205,7 @@ public class YHObject {
         while (bb.hasRemaining()) {
             ret.add(new YHObjectInfo(bb.getShort(), Type.forId(bb.get()), bb.get()));
         }
-        log.fine("Response to " + Command.LIST_OBJECTS.getName() + " command contained " + ret.size() + " objects");
+        log.debug("Response to " + Command.LIST_OBJECTS.getName() + " command contained " + ret.size() + " objects");
         return ret;
     }
 
@@ -253,7 +253,7 @@ public class YHObject {
                    InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
 
-        log.finer("Deleting " + type.getName() + " " + String.format("0x%02x", objectID));
+        log.debug("Deleting " + type.getName() + " " + String.format("0x%02x", objectID));
 
         ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_TYPE_SIZE);
         bb.putShort(objectID);
@@ -314,7 +314,7 @@ public class YHObject {
                    InvalidKeyException, YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
 
-        log.finer("Getting object info for " + type.getName() + " " + String.format("0x%02X", objectID));
+        log.debug("Getting object info for " + type.getName() + " " + String.format("0x%02X", objectID));
 
         ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_TYPE_SIZE);
         bb.putShort(objectID);

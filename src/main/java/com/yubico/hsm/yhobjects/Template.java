@@ -9,6 +9,7 @@ import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhconcepts.Command;
 import com.yubico.hsm.yhconcepts.Type;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -19,13 +20,12 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
- * Class representing a Template object on the YubiHSM. A Template Object is a binary template used for example to validate SSH certificate requests
+ * Class representing a Template object on the YubiHSM. A Template Object is a binary template used to validate SSH certificate requests
  */
+@Slf4j
 public class Template extends YHObject {
-    private static Logger log = Logger.getLogger(Template.class.getName());
 
     public static final Type TYPE = Type.TYPE_TEMPLATE;
     public static final int MAX_TEMPLATE_DATA_LENGTH = 1968;

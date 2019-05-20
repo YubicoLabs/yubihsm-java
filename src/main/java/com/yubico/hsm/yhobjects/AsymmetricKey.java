@@ -10,6 +10,7 @@ import com.yubico.hsm.yhconcepts.Command;
 import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhdata.YHObjectInfo;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -22,10 +23,9 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
+@Slf4j
 public class AsymmetricKey extends YHObject {
-    private static Logger log = Logger.getLogger(AsymmetricKey.class.getName());
 
     public static final Type TYPE = Type.TYPE_ASYMMETRIC_KEY;
     private static final int SSH_CERT_REQUEST_TIMESTAMP_LENGTH = 4;

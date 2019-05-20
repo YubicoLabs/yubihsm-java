@@ -13,6 +13,7 @@ import com.yubico.hsm.yhconcepts.Command;
 import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhdata.YHObjectInfo;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.*;
 import javax.crypto.spec.PBEKeySpec;
@@ -24,13 +25,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Class representing an Authentication Key Object
  */
+@Slf4j
 public class AuthenticationKey extends YHObject {
-    private static Logger log = Logger.getLogger(AuthenticationKey.class.getName());
 
     public static final Type TYPE = Type.TYPE_AUTHENTICATION_KEY;
 

@@ -11,6 +11,7 @@ import com.yubico.hsm.yhconcepts.Type;
 import com.yubico.hsm.yhdata.YHObjectInfo;
 import com.yubico.hsm.yhobjects.HmacKey;
 import com.yubico.hsm.yhobjects.YHObject;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -21,12 +22,11 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
+@Slf4j
 public class HmacKeyTest {
-    Logger log = Logger.getLogger(HmacKeyTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;

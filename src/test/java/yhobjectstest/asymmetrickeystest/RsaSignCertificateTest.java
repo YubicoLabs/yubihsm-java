@@ -7,6 +7,7 @@ import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.yhconcepts.Algorithm;
 import com.yubico.hsm.yhconcepts.Capability;
 import com.yubico.hsm.yhobjects.*;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
@@ -26,12 +27,11 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
+@Slf4j
 public class RsaSignCertificateTest {
-    Logger log = Logger.getLogger(RsaSignCertificateTest.class.getName());
 
     private static YubiHsm yubihsm;
     private static YHSession session;
