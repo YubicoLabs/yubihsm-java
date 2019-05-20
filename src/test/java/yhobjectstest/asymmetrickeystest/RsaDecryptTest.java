@@ -107,7 +107,7 @@ public class RsaDecryptTest {
         log.info("TEST END: testDecryptPkcs1()");
     }
 
-    //@Test
+    @Test
     public void testDecryptOaep() throws Exception {
         log.info("TEST START: testDecryptOaep()");
         decryptOaepTest(Algorithm.RSA_2048, 2048);

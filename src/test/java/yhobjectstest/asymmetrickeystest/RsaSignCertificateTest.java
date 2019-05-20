@@ -211,7 +211,7 @@ public class RsaSignCertificateTest {
 
         PrivateKey privkey = getRsaPrivateKeyFromPemString(rsaPrivateKey);
 
-        short keyId = 5; // 5 because this is one of the white listed keys in the ssh cert req
+        short keyId = 5; // 5 because this is one of the white listed keys in the ssh cert template
         short templateId = 10;
 
         try {
