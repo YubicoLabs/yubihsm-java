@@ -14,8 +14,7 @@ plugins {
 
 dependencies {
 
-    compileOnly 'org.projectlombok:lombok:1.18.2'
-
+    compile ('org.projectlombok:lombok:1.18.2')
     compile ('org.slf4j:slf4j-api:1.7.25')
     compile ('org.bouncycastle:bcpkix-jdk15on:1.61')
     compile ('org.unbroken-dome.gradle-plugins:gradle-testsets-plugin:1.4.5')
