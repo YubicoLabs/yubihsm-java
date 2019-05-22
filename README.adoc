@@ -1,0 +1,61 @@
+== JAVA YubiHSM
+
+Java-yubihsm is a java library used to interact with a YubiHSM 2 device
+
+=== Compilation
+
+To compile from source, run
+
+    $ ./gradlew build
+
+This will automatically run all tests after compilation. To compile without running tests, run
+
+    $ ./gradlew build -x test -x integrationTest
+
+=== Tests
+
+There are three test sets in this library, one for unit tests, one for integration tests and one for
+the device options test.
+
+==== Unit Tests
+
+To run all unit tests, run:
+
+    $ gradle clean test
+
+To run one unit test, run
+
+    $ gradle test -Dtest.single=<TEST NAME>
+
+==== Integrations Tests
+
+The integration tests assume that the YubiHSM contains the default authentication key, which is an
+ authentication key with Object ID `1`, password `password` and alla capabilities and delegated
+ capabilities. Some tests will reset the device so all objects contained in the device will be
+ deleted.
+
+The integration tests also assume that the YubiHSM is accessible via the URL `http://localhost:12345/connector/api`
+
+To run all integration tests, run
+
+    $ gradle clean integrationTest
+
+To run one integration test, run
+
+    $ gradle integrationTest -Dtest.single=<TEST NAME>
+
+Running all integration tests can take 10-15 minutes
+
+==== Device Options Test
+
+The device options test changes the audit log settings on the device. When run with the other tests,
+it will cause the log to fill quickly and all tests failing because of it. That is why this test is
+run is its own test set.
+
+To run the device options test, run
+
+     $ gradle clean optionsTest
+
+Or
+
+      $ gradle optionsTest -Dtest.single=OptionsTest
