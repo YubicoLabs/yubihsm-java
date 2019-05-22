@@ -42,16 +42,16 @@ testSets {
     integrationTest {
         dirName = 'integration-test' 
     }
-}
 
+    // This test changes the audit log setting on the device. When run with the other tests, it will cause the log to
+    // fill quickly and all tests failing because of it. That is why this test is run is its own test set
+    optionsTest {
+        dirName = 'options-test'
+    }
+}
 
 project.integrationTest {
     outputs.upToDateWhen { false }
-
-    // The test changes the audit log setting on the device. When run with the other tests, it will cause the log to
-    // fill quickly and all tests failing because of it. That is why this test is excluded. To run this test, comment 
-    // out the exclusion and run "gradle test -Dtest.single=OptionsTest"
-    exclude '**/OptionsTest.class'
 }
 
 check.dependsOn integrationTest
