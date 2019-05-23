@@ -68,7 +68,7 @@ public class YHCoreTest {
     @Test
     public void testGetPseudoRandom() throws Exception {
         log.info("TEST START: testGetPseudoRandom()");
-        for (int i = 1; i < 20; i++) {
+        for (short i = 1; i < 20; i++) {
             byte[] response = YHCore.getPseudoRandom(session, i);
             assertEquals(i, response.length);
         }

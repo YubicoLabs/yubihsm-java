@@ -110,13 +110,13 @@ public class YHCore {
      * @throws YHInvalidResponseException         If the device returns a response that cannot be parsed
      * @throws IllegalBlockSizeException          If the message encryption/decryption fails
      */
-    public static byte[] getPseudoRandom(@NonNull final YHSession session, final int length)
+    public static byte[] getPseudoRandom(@NonNull final YHSession session, final short length)
             throws YHConnectionException, NoSuchAlgorithmException, InvalidKeyException, YHDeviceException,
                    NoSuchPaddingException, BadPaddingException, YHAuthenticationException, InvalidAlgorithmParameterException,
                    YHInvalidResponseException, IllegalBlockSizeException {
         log.info("Getting " + length + " random bytes from the device");
         ByteBuffer data = ByteBuffer.allocate(2);
-        data.putShort((short) length);
+        data.putShort(length);
         byte[] resp = session.sendSecureCmd(Command.GET_PSEUDO_RANDOM, data.array());
         CommandUtils.verifyResponseLength(Command.GET_PSEUDO_RANDOM, resp.length, length);
         return resp;

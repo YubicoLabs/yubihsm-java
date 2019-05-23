@@ -42,7 +42,7 @@ To run all integration tests, run
 
 To run one integration test, run
 
-    $ gradle integrationTest -Dtest.single=<TEST NAME>
+    $ gradle integrationTest -DintegrationTest.single=<TEST NAME>
 
 Running all integration tests can take 10-15 minutes
 
@@ -58,4 +58,4 @@ To run the device options test, run
 
 Or
 
-      $ gradle optionsTest -Dtest.single=OptionsTest
+     $ gradle optionsTest -DoptionsTest.single=OptionsTest
