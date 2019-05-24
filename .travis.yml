@@ -10,3 +10,17 @@ env:
 
 before_install:
   - openssl aes-256-cbc -k "$tlspwd" -md sha256 -in ./.ci/client-combined.pem.enc -out ./.ci/client-combined.pem -d
+
+
+script:
+  - export krnl="$(uname -s | tr '[:upper:]' '[:lower:]')"
+  - wget https://github.com/square/ghostunnel/releases/download/v1.3.1/ghostunnel-v1.3.1-$krnl-amd64-with-pkcs11 -O ghostunnel
+  - chmod +x ./ghostunnel
+  - ./ghostunnel client --listen localhost:12345 --target hsm-connector01.sthlm.in.yubico.org:8443 --keystore ./.ci/client-combined.pem --cacert ./.ci/server-crt.pem 2>/dev/null &
+  - sleep 3
+  - export DEFAULT_CONNECTOR_URL="$(curl http://localhost:12345/dispatcher/request)"
+  - echo DEFAULT_CONNECTOR_URL=DEFAULT_CONNECTOR_URL
+  - gradle clean integrationTest
+
+after_script:
+  - curl "http://localhost:12345/dispatcher/release?connector=$DEFAULT_CONNECTOR_URL"
