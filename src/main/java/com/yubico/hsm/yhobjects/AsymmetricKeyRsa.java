@@ -40,8 +40,8 @@ import java.util.List;
 @Slf4j
 public class AsymmetricKeyRsa extends AsymmetricKey {
 
-    private final int RSA_PUBKEY_EXPONENT = 65537;
-    private final int SIGN_PSS_SALT_LENGTH = 2;
+    private static final int RSA_PUBKEY_EXPONENT = 65537;
+    private static final int SIGN_PSS_SALT_LENGTH = 2;
 
     private static final int BLOCK_SIZE_FOR_RSA2048 = 256;
     private static final int BLOCK_SIZE_FOR_RSA3072 = 384;

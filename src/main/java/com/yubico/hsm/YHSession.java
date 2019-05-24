@@ -54,21 +54,21 @@ public class YHSession {
         CLOSED
     }
 
-    private final byte KEY_ENC = 0x04;
-    private final byte KEY_MAC = 0x06;
-    private final byte KEY_RMAC = 0x07;
-    private final byte CARD_CRYPTOGRAM = 0x00;
-    private final byte HOST_CRYPTOGRAM = 0x01;
+    private static final byte KEY_ENC = 0x04;
+    private static final byte KEY_MAC = 0x06;
+    private static final byte KEY_RMAC = 0x07;
+    private static final byte CARD_CRYPTOGRAM = 0x00;
+    private static final byte HOST_CRYPTOGRAM = 0x01;
 
-    private final int PADDING_BLOCK_SIZE = 16;
-    private final int CHALLENGE_SIZE = 16;
-    private final int HALF_CHALLENGE_SIZE = 8;
-    private final int SESSION_KEY_SIZE = 16;
-    private final int MESSAGE_MAC_SIZE = 8;
-    private final int SESSION_COUNTER_SIZE = 16;
-    private final byte MIN_SESSION_ID = 0;
-    private final byte MAX_SESSION_ID = 15;
-    private final int SESSION_ID_SIZE = 1;
+    private static final int PADDING_BLOCK_SIZE = 16;
+    private static final int CHALLENGE_SIZE = 16;
+    private static final int HALF_CHALLENGE_SIZE = 8;
+    private static final int SESSION_KEY_SIZE = 16;
+    private static final int MESSAGE_MAC_SIZE = 8;
+    private static final int SESSION_COUNTER_SIZE = 16;
+    private static final byte MIN_SESSION_ID = 0;
+    private static final byte MAX_SESSION_ID = 15;
+    private static final int SESSION_ID_SIZE = 1;
 
     private YubiHsm yubihsm;
     @NonNull private AuthenticationKey authenticationKey;

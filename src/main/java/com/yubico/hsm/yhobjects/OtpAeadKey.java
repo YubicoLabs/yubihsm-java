@@ -46,7 +46,7 @@ public class OtpAeadKey extends YHObject {
     private static final int OTP_LENGTH = 16;
     private static final int OTP_AEAD_LENGTH = 36;
     private static final int CREATE_OTP_PRIVATE_ID_LENGTH = 6;
-    private final int DECRYPT_OTP_RESPONSE_LENGTH = 6;
+    private static final int DECRYPT_OTP_RESPONSE_LENGTH = 6;
 
     /**
      * Creates an Opaque object

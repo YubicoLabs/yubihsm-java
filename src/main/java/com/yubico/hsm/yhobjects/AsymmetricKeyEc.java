@@ -45,14 +45,14 @@ public class AsymmetricKeyEc extends AsymmetricKey {
     private static final int COMPONENT_LENGTH_FOR_512 = 64;
     private static final int COMPONENT_LENGTH_FOR_521 = 66;
 
-    private final String EC_CURVE_P224 = "secp224r1";
-    private final String EC_CURVE_P256 = "secp256r1";
-    private final String EC_CURVE_P384 = "secp384r1";
-    private final String EC_CURVE_P521 = "secp521r1";
-    private final String EC_CURVE_K256 = "secp256k1";
-    private final String EC_CURVE_BP256 = "brainpoolP256r1";
-    private final String EC_CURVE_BP384 = "brainpoolP384r1";
-    private final String EC_CURVE_BP512 = "brainpoolP512r1";
+    private static final String EC_CURVE_P224 = "secp224r1";
+    private static final String EC_CURVE_P256 = "secp256r1";
+    private static final String EC_CURVE_P384 = "secp384r1";
+    private static final String EC_CURVE_P521 = "secp521r1";
+    private static final String EC_CURVE_K256 = "secp256k1";
+    private static final String EC_CURVE_BP256 = "brainpoolP256r1";
+    private static final String EC_CURVE_BP384 = "brainpoolP384r1";
+    private static final String EC_CURVE_BP512 = "brainpoolP512r1";
 
     /**
      * Creates an AsymmetriKeyEc object

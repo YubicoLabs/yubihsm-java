@@ -53,10 +53,10 @@ public class YHObject {
     public static final int OBJECT_DELEGATED_CAPABILITIES_SIZE = 8;
     public static final int OBJECT_SEQUENCE_SIZE = 1;
 
-    protected final int HASH_LENGTH_FOR_SHA1 = 20;
-    protected final int HASH_LENGTH_FOR_SHA256 = 32;
-    protected final int HASH_LENGTH_FOR_SHA384 = 48;
-    protected final int HASH_LENGTH_FOR_SHA512 = 64;
+    protected static final int HASH_LENGTH_FOR_SHA1 = 20;
+    protected static final int HASH_LENGTH_FOR_SHA256 = 32;
+    protected static final int HASH_LENGTH_FOR_SHA384 = 48;
+    protected static final int HASH_LENGTH_FOR_SHA512 = 64;
 
     protected static final int KEY_LENGTH_FOR_AES128 = 16;
     protected static final int KEY_LENGTH_FOR_AES192 = 24;

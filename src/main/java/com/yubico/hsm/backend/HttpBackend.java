@@ -37,9 +37,9 @@ public class HttpBackend implements Backend {
 
     private static final String DEFAULT_CONNECTOR_URL_ENV = "DEFAULT_CONNECTOR_URL";
 
-    private final String DEFAULT_URL = System.getenv(DEFAULT_CONNECTOR_URL_ENV);
-    private final int DEFAULT_TIMEOUT = 0;
-    private final int MAX_MESSAGE_SIZE = 2048;
+    private static final String DEFAULT_URL = System.getenv(DEFAULT_CONNECTOR_URL_ENV);
+    private static final int DEFAULT_TIMEOUT = 0;
+    private static final int MAX_MESSAGE_SIZE = 2048;
 
     private URL url;
     private int timeout;

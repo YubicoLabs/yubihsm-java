@@ -42,7 +42,7 @@ public class WrapKey extends YHObject {
 
     public static final Type TYPE = Type.TYPE_WRAP_KEY;
 
-    private final int IMPORT_WRAPPED_RESPONSE_LENGTH = 3;
+    private static final int IMPORT_WRAPPED_RESPONSE_LENGTH = 3;
 
     /**
      * Creates a WrapKey object

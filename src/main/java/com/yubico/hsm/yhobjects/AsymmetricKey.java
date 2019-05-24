@@ -43,13 +43,14 @@ import java.util.List;
 public class AsymmetricKey extends YHObject {
 
     public static final Type TYPE = Type.TYPE_ASYMMETRIC_KEY;
+
     private static final int SSH_CERT_REQUEST_TIMESTAMP_LENGTH = 4;
     private static final int SSH_CERT_REQUEST_SIGNATURE_LENGTH = 256;
 
-    private final String HASH_ALGORITHM_SHA1 = "SHA-1";
-    private final String HASH_ALGORITHM_SHA256 = "SHA-256";
-    private final String HASH_ALGORITHM_SHA384 = "SHA-384";
-    private final String HASH_ALGORITHM_SHA512 = "SHA-512";
+    private static final String HASH_ALGORITHM_SHA1 = "SHA-1";
+    private static final String HASH_ALGORITHM_SHA256 = "SHA-256";
+    private static final String HASH_ALGORITHM_SHA384 = "SHA-384";
+    private static final String HASH_ALGORITHM_SHA512 = "SHA-512";
 
     private Algorithm keyAlgorithm;
 

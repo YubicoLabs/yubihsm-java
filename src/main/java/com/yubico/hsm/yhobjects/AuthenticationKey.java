@@ -55,9 +55,9 @@ public class AuthenticationKey extends YHObject {
     private static final int ITERATIONS = 10000;
 
     /** The long term encryption key of this Authentication Key */
-    private byte[] encryptionKey = null;
+    private byte[] encryptionKey;
     /** The long term MAC key of this Authentication Key */
-    private byte[] macKey = null;
+    private byte[] macKey;
 
     /**
      * Creates an AuthenticationKey object
