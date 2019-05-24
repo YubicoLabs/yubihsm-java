@@ -15,6 +15,7 @@
  */
 package yhobjectstest;
 
+import com.yubico.hsm.YHCore;
 import com.yubico.hsm.YHSession;
 import com.yubico.hsm.YubiHsm;
 import com.yubico.hsm.backend.Backend;
@@ -50,16 +51,24 @@ public class YHObjectTest {
     @BeforeClass
     public static void init() throws Exception {
         if (session == null) {
-            Backend backend = new HttpBackend();
-            yubihsm = new YubiHsm(backend);
-            session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
-            session.authenticateSession();
+            openSession(new HttpBackend());
         }
+        YHCore.resetDevice(session);
+        yubihsm.close();
+
+        Thread.sleep(1000);
+        openSession(new HttpBackend());
+    }
+
+    private static void openSession(Backend backend) throws Exception {
+        yubihsm = new YubiHsm(backend);
+        session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
+        session.authenticateSession();
     }
 
     @AfterClass
     public static void destroy() throws Exception {
-        if(session != null) {
+        if (session != null) {
             session.closeSession();
             yubihsm.close();
         }
@@ -142,7 +151,7 @@ public class YHObjectTest {
         log.info("TEST START: testDeleteObject()");
 
         short keyid = AsymmetricKey.generateAsymmetricKey(session, (short) 0, "ec_sign_ssh", Arrays.asList(1), Algorithm.EC_P224,
-                                                            Arrays.asList(Capability.SIGN_SSH_CERTIFICATE, Capability.EXPORT_WRAPPED));
+                                                          Arrays.asList(Capability.SIGN_SSH_CERTIFICATE, Capability.EXPORT_WRAPPED));
         AsymmetricKey key = new AsymmetricKey(keyid, Algorithm.EC_P224);
         assertTrue(key.exists(session));
 
@@ -153,7 +162,7 @@ public class YHObjectTest {
         try {
             key.delete(session);
         } catch (YHDeviceException e) {
-            if(YHError.OBJECT_NOT_FOUND.equals(e.getYhError())) {
+            if (YHError.OBJECT_NOT_FOUND.equals(e.getYhError())) {
                 exceptionThrown = true;
             } else {
                 throw e;

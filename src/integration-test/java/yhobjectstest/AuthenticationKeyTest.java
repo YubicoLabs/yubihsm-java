@@ -47,11 +47,19 @@ public class AuthenticationKeyTest {
     @BeforeClass
     public static void init() throws Exception {
         if (session == null) {
-            Backend backend = new HttpBackend();
-            yubihsm = new YubiHsm(backend);
-            session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
-            session.authenticateSession();
+            openSession(new HttpBackend());
         }
+        YHCore.resetDevice(session);
+        yubihsm.close();
+
+        Thread.sleep(1000);
+        openSession(new HttpBackend());
+    }
+
+    private static void openSession(Backend backend) throws Exception {
+        yubihsm = new YubiHsm(backend);
+        session = new YHSession(yubihsm, (short) 1, "password".toCharArray());
+        session.authenticateSession();
     }
 
     @AfterClass
