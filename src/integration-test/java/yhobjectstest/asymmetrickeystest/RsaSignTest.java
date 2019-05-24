@@ -61,8 +61,10 @@ public class RsaSignTest {
 
     @AfterClass
     public static void destroy() throws Exception {
-        session.closeSession();
-        yubihsm.close();
+        if(session != null) {
+            session.closeSession();
+            yubihsm.close();
+        }
     }
 
 

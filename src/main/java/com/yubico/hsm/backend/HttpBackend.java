@@ -27,6 +27,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.MissingResourceException;
 
 /**
  * Handles connection to the YubiHSM over HTTP
@@ -34,7 +35,9 @@ import java.util.Arrays;
 @Slf4j
 public class HttpBackend implements Backend {
 
-    private final String DEFAULT_URL = "http://localhost:12345/connector/api";
+    private static final String DEFAULT_CONNECTOR_URL_ENV = "DEFAULT_CONNECTOR_URL";
+
+    private final String DEFAULT_URL = System.getenv(DEFAULT_CONNECTOR_URL_ENV);
     private final int DEFAULT_TIMEOUT = 0;
     private final int MAX_MESSAGE_SIZE = 2048;
 
@@ -43,12 +46,12 @@ public class HttpBackend implements Backend {
     private HttpURLConnection connection = null;
 
     /**
-     * Default constructor. Connects to the YubiHSM using `http://localhost:12345/connector/api` and timeout `0`
+     * Default constructor. Connects to the YubiHSM using the URL specified in the environment variable DEFAULT_CONNECTOR_URL and timeout `0`
      *
      * @throws MalformedURLException
      */
     public HttpBackend() throws MalformedURLException {
-        this.url = new URL(DEFAULT_URL);
+        this.url = getDefaultConnectorUrl();
         this.timeout = DEFAULT_TIMEOUT;
     }
 
@@ -61,7 +64,7 @@ public class HttpBackend implements Backend {
         if (urlStr != null && !urlStr.equals("")) {
             this.url = new URL(urlStr);
         } else {
-            this.url = new URL(DEFAULT_URL);
+            this.url = getDefaultConnectorUrl();
         }
 
         if (timeout > 0) {
@@ -69,6 +72,14 @@ public class HttpBackend implements Backend {
         } else {
             this.timeout = DEFAULT_TIMEOUT;
         }
+    }
+
+    private URL getDefaultConnectorUrl() throws MalformedURLException {
+        if (DEFAULT_URL == null || DEFAULT_URL.equals("")) {
+            throw new IllegalStateException(
+                    "If the URL to the YubiHSM connector is not specified, the environment variable '" + DEFAULT_CONNECTOR_URL_ENV + "' must be set");
+        }
+        return new URL(DEFAULT_URL);
     }
 
     /**

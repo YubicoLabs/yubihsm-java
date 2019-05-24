@@ -50,7 +50,9 @@ public class ResetDeviceTest {
 
     @AfterClass
     public static void destroy() throws Exception {
-        yubihsm.close();
+        if(yubihsm != null) {
+            yubihsm.close();
+        }
     }
 
     @Test

@@ -47,7 +47,9 @@ public class YHSessionTest {
 
     @AfterClass
     public static void destroy() {
-        yubihsm.close();
+        if(yubihsm != null) {
+            yubihsm.close();
+        }
     }
 
     @Test
