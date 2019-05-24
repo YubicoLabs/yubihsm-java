@@ -27,7 +27,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.MissingResourceException;
 
 /**
  * Handles connection to the YubiHSM over HTTP
@@ -36,6 +35,7 @@ import java.util.MissingResourceException;
 public class HttpBackend implements Backend {
 
     private static final String DEFAULT_CONNECTOR_URL_ENV = "DEFAULT_CONNECTOR_URL";
+    private static final String CONNECTOR_URL_SUFFIX = "/connector/api";
 
     private static final String DEFAULT_URL = System.getenv(DEFAULT_CONNECTOR_URL_ENV);
     private static final int DEFAULT_TIMEOUT = 0;
@@ -51,7 +51,7 @@ public class HttpBackend implements Backend {
      * @throws MalformedURLException
      */
     public HttpBackend() throws MalformedURLException {
-        this.url = getDefaultConnectorUrl();
+        this.url = getConnectorUrl(null);
         this.timeout = DEFAULT_TIMEOUT;
     }
 
@@ -61,11 +61,7 @@ public class HttpBackend implements Backend {
      * @throws MalformedURLException
      */
     public HttpBackend(final String urlStr, final int timeout) throws MalformedURLException {
-        if (urlStr != null && !urlStr.equals("")) {
-            this.url = new URL(urlStr);
-        } else {
-            this.url = getDefaultConnectorUrl();
-        }
+        this.url = getConnectorUrl(urlStr);
 
         if (timeout > 0) {
             this.timeout = timeout;
@@ -74,12 +70,27 @@ public class HttpBackend implements Backend {
         }
     }
 
-    private URL getDefaultConnectorUrl() throws MalformedURLException {
-        if (DEFAULT_URL == null || DEFAULT_URL.equals("")) {
-            throw new IllegalStateException(
-                    "If the URL to the YubiHSM connector is not specified, the environment variable '" + DEFAULT_CONNECTOR_URL_ENV + "' must be set");
+    private URL getConnectorUrl(final String urlStr) throws MalformedURLException {
+        String url;
+        if (urlStr != null && !urlStr.equals("")) {
+            url = urlStr;
+        } else {
+            if (DEFAULT_URL == null || DEFAULT_URL.equals("")) {
+                throw new IllegalStateException(
+                        "If the URL to the YubiHSM connector is not specified, the environment variable '" + DEFAULT_CONNECTOR_URL_ENV +
+                        "' must be set");
+            }
+            url = DEFAULT_URL;
         }
-        return new URL(DEFAULT_URL);
+
+        if (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
+        if (!url.endsWith(CONNECTOR_URL_SUFFIX)) {
+            url += CONNECTOR_URL_SUFFIX;
+        }
+        log.info("Connecting to the YubiHSM over " + url);
+        return new URL(url);
     }
 
     /**
