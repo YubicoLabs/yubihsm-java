@@ -1,6 +1,12 @@
-
 language: java
 
 jdk:
   - openjdk8
   - oraclejdk8
+
+env:
+  global:
+    - secure: "KPB9LCB57W15cY4hhHTKOBLeRQDak7ohnE3kbQkWlv72Af6NK7o/r/3Iklg8Mob3TGYLD9E2NcCGA3EwRYBXjgj6K1BvvM/TP1/VOZ4FLd7qyeWGw2PkXRkDBgSZUjgx9AW8QqFKyQgZZMdRvYNAmduiLoxdrwL/B82Rjr0KteYI48ypWzK8xinJxTol5nNuQ/OyaYcobVP5pKvQazbBbaX+EiM3U+Dpak+p2Y2sdpmuNcxh0Hj1+5Xz6nuo0OKPqpccABzRfFX+ni8PG0vfe3MpS4/9p6dOyd6fpBMnnbTYxq7sPkPov/WKxx82tDeFsEgL6dwKvJS95CWF43NcWwZKvBA0FndJjCyFIFd44ZwTekkacvYSQ6T0SdpkYHt2v/PDtVMGf8F3fhrNUyCsiDooyJD1FjRw32JBaAZV4l0hSxFaQBFVDMIKpxkz6CBRdlgy3y/yWjMMxLwsSTz7/iX6oWhNIzR7HkvMe0ggE35HJtmV2wfKYwenkLPXIUo8U6ILFue0V0jTLny92Iz8t+8JGMd+TkwRs5JaBY3hIE9lJH1VSOtYI0mnmIO7rvVOVUjy72wkeDmhePhYlyEh3DKpRl6GYRodfzZFsRhR5Q0Xo/2pig8r9HD6UllSjZoDix2EouWEodEAqFZJGpbyXlINeHwHrm1jWz/+XU+g7WU="
+
+before_install:
+  - openssl aes-256-cbc -k "$tlspwd" -md sha256 -in ./.ci/client-combined.pem.enc -out ./.ci/client-combined.pem -d
