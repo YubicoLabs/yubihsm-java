@@ -22,5 +22,8 @@ script:
   - echo DEFAULT_CONNECTOR_URL=$DEFAULT_CONNECTOR_URL
   - gradle clean integrationTest
 
+after_failure:
+  - less build/reports/tests/integrationTest/classes/*
+
 after_script:
   - curl "http://localhost:12345/dispatcher/release?connector=$DEFAULT_CONNECTOR_URL"
