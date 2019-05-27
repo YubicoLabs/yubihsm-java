@@ -20,7 +20,30 @@ script:
   - sleep 3
   - export DEFAULT_CONNECTOR_URL="$(curl http://localhost:12345/dispatcher/request)"
   - echo DEFAULT_CONNECTOR_URL=$DEFAULT_CONNECTOR_URL
-  - gradle clean integrationTest
+  - gradle clean integrationTest -DintegrationTest.single=AsymmetricKeyEdTest
+  - gradle clean integrationTest -DintegrationTest.single=EcDeriveEcdhTest
+  - gradle clean integrationTest -DintegrationTest.single=EcNewKeyTest
+  - gradle clean integrationTest -DintegrationTest.single=EcPublicKeyTest
+  - gradle clean integrationTest -DintegrationTest.single=EcSignCertificateTest
+  - gradle clean integrationTest -DintegrationTest.single=EcSignTest
+  - gradle clean integrationTest -DintegrationTest.single=RsaDecryptTest
+  - gradle clean integrationTest -DintegrationTest.single=RsaNewKeyTest
+  - gradle clean integrationTest -DintegrationTest.single=RsaPublicKeyTest
+  - gradle clean integrationTest -DintegrationTest.single=RsaSignCertificateTest
+  - gradle clean integrationTest -DintegrationTest.single=RsaSignTest
+  - gradle clean integrationTest -DintegrationTest.single=AuthenticationKeyTest
+  - gradle clean integrationTest -DintegrationTest.single=HmacKeyTest
+  - gradle clean integrationTest -DintegrationTest.single=OpaqueTest
+  - gradle clean integrationTest -DintegrationTest.single=OtpAeadKeyTest
+  - gradle clean integrationTest -DintegrationTest.single=TemplateTest
+  - gradle clean integrationTest -DintegrationTest.single=WrapKeyTest
+  - gradle clean integrationTest -DintegrationTest.single=YHObjectTest
+  - gradle clean integrationTest -DintegrationTest.single=ResetDeviceTest
+  - gradle clean integrationTest -DintegrationTest.single=YHCoreTest
+  - gradle clean integrationTest -DintegrationTest.single=YHSessionTest
+  - gradle clean integrationTest -DintegrationTest.single=YubiHsmTest
+  - gradle clean optionsTest
+
 
 after_failure:
   - less build/reports/tests/integrationTest/classes/*
