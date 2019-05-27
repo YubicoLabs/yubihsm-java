@@ -31,10 +31,10 @@ To run one unit test, run
 
 The integration tests assume that the YubiHSM contains the default authentication key, which is an
  authentication key with Object ID `1`, password `password` and alla capabilities and delegated
- capabilities. Some tests will reset the device so all objects contained in the device will be
- deleted.
+ capabilities. Most tests will reset the device before it starts.
 
-The integration tests also assume that the YubiHSM is accessible via the URL `http://localhost:12345/connector/api`
+The integration tests also assume that the YubiHSM is accessible via the URL defined in the environment variable
+ `DEFAULT_CONNECTOR_URL`
 
 To run all integration tests, run
 
@@ -50,7 +50,7 @@ Running all integration tests can take 10-15 minutes
 
 The device options test changes the audit log settings on the device. When run with the other tests,
 it will cause the log to fill quickly and all tests failing because of it. That is why this test is
-run is its own test set.
+run in its own test set.
 
 To run the device options test, run
 
