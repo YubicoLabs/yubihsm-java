@@ -59,3 +59,20 @@ To run the device options test, run
 Or
 
      $ gradle optionsTest -DoptionsTest.single=OptionsTest
+
+=== Release
+
+When it is time for a release, run the following commands to create the binary package, the source code package and the
+ JavaDocs package:
+
+    $ gradle jar
+    $ gradle packageSources
+    $ gradle packageJavadoc
+
+The three packages can be found under `build/libs`
+
+Sign each one of those packages with your private key:
+
+   $ gpg --detach-sign PACKAGE
+
+This will store the signature in a separate file with the ending `.sig`

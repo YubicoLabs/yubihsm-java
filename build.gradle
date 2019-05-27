@@ -10,7 +10,10 @@ plugins {
     // Apply the java-library plugin to add support for Java Library
     id 'java-library'
     id 'org.unbroken-dome.test-sets' version '1.4.5'
+    id 'io.franzbecker.gradle-lombok' version '1.14'
 }
+
+import io.franzbecker.gradle.lombok.task.DelombokTask
 
 version = '0.1.0'
 
@@ -59,6 +62,7 @@ project.integrationTest {
 check.dependsOn integrationTest
 integrationTest.mustRunAfter test
 
+// The building the binary jar
 jar {
     manifest {
         attributes(
@@ -67,3 +71,38 @@ jar {
         )
     }
 }
+
+// Building the jar containing the source code
+task packageSources(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+artifacts.archives packageSources
+
+
+// Building the jar containing the javadoc
+task delombok(type: DelombokTask, dependsOn: classes) {
+    ext.outputDir = file("${buildDir}/delombok")
+    outputs.dir outputDir
+    sourceSets.main.java.srcDirs.each {
+        inputs.dir it
+        args(it, '-d', outputDir)
+    }
+    doFirst {
+        outputDir.deleteDir()
+    }
+}
+
+javadoc {
+    dependsOn delombok
+    source = delombok.outputDir
+    options.encoding = 'UTF-8'
+    options.addStringOption('charset', 'UTF-8')
+}
+
+task packageJavadoc(type: Jar) {
+    classifier = 'javadoc'
+    inputs.files javadoc.outputs
+    from javadoc.destinationDir
+}
+artifacts.archives packageJavadoc
