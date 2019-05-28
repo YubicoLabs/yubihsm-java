@@ -71,7 +71,7 @@ public class AsymmetricKeyEc extends AsymmetricKey {
 
     /**
      * @param algorithm
-     * @return True if the algorithm is one of {{@link Algorithm.EC_BP256}}, {{@link Algorithm.EC_BP384}} or {{@link Algorithm.EC_BP512}}. False
+     * @return True if the algorithm is one of Algorithm.EC_BP256, {@link Algorithm#EC_BP384} or {@link Algorithm#EC_BP512}. False
      * otherwise
      */
     public static boolean isBrainpoolKeyAlgorithm(@NonNull final Algorithm algorithm) {
@@ -187,8 +187,8 @@ public class AsymmetricKeyEc extends AsymmetricKey {
      * @param session       An authenticated session to communicate with the device over
      * @param data          The raw data to sign
      * @param hashAlgorithm The digest algorithm used to hash the data before signing it. Can be one of
-     *                      {{@link Algorithm.EC_ECDSA_SHA1}}, {{@link Algorithm.EC_ECDSA_SHA256}}, {{@link Algorithm.EC_ECDSA_SHA384}},
-     *                      {{@link Algorithm.EC_ECDSA_SHA512}}
+     *                      {@link Algorithm#EC_ECDSA_SHA1}, {@link Algorithm#EC_ECDSA_SHA256}, {@link Algorithm#EC_ECDSA_SHA384},
+     *                      {@link Algorithm#EC_ECDSA_SHA512}
      * @return The signature
      * @throws NoSuchAlgorithmException           If the encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
