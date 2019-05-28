@@ -67,6 +67,11 @@ jar {
                 'Implementation-Version': project.version
         )
     }
+
+    doFirst {
+        from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
 }
 
 // Building the jar containing the source code
