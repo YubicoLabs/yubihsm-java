@@ -56,7 +56,7 @@ public class Opaque extends YHObject {
      * Creates an Opaque object
      *
      * @param id        The object ID of this key
-     * @param algorithm A supported Opaque object algorithm. Can be {{@link Algorithm.OPAQUE_X509_CERTIFICATE}} or {{@link Algorithm.OPAQUE_DATA}}
+     * @param algorithm A supported Opaque object algorithm. Can be {@link Algorithm#OPAQUE_X509_CERTIFICATE} or {@link Algorithm#OPAQUE_DATA}
      */
     public Opaque(final short id, @NonNull final Algorithm algorithm) {
         if (!isOpaqueAlgorithm(algorithm)) {

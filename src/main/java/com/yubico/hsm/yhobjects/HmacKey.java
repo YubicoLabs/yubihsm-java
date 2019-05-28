@@ -74,8 +74,8 @@ public class HmacKey extends YHObject {
      * @param id           The desired ID for the new HMAC key. Set to 0 to have it generated
      * @param label        The label of the new HMAC key
      * @param domains      The domains through which the new HMAC key can be accessible
-     * @param keyAlgorithm The algorithm used to generate the new HMAC key. Can be one of {{@link Algorithm.HMAC_SHA1}},
-     *                     {{@link Algorithm.HMAC_SHA256}}, {{@link Algorithm.HMAC_SHA384}} or {{@link Algorithm.HMAC_SHA512}}
+     * @param keyAlgorithm The algorithm used to generate the new HMAC key. Can be one of {@link Algorithm#HMAC_SHA1},
+     *                     {@link Algorithm#HMAC_SHA256}, {@link Algorithm#HMAC_SHA384} or {@link Algorithm#HMAC_SHA512}
      * @param capabilities The actions that can be performed by the new HMAC key
      * @return ID of the HMAC key generated on the device
      * @throws NoSuchAlgorithmException           If the encryption/decryption fails
@@ -121,11 +121,11 @@ public class HmacKey extends YHObject {
      * @param id           The desired ID for the new HMAC key. Set to 0 to have it generated
      * @param label        The label of the new HMAC key
      * @param domains      The domains through which the new HMAC key can be accessible
-     * @param keyAlgorithm The algorithm used to generate the new HMAC key. Can be one of {{@link Algorithm.HMAC_SHA1}},
-     *                     {{@link Algorithm.HMAC_SHA256}}, {{@link Algorithm.HMAC_SHA384}} or {{@link Algorithm.HMAC_SHA512}}
+     * @param keyAlgorithm The algorithm used to generate the new HMAC key. Can be one of {@link Algorithm#HMAC_SHA1},
+     *                     {@link Algorithm#HMAC_SHA256}, {@link Algorithm#HMAC_SHA384} or {@link Algorithm#HMAC_SHA512}
      * @param capabilities The actions that can be performed by the new HMAC key
-     * @param hmacKey      The HMAC key. A maximum of 64 bytes for {{@link Algorithm.HMAC_SHA1}} and {{@link Algorithm.HMAC_SHA256}} and 128 bytes for {
-     *                     {@link Algorithm.HMAC_SHA384}} and {{@link Algorithm.HMAC_SHA512}}
+     * @param hmacKey      The HMAC key. A maximum of 64 bytes for {@link Algorithm#HMAC_SHA1} and {@link Algorithm#HMAC_SHA256} and 128 bytes
+     *                     for {@link Algorithm#HMAC_SHA384} and {@link Algorithm#HMAC_SHA512}
      * @return ID of the HMAC key generated on the device
      * @throws NoSuchAlgorithmException           If the encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error

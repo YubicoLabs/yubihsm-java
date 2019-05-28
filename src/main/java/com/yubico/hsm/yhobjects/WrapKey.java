@@ -54,8 +54,8 @@ public class WrapKey extends YHObject {
     }
 
     /**
-     * @return True if `algorithm` is one of {{@link Algorithm.AES128_CCM_WRAP}}, {{@link Algorithm.AES192_CCM_WRAP}} or {
-     * {@link Algorithm.AES256_CCM_WRAP}}. False otherwise
+     * @return True if `algorithm` is one of {@link Algorithm#AES128_CCM_WRAP}, {@link Algorithm#AES192_CCM_WRAP} or
+     * {@link Algorithm#AES256_CCM_WRAP}. False otherwise
      */
     public static boolean isWrapKeyAlgorithm(final Algorithm algorithm) {
         return algorithm.equals(Algorithm.AES128_CCM_WRAP) || algorithm.equals(Algorithm.AES192_CCM_WRAP) ||
@@ -70,8 +70,8 @@ public class WrapKey extends YHObject {
      * @param id                    The desired ID for the new Wrap key. Set to 0 to have it generated
      * @param label                 The label of the new Wrap key
      * @param domains               The domains through which the new Wrap key can be accessible
-     * @param wrapKeyAlgorithm      The algorithm used to generate the new Wrap key. Can be one of {{@link Algorithm.AES128_CCM_WRAP}}, {
-     *                              {@link Algorithm.AES192_CCM_WRAP}} or {{@link Algorithm.AES256_CCM_WRAP}}
+     * @param wrapKeyAlgorithm      The algorithm used to generate the new Wrap key. Can be one of {@link Algorithm#AES128_CCM_WRAP},
+     *                              {@link Algorithm#AES192_CCM_WRAP} or {@link Algorithm#AES256_CCM_WRAP}
      * @param capabilities          The actions that can be performed by the new Wrap key
      * @param delegatedCapabilities The capabilities of the object that the new Wrap key will be able to perform actions on
      * @return ID of the Wrap key generated on the device
@@ -121,8 +121,8 @@ public class WrapKey extends YHObject {
      * @param id                    The desired ID for the imported Wrap key. Set to 0 to have it generated
      * @param label                 The label of the imported Wrap key
      * @param domains               The domains through which the imported Wrap key can be accessible
-     * @param wrapKeyAlgorithm      The algorithm used to generate the imported Wrap key. Can be one of {{@link Algorithm.AES128_CCM_WRAP}}, {
-     *                              {@link Algorithm.AES192_CCM_WRAP}} or {{@link Algorithm.AES256_CCM_WRAP}}
+     * @param wrapKeyAlgorithm      The algorithm used to generate the imported Wrap key. Can be one of {@link Algorithm#AES128_CCM_WRAP},
+     *                              {@link Algorithm#AES192_CCM_WRAP} or {@link Algorithm#AES256_CCM_WRAP}
      * @param capabilities          The actions that can be performed by the imported Wrap key
      * @param delegatedCapabilities The capabilities of the object that the imported Wrap key will be able to perform actions on
      * @param wrapKey               The Wrap key. 16, 24 or 32 bytes depending on the key algorithm

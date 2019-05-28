@@ -142,8 +142,8 @@ public class AuthenticationKey extends YHObject {
      * @param id                    The desired Object ID of the new Authentication key. Set to 0 to have it generated
      * @param label                 The label of the new Authentication key
      * @param domains               The domains where the new Authentication key can operate
-     * @param keyAlgorithm          The algorithm used to derive the long term encryption key and MAC key. Currently, only {
-     *                              {@link Algorithm.AES128_YUBICO_AUTHENTICATION}} is supported
+     * @param keyAlgorithm          The algorithm used to derive the long term encryption key and MAC key. Currently, only
+     *                              {@link Algorithm#AES128_YUBICO_AUTHENTICATION} is supported
      * @param capabilities          The actions that can be performed while inside a session authenticated using the new Authentication key
      * @param delegatedCapabilities The capabilities that can be bestowed on an object created or imported during a session authenticated with the
      *                              new Authentication key
@@ -201,8 +201,8 @@ public class AuthenticationKey extends YHObject {
      * @param id                    The desired Object ID of the new Authentication key. Set to 0 to have it generated
      * @param label                 The label of the new Authentication key
      * @param domains               The domains where the new Authentication key can operate
-     * @param keyAlgorithm          The algorithm used to derive the long term encryption key and MAC key. Currently, only {
-     *                              {@link Algorithm.AES128_YUBICO_AUTHENTICATION}} is supported
+     * @param keyAlgorithm          The algorithm used to derive the long term encryption key and MAC key. Currently, only
+     *                              {@link Algorithm#AES128_YUBICO_AUTHENTICATION} is supported
      * @param capabilities          The actions that can be performed while inside a session authenticated using the new Authentication key
      * @param delegatedCapabilities The capabilities that can be bestowed on an object created or imported during a session authenticated with the
      *                              new Authentication key

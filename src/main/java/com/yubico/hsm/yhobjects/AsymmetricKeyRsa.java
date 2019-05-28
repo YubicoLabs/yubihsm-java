@@ -186,8 +186,8 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
      * @param session       An authenticated session to communicate with the device over
      * @param data          The raw data to sign
      * @param hashAlgorithm The digest algorithm used to hash the data before signing it. Can be one of
-     *                      {{@link Algorithm.RSA_PKCS1_SHA1}}, {{@link Algorithm.RSA_PKCS1_SHA256}}, {{@link Algorithm.RSA_PKCS1_SHA384}},
-     *                      {{@link Algorithm.RSA_PKCS1_SHA512}}
+     *                      {@link Algorithm#RSA_PKCS1_SHA1}, {@link Algorithm#RSA_PKCS1_SHA256}, {@link Algorithm#RSA_PKCS1_SHA384},
+     *                      {@link Algorithm#RSA_PKCS1_SHA512}
      * @return The signature
      * @throws NoSuchAlgorithmException           If the encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
@@ -199,8 +199,9 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
      * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
-     * @throws UnsupportedAlgorithmException      If the hash Algorithm is not one of {{@link Algorithm.RSA_PKCS1_SHA1}}, {
-     *                                            {@link Algorithm.RSA_PKCS1_SHA256}}, {{@link Algorithm.RSA_PKCS1_SHA384}}, {{@link Algorithm.RSA_PKCS1_SHA512}}
+     * @throws UnsupportedAlgorithmException      If the hash Algorithm is not one of {@link Algorithm#RSA_PKCS1_SHA1},
+     *                                            {@link Algorithm#RSA_PKCS1_SHA256}, {@link Algorithm#RSA_PKCS1_SHA384},
+     *                                            {@link Algorithm#RSA_PKCS1_SHA512}
      */
     public byte[] signPkcs1(final YHSession session, final byte[] data, @NonNull final Algorithm hashAlgorithm)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
@@ -249,8 +250,8 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
      * Signs the input data using RSA-PSS as defined in RFC 3447
      *
      * @param session       An authenticated session to communicate with the device over
-     * @param mgf1Algorithm The MGF1 algorithm used for signing. Can be one of {{@link Algorithm.RSA_MGF1_SHA1}}, {{@link Algorithm.RSA_MGF1_SHA256}},
-     *                      {{@link Algorithm.RSA_MGF1_SHA384}},{{@link Algorithm.RSA_MGF1_SHA512}}
+     * @param mgf1Algorithm The MGF1 algorithm used for signing. Can be one of {@link Algorithm#RSA_MGF1_SHA1}, {@link Algorithm#RSA_MGF1_SHA256},
+     *                      {@link Algorithm#RSA_MGF1_SHA384},{@link Algorithm#RSA_MGF1_SHA512}
      * @param saltLength    Length of salt
      * @param data          The raw data to be signed
      * @return The signature
@@ -264,8 +265,9 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
      * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
-     * @throws UnsupportedAlgorithmException      If the hash Algorithm is not one of {{@link Algorithm.RSA_MGF1_SHA1}}, {
-     *                                            * {@link Algorithm.RSA_MGF1_SHA256}}, {{@link Algorithm.RSA_MGF1_SHA384}}, {{@link Algorithm.RSA_MGF1_SHA512}}
+     * @throws UnsupportedAlgorithmException      If the hash Algorithm is not one of {@link Algorithm#RSA_MGF1_SHA1},
+     *                                            {@link Algorithm#RSA_MGF1_SHA256}, {@link Algorithm#RSA_MGF1_SHA384},
+     *                                            {@link Algorithm#RSA_MGF1_SHA512}
      */
     public byte[] signPss(@NonNull final YHSession session, @NonNull final Algorithm mgf1Algorithm, final short saltLength, byte[] data)
             throws NoSuchPaddingException, NoSuchAlgorithmException, YHConnectionException, InvalidKeyException, YHDeviceException,
@@ -337,11 +339,10 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
      * @param session       An authenticated session to communicate with the device over
      * @param enc           Encrypted data. 256, 384 or 512 bytes long
      * @param label         Optional label to be associated with the message
-     * @param mgf1Algorithm The hash algorithm to use for MGF1. Can be one of {{@link Algorithm.RSA_MGF1_SHA1}}, {{@link Algorithm.RSA_MGF1_SHA256}},
-     *                      {{@link Algorithm.RSA_MGF1_SHA384}},{{@link Algorithm.RSA_MGF1_SHA512}}
-     * @param hashAlgorithm The hash algorithm to use for hashing the label. Can be one of {{@link Algorithm.RSA_OAEP_SHA1}}, {
-     *                      {@link Algorithm.RSA_OAEP_SHA256}},
-     *                      {{@link Algorithm.RSA_OAEP_SHA384}},{{@link Algorithm.RSA_OAEP_SHA512}}
+     * @param mgf1Algorithm The hash algorithm to use for MGF1. Can be one of {@link Algorithm#RSA_MGF1_SHA1}, {@link Algorithm#RSA_MGF1_SHA256},
+     *                      {@link Algorithm#RSA_MGF1_SHA384},{@link Algorithm#RSA_MGF1_SHA512}
+     * @param hashAlgorithm The hash algorithm to use for hashing the label. Can be one of {@link Algorithm#RSA_OAEP_SHA1},
+     *                      {@link Algorithm#RSA_OAEP_SHA256}, {@link Algorithm#RSA_OAEP_SHA384}, {@link Algorithm#RSA_OAEP_SHA512}
      * @return The decrypted data
      * @throws NoSuchAlgorithmException           If the encryption/decryption fails
      * @throws YHDeviceException                  If the device returns an error
@@ -353,11 +354,11 @@ public class AsymmetricKeyRsa extends AsymmetricKey {
      * @throws InvalidAlgorithmParameterException If the encryption/decryption fails
      * @throws BadPaddingException                If the encryption/decryption fails
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
-     * @throws UnsupportedAlgorithmException      If the MGF1 algorithm is not one of {{@link Algorithm.RSA_MGF1_SHA1}}, {{@link Algorithm.RSA_MGF1_SHA256}},
-     *                                            {{@link Algorithm.RSA_MGF1_SHA384}},{{@link Algorithm.RSA_MGF1_SHA512}} or if the hash algorithm is not
-     *                                            one of {{@link Algorithm.RSA_OAEP_SHA1}}, {
-     *                                            {@link Algorithm.RSA_OAEP_SHA256}},
-     *                                            {{@link Algorithm.RSA_OAEP_SHA384}},{{@link Algorithm.RSA_OAEP_SHA512}}
+     * @throws UnsupportedAlgorithmException      If the MGF1 algorithm is not one of {@link Algorithm#RSA_MGF1_SHA1},
+     *                                            {@link Algorithm#RSA_MGF1_SHA256}, {@link Algorithm#RSA_MGF1_SHA384},
+     *                                            {@link Algorithm#RSA_MGF1_SHA512} or if the hash algorithm is not one of
+     *                                            {@link Algorithm#RSA_OAEP_SHA1}, {@link Algorithm#RSA_OAEP_SHA256},
+     *                                            {@link Algorithm#RSA_OAEP_SHA384}, {@link Algorithm#RSA_OAEP_SHA512}
      */
     public byte[] decryptOaep(@NonNull final YHSession session, @NonNull final byte[] enc, final String label, @NonNull final Algorithm mgf1Algorithm,
                               @NonNull final Algorithm hashAlgorithm)

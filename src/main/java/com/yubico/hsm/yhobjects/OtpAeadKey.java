@@ -73,8 +73,8 @@ public class OtpAeadKey extends YHObject {
      * @param id           The desired ID for the new OTP AEAD key. Set to 0 to have it generated
      * @param label        The label of the new OTP AEAD key
      * @param domains      The domains through which the new OTP AEAD key can be accessible
-     * @param keyAlgorithm The algorithm used to generate the new OTP AEAD key. Can be one of {{@link Algorithm.AES128_YUBICO_OTP}}, {
-     *                     {@link Algorithm.AES192_YUBICO_OTP}} or {{@link Algorithm.AES256_YUBICO_OTP}}
+     * @param keyAlgorithm The algorithm used to generate the new OTP AEAD key. Can be one of {@link Algorithm#AES128_YUBICO_OTP},
+     *                     {@link Algorithm#AES192_YUBICO_OTP} or {@link Algorithm#AES256_YUBICO_OTP}
      * @param capabilities The actions that can be performed by the new OTP AEAD key
      * @param nonceId      A 4 bytes nonce
      * @return ID of the OTP AEAD key generated on the device
@@ -123,8 +123,8 @@ public class OtpAeadKey extends YHObject {
      * @param id           The desired ID for the imported OTP AEAD key. Set to 0 to have it generated
      * @param label        The label of the imported OTP AEAD key
      * @param domains      The domains through which the imported OTP AEAD key can be accessible
-     * @param keyAlgorithm The algorithm used to generate the imported OTP AEAD key. Can be one of {{@link Algorithm.AES128_YUBICO_OTP}}, {
-     *                     {@link Algorithm.AES192_YUBICO_OTP}} or {{@link Algorithm.AES256_YUBICO_OTP}}
+     * @param keyAlgorithm The algorithm used to generate the imported OTP AEAD key. Can be one of {@link Algorithm#AES128_YUBICO_OTP},
+     *                     {@link Algorithm#AES192_YUBICO_OTP} or {@link Algorithm#AES256_YUBICO_OTP}
      * @param capabilities The actions that can be performed by the imported OTP AEAD key
      * @param nonceId      A 4 bytes nonce
      * @param key          The OTP AEAD key. 16, 24 or 32 bytes depending on the key algorithm

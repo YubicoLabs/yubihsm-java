@@ -306,11 +306,11 @@ public class AsymmetricKeyEc extends AsymmetricKey {
      * Converts the ECPoint into a PublicKey object using the java native libraries. Used for the following algorithms:
      *
      * <ul>
-     * <li>{{@link Algorithm.EC_P224}}</li>
-     * <li>{{@link Algorithm.EC_P256}}</li>
-     * <li>{{@link Algorithm.EC_P384}}</li>
-     * <li>{{@link Algorithm.EC_P521}}</li>
-     * <li>{{@link Algorithm.EC_K256}}</li>
+     * <li>{@link Algorithm#EC_P224}</li>
+     * <li>{@link Algorithm#EC_P256}</li>
+     * <li>{@link Algorithm#EC_P384}</li>
+     * <li>{@link Algorithm#EC_P521}</li>
+     * <li>{@link Algorithm#EC_K256}</li>
      * </ul>
      *
      * @param point The EC public component
