@@ -100,6 +100,17 @@ public class LogEntry {
         return commandId;
     }
 
+    public String getCommandName() {
+        String ret;
+        Command cmd = Command.forId(commandId);
+        if(cmd != null) {
+            ret = cmd.getName();
+        } else {
+            ret = String.format("0x%04x", commandId);
+        }
+        return ret;
+    }
+
     public short getCommandLength() {
         return commandLength;
     }
@@ -130,9 +141,8 @@ public class LogEntry {
 
     @Override
     public String toString() {
-        String.valueOf(sessionKeyId);
         return String.format("item: %4s -- cmd: %25s -- length: %3s -- session key: 0x%04x --  target key: 0x%04x -- second key: 0x%04x -- result: " +
-                             "0x%02x -- tick: %6s -- hash: %s\n", itemNumber, Command.forId(commandId).getName(), commandLength, sessionKeyId,
+                             "0x%02x -- tick: %8s -- hash: %s\n", itemNumber, getCommandName(), commandLength, sessionKeyId,
                              targetKeyId, targetKeyId2, commandErrorCode, systick, Utils.getPrintableBytes(entryDigest));
     }
 }
