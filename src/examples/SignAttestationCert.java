@@ -58,9 +58,15 @@ public class SignAttestationCert {
 
             Opaque.importCertificate(session, attestingKey.getId(), "", Arrays.asList(1, 2, 3), getTempCertificate());
             X509Certificate attestationCert = attestingKey.signAttestationCertificate(session, attestedId);
+            System.out.println("Signed attestation certificate");
 
             PublicKey attestingPublicKey = attestingKey.getRsaPublicKey(session);
-            attestationCert.verify(attestingPublicKey);
+            try {
+                attestationCert.verify(attestingPublicKey);
+                System.out.println("Verifying the attestation certificate succeeded");
+            } catch (CertificateException | NoSuchAlgorithmException | InvalidKeyException | NoSuchProviderException | SignatureException e) {
+                System.out.println("Verifying the attestation certificate failed");
+            }
 
             YHObject.delete(session, attestingKey.getId(), Opaque.TYPE);
             YHObject.delete(session, attestedId, AsymmetricKey.TYPE);

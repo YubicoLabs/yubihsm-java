@@ -171,6 +171,7 @@ public enum Capability {
     private final List<Type> applicableObjects;
 
     public static List<Capability> ALL = Arrays.asList(Capability.values());
+    public static long ALL_ID = 0xFFFFFFFFFFFFFFFFL;
 
     Capability(long id, String name, String description, List<Type> applicableObjects) {
         this.id = id;

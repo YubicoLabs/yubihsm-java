@@ -157,12 +157,20 @@ public class YHObjectInfo {
         return Objects.hash(fields);
     }
 
-    @Override
-    public String toString() {
+    /**
+     * @return A representation of the object containing only the object's ID, Type and Sequence
+     */
+    public String toSimpleString() {
         StringBuilder builder = new StringBuilder();
         builder.append("Object ID: " + id).append("\n");
         builder.append("Object Type: " + type.getName()).append("\n");
         builder.append("Sequence: " + sequence).append("\n");
+        return builder.toString();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder(toSimpleString());
         builder.append("Label: ").append(label).append("\n");
         builder.append("Size: " + objectSize + " bytes").append("\n");
 

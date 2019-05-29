@@ -130,6 +130,8 @@ public class UtilsTest {
 
         assertEquals(0, Utils.getLongFromCapabilities((null)));
 
+        assertEquals(Capability.ALL_ID, Utils.getLongFromCapabilities(Capability.ALL));
+
         log.info("TEST END: testGetCapabilitiesFromList()");
     }
 
@@ -163,6 +165,17 @@ public class UtilsTest {
         assertEquals(expectedResult.size(), actualResult.size());
         assertTrue(actualResult.containsAll(expectedResult));
 
+        capabilities = Capability.ALL_ID;
+        expectedResult = Capability.ALL;
+        actualResult = Utils.getCapabilitiesFromLong(capabilities);
+        assertEquals(expectedResult.size(), actualResult.size());
+        assertTrue(actualResult.containsAll(expectedResult));
+
+        capabilities = 0x7FFFFFFFFFFFL;
+        expectedResult = Capability.ALL;
+        actualResult = Utils.getCapabilitiesFromLong(capabilities);
+        assertEquals(expectedResult.size(), actualResult.size());
+        assertTrue(actualResult.containsAll(expectedResult));
 
         capabilities = 0;
         actualResult = Utils.getCapabilitiesFromLong(capabilities);

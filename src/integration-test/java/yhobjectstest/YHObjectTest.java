@@ -22,15 +22,9 @@ import com.yubico.hsm.backend.Backend;
 import com.yubico.hsm.backend.HttpBackend;
 import com.yubico.hsm.exceptions.YHDeviceException;
 import com.yubico.hsm.internal.util.Utils;
-import com.yubico.hsm.yhconcepts.Algorithm;
-import com.yubico.hsm.yhconcepts.Capability;
-import com.yubico.hsm.yhconcepts.ListObjectsFilter;
-import com.yubico.hsm.yhconcepts.YHError;
+import com.yubico.hsm.yhconcepts.*;
 import com.yubico.hsm.yhdata.YHObjectInfo;
-import com.yubico.hsm.yhobjects.AsymmetricKey;
-import com.yubico.hsm.yhobjects.HmacKey;
-import com.yubico.hsm.yhobjects.WrapKey;
-import com.yubico.hsm.yhobjects.YHObject;
+import com.yubico.hsm.yhobjects.*;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -171,6 +165,20 @@ public class YHObjectTest {
         assertFalse(exceptionThrown);
 
         log.info("TEST END: testDeleteObject()");
+    }
+
+    @Test
+    public void testObjectInfo() throws Exception {
+        YHObjectInfo info = YHObject.getObjectInfo(session, (short) 1, AuthenticationKey.TYPE);
+        assertEquals(1, info.getId());
+        assertEquals(AuthenticationKey.TYPE, info.getType());
+        assertEquals(0, info.getSequence());
+        assertTrue(info.getDomains().containsAll(Arrays.asList(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)));
+        assertEquals(Algorithm.AES128_YUBICO_AUTHENTICATION, info.getAlgorithm());
+        assertEquals(Origin.YH_ORIGIN_IMPORTED, info.getOrigin());
+        assertEquals("DEFAULT AUTHKEY CHANGE THIS ASAP", info.getLabel());
+        assertTrue(info.getCapabilities().containsAll(Capability.ALL));
+        assertTrue(info.getDelegatedCapabilities().containsAll(Capability.ALL));
     }
 
 }

@@ -45,7 +45,7 @@ public class ImportCert {
 
             X509Certificate testCert = getTestCertificate();
 
-            System.out.println("Importing test certificate: " + java.util.Base64.getEncoder().encodeToString(testCert.getEncoded()));
+            System.out.println("Importing test certificate:             " + java.util.Base64.getEncoder().encodeToString(testCert.getEncoded()));
             short id = Opaque.importCertificate(session, (short) 0, "test_cert", Arrays.asList(1, 2, 3), testCert);
 
             Opaque opaque = new Opaque(id, Algorithm.OPAQUE_X509_CERTIFICATE);

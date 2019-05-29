@@ -30,11 +30,13 @@ public class OtpAead {
             byte[] nonceId = new byte[4];
             new Random().nextBytes(nonceId);
             short id1 = OtpAeadKey.importOtpAeadKey(session, (short) 0, "test_otp_aead_key1", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_OTP,
-                                                    Arrays.asList(Capability.CREATE_OTP_AEAD, Capability.DECRYPT_OTP), nonceId, otpAeadKey);
+                                                    Arrays.asList(Capability.CREATE_OTP_AEAD, Capability.DECRYPT_OTP,
+                                                                  Capability.REWRAP_FROM_OTP_AEAD_KEY), nonceId, otpAeadKey);
             OtpAeadKey key1 = new OtpAeadKey(id1);
 
             short id2 = OtpAeadKey.generateOtpAeadKey(session, (short) 0, "test_otp_aead_key2", Arrays.asList(2, 5, 8), Algorithm.AES128_YUBICO_OTP,
-                                                      Arrays.asList(Capability.CREATE_OTP_AEAD, Capability.DECRYPT_OTP), 1);
+                                                      Arrays.asList(Capability.CREATE_OTP_AEAD, Capability.DECRYPT_OTP,
+                                                                    Capability.REWRAP_TO_OTP_AEAD_KEY), 1);
             OtpAeadKey key2 = new OtpAeadKey(id2);
 
 

@@ -137,8 +137,12 @@ public class Utils {
     public static long getLongFromCapabilities(final List<Capability> capabilities) {
         long ret = 0L;
         if (capabilities != null) {
-            for (Capability c : capabilities) {
-                ret = ret | c.getId();
+            if (capabilities.containsAll(Capability.ALL)) {
+                ret = Capability.ALL_ID;
+            } else {
+                for (Capability c : capabilities) {
+                    ret = ret | c.getId();
+                }
             }
         }
         return ret;
@@ -151,6 +155,10 @@ public class Utils {
      * @return `capabilities` as a List of Capability
      */
     public static List<Capability> getCapabilitiesFromLong(final long capabilities) {
+        if (capabilities == Capability.ALL_ID) {
+            return Capability.ALL;
+        }
+
         List<Capability> ret = new ArrayList<Capability>();
         long c = 1L;
         while (c <= capabilities) {

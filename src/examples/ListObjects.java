@@ -36,16 +36,20 @@ public class ListObjects {
             short wrapid = WrapKey.generateWrapKey(session, (short) 0, "wrap", Arrays.asList(2, 4), Algorithm.AES192_CCM_WRAP,
                                                    Arrays.asList(Capability.EXPORT_WRAPPED), null);
 
-            // List object with domains 5 and type HMAC key
-            HashMap filters = new HashMap();
-            filters.put(ListObjectsFilter.DOMAINS, Utils.getShortFromList(Arrays.asList(5)));
-            filters.put(ListObjectsFilter.TYPE, HmacKey.TYPE);
-            List<YHObjectInfo> objects = YHObject.getObjectList(session, filters);
+            // List all objects
+            System.out.println("Listing all objects");
+            List<YHObjectInfo> objects = YHObject.getObjectList(session, null);
+            printObjects(session, objects);
 
-            System.out.println("Found items:");
-            for (YHObjectInfo info : objects) {
-                System.out.println(info.toString());
-            }
+            System.out.println("---------------------------");
+
+            // List object with domains 4 and type HMAC key
+            System.out.println("Listing all objects with domain 4 and of type HMAC key");
+            HashMap filters = new HashMap();
+            filters.put(ListObjectsFilter.DOMAINS, Utils.getShortFromList(Arrays.asList(4)));
+            filters.put(ListObjectsFilter.TYPE, HmacKey.TYPE);
+            objects = YHObject.getObjectList(session, filters);
+            printObjects(session, objects);
 
             YHObject.delete(session, asymid1, AsymmetricKey.TYPE);
             YHObject.delete(session, asymid2, AsymmetricKey.TYPE);
@@ -56,6 +60,19 @@ public class ListObjects {
             backend.close();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void printObjects(YHSession session, List<YHObjectInfo> objects) throws Exception {
+        System.out.println("Found " + objects.size() + " items:");
+        int count = 1;
+        for (YHObjectInfo info : objects) {
+            System.out.println("Object " + count + " - Simple info: ");
+            System.out.println(info.toSimpleString());
+            YHObjectInfo detailedInfo = YHObject.getObjectInfo(session, info.getId(), info.getType());
+            System.out.println("Object " + count + " - Detailed info: ");
+            System.out.println(detailedInfo.toString());
+            count++;
         }
     }
 }
