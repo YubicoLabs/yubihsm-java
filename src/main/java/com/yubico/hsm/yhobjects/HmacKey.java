@@ -47,7 +47,7 @@ public class HmacKey extends YHObject {
 
     public HmacKey(final short id, final Algorithm keyAlgorithm) {
         if (!isHmacKeyAlgorithm(keyAlgorithm)) {
-            throw new IllegalArgumentException(keyAlgorithm.toString() + " is not a supported HMAC key algorithm");
+            throw new IllegalArgumentException(keyAlgorithm + " is not a supported HMAC key algorithm");
         }
         setId(id);
         setType(TYPE);
@@ -273,7 +273,7 @@ public class HmacKey extends YHObject {
             throw new IllegalArgumentException("Domains parameter cannot be null or empty");
         }
         if (!isHmacKeyAlgorithm(keyAlgorithm)) {
-            throw new UnsupportedAlgorithmException(keyAlgorithm.toString() + " is not a supported Wrap key algorithm");
+            throw new UnsupportedAlgorithmException(keyAlgorithm + " is not a supported Wrap key algorithm");
         }
 
         if (key != null) {

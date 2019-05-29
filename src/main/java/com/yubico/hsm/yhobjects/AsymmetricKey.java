@@ -182,8 +182,8 @@ public class AsymmetricKey extends YHObject {
         bb = ByteBuffer.wrap(resp);
         final Algorithm algorithm = Algorithm.forId(bb.get());
         if (algorithm == null || !algorithm.equals(getKeyAlgorithm())) {
-            throw new YHInvalidResponseException("The public key algorithm was '" + (algorithm==null? "" : algorithm.toString()) + "', which does " +
-                                                 "not match the private key algorithm " + getKeyAlgorithm().toString());
+            throw new YHInvalidResponseException("The public key algorithm was '" + algorithm + "', which does not match the private key algorithm " +
+                                                 getKeyAlgorithm().toString());
         }
 
         byte[] pubKey = new byte[bb.remaining()];
