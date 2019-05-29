@@ -105,7 +105,7 @@ public class CommandUtils {
      * @return True if the first 3 bytes of the device response are: 0x7f 0x00 0x01 (The fourth byte is the error code). False otherwise
      */
     public static boolean isErrorResponse(final byte[] deviceResponse) {
-        if (deviceResponse == null && deviceResponse.length != ERROR_RESPONSE_LENGTH) {
+        if (deviceResponse == null || deviceResponse.length != ERROR_RESPONSE_LENGTH) {
             return false;
         }
         for (int i = 0; i < ERROR_RESPONSE_START.length; i++) {
