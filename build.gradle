@@ -12,7 +12,7 @@ plugins {
     id 'org.unbroken-dome.test-sets' version '1.4.5'
 }
 
-version = '0.1.0'
+version = '0.1.0RC1'
 
 dependencies {
 
