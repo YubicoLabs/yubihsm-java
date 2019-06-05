@@ -164,8 +164,8 @@ public class OtpAeadKey extends YHObject {
         bb = ByteBuffer.wrap(resp);
         short newid = bb.getShort();
 
-        log.info("Imported OTP AEAD key with ID 0x" + Integer.toHexString(newid) + " using algorithm " + keyAlgorithm.getName() + " and nonce ID " +
-                 nonceId);
+        log.info("Imported OTP AEAD key with ID 0x" + Integer.toHexString(newid) + " using algorithm " + keyAlgorithm.getName() + " and nonce ID 0x" +
+                 Utils.getPrintableBytes(nonceId));
         return newid;
     }
 
