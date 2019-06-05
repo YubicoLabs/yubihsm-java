@@ -104,18 +104,21 @@ public class AuthenticationKey extends YHObject {
             throw new IllegalArgumentException("Missing password for derivation of authentication key");
         }
 
-        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(ALGORITHM);
-        PBEKeySpec keySpec = new PBEKeySpec(password, SALT, ITERATIONS, KEY_SIZE * 2 * 8); // keyLength in bits: 2 keys each KEY_SIZE long * 8 bits
-        // in each byte
-        SecretKey key = keyFactory.generateSecret(keySpec);
-        final byte[] keybytes = key.getEncoded();
+        try {
+            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(ALGORITHM);
+            PBEKeySpec keySpec =
+                    new PBEKeySpec(password, SALT, ITERATIONS, KEY_SIZE * 2 * 8); // keyLength in bits: 2 keys each KEY_SIZE long * 8 bits
+            // in each byte
+            SecretKey key = keyFactory.generateSecret(keySpec);
+            final byte[] keybytes = key.getEncoded();
 
-        Object[] keys = new Object[2];
-        keys[0] = Arrays.copyOfRange(keybytes, 0, KEY_SIZE);
-        keys[1] = Arrays.copyOfRange(keybytes, KEY_SIZE, keybytes.length);
-
-        Arrays.fill(password, 'c');
-        return keys;
+            Object[] keys = new Object[2];
+            keys[0] = Arrays.copyOfRange(keybytes, 0, KEY_SIZE);
+            keys[1] = Arrays.copyOfRange(keybytes, KEY_SIZE, keybytes.length);
+            return keys;
+        } finally {
+            Arrays.fill(password, 'c');
+        }
     }
 
     private static void destroysKeys(byte[] encKey, byte[] macKey) {
@@ -169,29 +172,30 @@ public class AuthenticationKey extends YHObject {
                    IllegalBlockSizeException {
         verifyParametersForNewKey(domains, keyAlgorithm, encryptionKey, macKey);
 
-        ByteBuffer bb = ByteBuffer.allocate(
-                OBJECT_ID_SIZE + OBJECT_LABEL_SIZE + OBJECT_DOMAINS_SIZE + OBJECT_CAPABILITIES_SIZE + OBJECT_ALGORITHM_SIZE +
-                OBJECT_DELEGATED_CAPABILITIES_SIZE + KEY_SIZE + KEY_SIZE);
-        bb.putShort(id);
-        bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
-        bb.putShort(Utils.getShortFromList(domains));
-        bb.putLong(Utils.getLongFromCapabilities(capabilities));
-        bb.put(keyAlgorithm == null ? Algorithm.AES128_YUBICO_AUTHENTICATION.getId() : keyAlgorithm.getId());
-        bb.putLong(Utils.getLongFromCapabilities(delegatedCapabilities));
-        bb.put(encryptionKey);
-        bb.put(macKey);
+        try {
+            ByteBuffer bb = ByteBuffer.allocate(
+                    OBJECT_ID_SIZE + OBJECT_LABEL_SIZE + OBJECT_DOMAINS_SIZE + OBJECT_CAPABILITIES_SIZE + OBJECT_ALGORITHM_SIZE +
+                    OBJECT_DELEGATED_CAPABILITIES_SIZE + KEY_SIZE + KEY_SIZE);
+            bb.putShort(id);
+            bb.put(Arrays.copyOf(Utils.getLabel(label).getBytes(), OBJECT_LABEL_SIZE));
+            bb.putShort(Utils.getShortFromList(domains));
+            bb.putLong(Utils.getLongFromCapabilities(capabilities));
+            bb.put(keyAlgorithm == null ? Algorithm.AES128_YUBICO_AUTHENTICATION.getId() : keyAlgorithm.getId());
+            bb.putLong(Utils.getLongFromCapabilities(delegatedCapabilities));
+            bb.put(encryptionKey);
+            bb.put(macKey);
 
-        byte[] resp = session.sendSecureCmd(Command.PUT_AUTHENTICATION_KEY, bb.array());
-        CommandUtils.verifyResponseLength(Command.PUT_AUTHENTICATION_KEY, resp.length, OBJECT_ID_SIZE);
+            byte[] resp = session.sendSecureCmd(Command.PUT_AUTHENTICATION_KEY, bb.array());
+            CommandUtils.verifyResponseLength(Command.PUT_AUTHENTICATION_KEY, resp.length, OBJECT_ID_SIZE);
 
-        bb = ByteBuffer.wrap(resp);
-        short newid = bb.getShort();
+            bb = ByteBuffer.wrap(resp);
+            short newid = bb.getShort();
+            log.info("Created Authentication key with ID 0x" + Integer.toHexString(newid));
 
-        destroysKeys(encryptionKey, macKey);
-
-        log.info("Created Authentication key with ID 0x" + Integer.toHexString(newid));
-
-        return newid;
+            return newid;
+        } finally {
+            destroysKeys(encryptionKey, macKey);
+        }
     }
 
     /**
@@ -222,18 +226,19 @@ public class AuthenticationKey extends YHObject {
      */
     public static short importAuthenticationKey(final YHSession session, final short id, final String label,
                                                 @NonNull final List<Integer> domains, Algorithm keyAlgorithm, final List<Capability> capabilities,
-                                                final List<Capability> delegatedCapabilities, char[] password)
+                                                final List<Capability> delegatedCapabilities, @NonNull char[] password)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, InvalidKeySpecException {
-        Object[] secretKeys = deriveSecretKey(password);
-        byte[] encKey = (byte[]) secretKeys[0];
-        byte[] macKey = (byte[]) secretKeys[1];
-        short newid = importAuthenticationKey(session, id, label, domains, keyAlgorithm, capabilities, delegatedCapabilities, encKey, macKey);
-
-        Arrays.fill(password, 'c');
-
-        return newid;
+        try {
+            Object[] secretKeys = deriveSecretKey(password);
+            byte[] encKey = (byte[]) secretKeys[0];
+            byte[] macKey = (byte[]) secretKeys[1];
+            short newid = importAuthenticationKey(session, id, label, domains, keyAlgorithm, capabilities, delegatedCapabilities, encKey, macKey);
+            return newid;
+        } finally {
+            Arrays.fill(password, 'c');
+        }
     }
 
     /**
@@ -260,31 +265,32 @@ public class AuthenticationKey extends YHObject {
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException {
 
-        if (encryptionKey.length != KEY_SIZE || macKey.length != KEY_SIZE) {
-            throw new InvalidParameterException("Long term encryption key and MAC key have to be of size " + KEY_SIZE);
+        try {
+            if (encryptionKey.length != KEY_SIZE || macKey.length != KEY_SIZE) {
+                throw new InvalidParameterException("Long term encryption key and MAC key have to be of size " + KEY_SIZE);
+            }
+
+            YHObjectInfo keyinfo = getObjectInfo(session, id, TYPE);
+
+            ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_ALGORITHM_SIZE + KEY_SIZE + KEY_SIZE);
+            bb.putShort(id);
+            bb.put(keyinfo.getAlgorithm().getId());
+            bb.put(encryptionKey);
+            bb.put(macKey);
+            byte[] resp = session.sendSecureCmd(Command.CHANGE_AUTHENTICATION_KEY, bb.array());
+            CommandUtils.verifyResponseLength(Command.CHANGE_AUTHENTICATION_KEY, resp.length, OBJECT_ID_SIZE);
+
+            bb = ByteBuffer.wrap(resp);
+            short changedId = bb.getShort();
+            if (changedId != id) {
+                throw new YHInvalidResponseException(
+                        "Object ID of the changed Authentication key is incorrect. Expected ID is 0x" + Integer.toHexString(id) + " but was 0x" +
+                        Integer.toHexString(changedId));
+            }
+            log.info("Changed Authentication key with ID 0x" + Integer.toHexString(id));
+        } finally {
+            destroysKeys(encryptionKey, macKey);
         }
-
-        YHObjectInfo keyinfo = getObjectInfo(session, id, TYPE);
-
-        ByteBuffer bb = ByteBuffer.allocate(OBJECT_ID_SIZE + OBJECT_ALGORITHM_SIZE + KEY_SIZE + KEY_SIZE);
-        bb.putShort(id);
-        bb.put(keyinfo.getAlgorithm().getId());
-        bb.put(encryptionKey);
-        bb.put(macKey);
-        byte[] resp = session.sendSecureCmd(Command.CHANGE_AUTHENTICATION_KEY, bb.array());
-        CommandUtils.verifyResponseLength(Command.CHANGE_AUTHENTICATION_KEY, resp.length, OBJECT_ID_SIZE);
-
-        bb = ByteBuffer.wrap(resp);
-        short changedId = bb.getShort();
-        if (changedId != id) {
-            throw new YHInvalidResponseException(
-                    "Object ID of the changed Authentication key is incorrect. Expected ID is 0x" + Integer.toHexString(id) + " but was 0x" +
-                    Integer.toHexString(changedId));
-        }
-
-        destroysKeys(encryptionKey, macKey);
-
-        log.info("Changed Authentication key with ID 0x" + Integer.toHexString(id));
     }
 
     /**
@@ -305,16 +311,18 @@ public class AuthenticationKey extends YHObject {
      * @throws IllegalBlockSizeException          If the encryption/decryption fails
      * @throws InvalidKeySpecException            If the derivation of the long term keys from the password fails
      */
-    public static void changeAuthenticationKey(final YHSession session, short id, char[] password)
+    public static void changeAuthenticationKey(final YHSession session, short id, @NonNull char[] password)
             throws NoSuchAlgorithmException, YHDeviceException, YHInvalidResponseException, YHConnectionException, InvalidKeyException,
                    YHAuthenticationException, NoSuchPaddingException, InvalidAlgorithmParameterException, BadPaddingException,
                    IllegalBlockSizeException, InvalidKeySpecException {
-        Object[] secretKeys = deriveSecretKey(password);
-        byte[] encKey = (byte[]) secretKeys[0];
-        byte[] macKey = (byte[]) secretKeys[1];
-        changeAuthenticationKey(session, id, encKey, macKey);
-
-        Arrays.fill(password, 'c');
+        try {
+            Object[] secretKeys = deriveSecretKey(password);
+            byte[] encKey = (byte[]) secretKeys[0];
+            byte[] macKey = (byte[]) secretKeys[1];
+            changeAuthenticationKey(session, id, encKey, macKey);
+        } finally {
+            Arrays.fill(password, 'c');
+        }
     }
 
     private static void verifyParametersForNewKey(@NonNull final List<Integer> domains, @NonNull final Algorithm keyAlgorithm,
