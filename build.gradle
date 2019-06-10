@@ -10,9 +10,15 @@ plugins {
     // Apply the java-library plugin to add support for Java Library
     id 'java-library'
     id 'org.unbroken-dome.test-sets' version '1.4.5'
+    id 'io.codearte.nexus-staging' version '0.9.0'
 }
 
 version = '0.1.0RC1'
+group = 'com.yubico'
+
+wrapper {
+    gradleVersion = '4.10'
+}
 
 dependencies {
 
@@ -89,3 +95,63 @@ task packageJavadoc(type: Jar) {
     from javadoc.destinationDir
 }
 artifacts.archives packageJavadoc
+
+nexusStaging {
+    username = ossrhUsername
+    password = ossrhPassword
+    stagingProfileId = ossrhProfileId
+}
+
+
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+signing {
+    useGpgCmd()
+    sign configurations.archives
+}
+signArchives.dependsOn test
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name project.description
+                description 'Java library for communicating with the YubiHSM'
+                url 'https://developers.yubico.com/YubiHSM2/'
+
+                developers {
+                    developer {
+                        id 'aveen'
+                        name 'Aveen Ismail'
+                        email 'aveen.ismail@yubico.com'
+                    }
+                }
+
+                licenses {
+                    license {
+                        name 'Apache License, Version 2.0'
+                    }
+                }
+
+                scm {
+                    url 'scm:git:git://github.com/YubicoLabs/yubihsm-java.git'
+                    connection 'scm:git:git://github.com/YubicoLabs/yubihsm-java.git'
+                    developerConnection 'scm:git:ssh://git@github.com:YubicoLabs/yubihsm-java.git'
+                    tag 'HEAD'
+                }
+            }
+        }
+    }
+}
+
