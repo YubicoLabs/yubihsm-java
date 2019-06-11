@@ -13,7 +13,7 @@ plugins {
     id 'io.codearte.nexus-staging' version '0.9.0'
 }
 
-version = '0.1.0RC1'
+version = '0.1.0-RC2'
 group = 'com.yubico'
 
 wrapper {
@@ -22,7 +22,8 @@ wrapper {
 
 dependencies {
 
-    compile ('org.projectlombok:lombok:1.18.2')
+    compileOnly ('org.projectlombok:lombok:1.18.2')
+    testCompileOnly ('org.projectlombok:lombok:1.18.2')
     compile ('org.slf4j:slf4j-api:1.7.25')
     compile ('org.bouncycastle:bcpkix-jdk15on:1.61')
     compile ('org.unbroken-dome.gradle-plugins:gradle-testsets-plugin:1.4.5')
@@ -75,9 +76,11 @@ jar {
     }
 
     doFirst {
-        from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+        from {
+            configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } 
+        }
     }
-    exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA', 'module-info.class'
 }
 
 // Building the jar containing the source code
@@ -96,59 +99,68 @@ task packageJavadoc(type: Jar) {
 }
 artifacts.archives packageJavadoc
 
-nexusStaging {
-    username = ossrhUsername
-    password = ossrhPassword
-    stagingProfileId = ossrhProfileId
-}
+
+project.ext.isCiBuild = System.env.CI == 'true'
+
+project.ext.publishEnabled = !isCiBuild &&
+        project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')
+
+if (publishEnabled) {
+    
+    apply plugin: 'maven'
+    apply plugin: 'signing'
+
+    nexusStaging {
+        username = ossrhUsername
+        password = ossrhPassword
+        stagingProfileId = ossrhProfileId
+    }
+    
+    signing {
+        useGpgCmd()
+        sign configurations.archives
+    }
+    signArchives.dependsOn check
 
 
-apply plugin: 'maven'
-apply plugin: 'signing'
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-signing {
-    useGpgCmd()
-    sign configurations.archives
-}
-signArchives.dependsOn test
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            pom.project {
-                name project.description
-                description 'Java library for communicating with the YubiHSM'
-                url 'https://developers.yubico.com/YubiHSM2/'
-
-                developers {
-                    developer {
-                        id 'aveen'
-                        name 'Aveen Ismail'
-                        email 'aveen.ismail@yubico.com'
-                    }
+                repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
+                    authentication(userName: ossrhUsername, password: ossrhPassword)
                 }
 
-                licenses {
-                    license {
-                        name 'Apache License, Version 2.0'
-                    }
+                snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
+                    authentication(userName: ossrhUsername, password: ossrhPassword)
                 }
 
-                scm {
-                    url 'scm:git:git://github.com/YubicoLabs/yubihsm-java.git'
-                    connection 'scm:git:git://github.com/YubicoLabs/yubihsm-java.git'
-                    developerConnection 'scm:git:ssh://git@github.com:YubicoLabs/yubihsm-java.git'
-                    tag 'HEAD'
+                pom.project {
+                    name project.description
+                    description 'Java library for communicating with the YubiHSM'
+                    url 'https://developers.yubico.com/YubiHSM2/'
+
+                    developers {
+                        developer {
+                            id 'aveen'
+                            name 'Aveen Ismail'
+                            email 'aveen.ismail@yubico.com'
+                        }
+                    }
+
+                    licenses {
+                        license {
+                            name 'Apache License, Version 2.0'
+                        }
+                    }
+
+                    scm {
+                        url 'scm:git:git://github.com/YubicoLabs/yubihsm-java.git'
+                        connection 'scm:git:git://github.com/YubicoLabs/yubihsm-java.git'
+                        developerConnection 'scm:git:ssh://git@github.com:YubicoLabs/yubihsm-java.git'
+                        tag 'HEAD'
+                    }
                 }
             }
         }

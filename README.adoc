@@ -62,17 +62,42 @@ Or
 
 === Release
 
-When it is time for a release, run the following commands to create the binary package, the source code package and the
- JavaDocs package:
+Releasing is done into maven central (https://oss.sonatype.org[Sonatype]).
 
-    $ gradle jar
-    $ gradle packageSources
-    $ gradle packageJavadoc
+Before making the release, make sure of the following:
 
-The three packages can be found under `build/libs`
+* Update the version number in build.gradle file. If the release is a release candidate, the version number should be
+in the format `X.Y.Z-RC[U]`, where:
+    - X: Major version
+    - Y: Minor version
+    - Z: Build version
+    - U: The number of the release candidate if there are more than one release candidate
 
-Sign each one of those packages with your private key:
+* The `.gradle/gradle.properties` contains the right credentials and profile ID as the values to the properties
+`ossrhUsername`, `ossrhPassword` and `ossrhProfileId`. These are the credentials to log into https://oss.sonatype.org[Sonatype]
 
-   $ gpg --detach-sign PACKAGE
+To make the release, run the following commands:
 
-This will store the signature in a separate file with the ending `.sig`
+1. Upload the project to maven central by running the command bellow. To check that the upload worked, log into
+https://oss.sonatype.org[Sonatype] and go to `Staging Repositories`. The uploaded files should be found in the bundle
+at the bottom of the list.
+
+        $./gradlew uploadArchives
+
+
+2. Close the bundle and release the library by running:
+
+    $ ./gradlew closeAndReleaseRepository
+
+If this command fails, try to close and then release from https://oss.sonatype.org[Sonatype]. Log in there and go to
+`Staging Repositories`. Mark the bundle containing the newly uploaded files and click the `Close` button at the top of
+the list. If every thing goes well, mark the same bundle and click the `Release` button at the top of the list. The
+bundle should now disappear from the staging repositories view.
+
+To verify that the library was released properly, go to `Repositories` and click `Releases` on the upper frame. In the
+lower frame, go to `Browse Storage` and expand `com/yubico/java-yubihsm`. The new release should be listed there.
+
+The command `./gradlew closeAndReleaseRepository` can also be divided into two commands:
+
+    $ ./gradlew closeRepository
+    $ ./gradlew releaseRepository
