@@ -10,18 +10,14 @@ matrix:
       os: linux
       dist: trusty
       jdk: oraclejdk8
-    - name: 'trusty-oracle11'
+    - name: 'trusty-oracle9'
       os: linux
       dist: trusty
-      jdk: oraclejdk11
+      jdk: oraclejdk9
     - name: 'xenial-openjdk10'
       os: linux
       dist: xenial
       jdk: openjdk10
-    - name: 'xenial-openjdk11'
-      os: linux
-      dist: xenial
-      jdk: openjdk11
 
 env:
   global:
@@ -39,8 +35,9 @@ script:
   - sleep 3
   - export DEFAULT_CONNECTOR_URL="$(curl http://localhost:12345/dispatcher/request)"
   - echo DEFAULT_CONNECTOR_URL=$DEFAULT_CONNECTOR_URL
-  - travis_wait 30 gradle clean integrationTest
-  - gradle clean optionsTest
+  - travis_wait 30 ./gradlew clean integrationTest
+  - ./gradlew clean test
+  - ./gradlew clean optionsTest
 
 after_failure:
   - less build/reports/tests/integrationTest/classes/*
