@@ -1,11 +1,19 @@
 language: java
-dist: xenial
 
-jdk:
-  - openjdk8
-  - openjdk10
-  - openjdk11
-  - oraclejdk8
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      jdk:
+        - openjdk8
+        - oraclejdk8
+        - oraclejdk11
+    - os: linux
+      dist: xenial
+      jdk:
+        - openjdk8
+        - openjdk10
+        - openjdk11
 
 env:
   global:
