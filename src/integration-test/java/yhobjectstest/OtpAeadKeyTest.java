@@ -159,8 +159,8 @@ public class OtpAeadKeyTest {
             byte[] aead = key.randomizeOtpAed(session);
             assertEquals(36, aead.length);
 
-            TestVector v = getTestVectors().get(3);
-            byte[] aead2 = key.createOtpAed(session, v.key, v.privateId);
+            OtpAeadKeyTestVector v = getTestVectors().get(3);
+            byte[] aead2 = key.createOtpAed(session, v.getKey(), v.getPrivateId());
 
             assertFalse(Arrays.equals(aead, aead2));
 
@@ -237,8 +237,8 @@ public class OtpAeadKeyTest {
             OtpAeadKey key3 = new OtpAeadKey(key3Id);
 
 
-            for (TestVector v : getTestVectors()) {
-                byte[] aead1 = key1.createOtpAed(session, v.key, v.privateId);
+            for (OtpAeadKeyTestVector v : getTestVectors()) {
+                byte[] aead1 = key1.createOtpAed(session, v.getKey(), v.getPrivateId());
                 byte[] aead2 = OtpAeadKey.rewrapOtpAead(session, key1.getId(), key2.getId(), aead1);
                 assertFalse(Arrays.equals(aead1, aead2));
 
@@ -246,14 +246,14 @@ public class OtpAeadKeyTest {
                 byte[] aead3 = OtpAeadKey.rewrapOtpAead(session, key2.getId(), key3.getId(), aead2);
                 assertFalse(Arrays.equals(aead1, aead3));
                 assertFalse(Arrays.equals(aead2, aead3));
-                assertFalse(Arrays.equals(aead1, key3.createOtpAed(session, v.key, v.privateId)));
+                assertFalse(Arrays.equals(aead1, key3.createOtpAed(session, v.getKey(), v.getPrivateId())));
 
-                for (String otp : v.otps.keySet()) {
+                for (String otp : v.getOtps().keySet()) {
                     String otpHex = encodedStringToHex(otp);
                     byte[] otpBin = Hex.decode(otpHex);
-                    assertEquals(v.otps.get(otp), key1.decryptOtp(session, aead1, otpBin));
-                    assertEquals(v.otps.get(otp), key2.decryptOtp(session, aead2, otpBin));
-                    assertEquals(v.otps.get(otp), key3.decryptOtp(session, aead3, otpBin));
+                    assertEquals(v.getOtps().get(otp), key1.decryptOtp(session, aead1, otpBin));
+                    assertEquals(v.getOtps().get(otp), key2.decryptOtp(session, aead2, otpBin));
+                    assertEquals(v.getOtps().get(otp), key3.decryptOtp(session, aead3, otpBin));
                 }
             }
         } finally {
@@ -276,8 +276,8 @@ public class OtpAeadKeyTest {
         return new String(newString);
     }
 
-    private List<TestVector> getTestVectors() {
-        List<TestVector> testVectors = new ArrayList<TestVector>();
+    private List<OtpAeadKeyTestVector> getTestVectors() {
+        List<OtpAeadKeyTestVector> testVectors = new ArrayList<OtpAeadKeyTestVector>();
 
         byte[] v1Key = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
         byte[] v1PrivateId = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
@@ -285,20 +285,20 @@ public class OtpAeadKeyTest {
         otps.put("dvgtiblfkbgturecfllberrvkinnctnn", new YubicoOtpData((short) 1, (byte) 1, (byte) 1, (short) 1));
         otps.put("rnibcnfhdninbrdebccrndfhjgnhftee", new YubicoOtpData((short) 1, (byte) 2, (byte) 1, (short) 1));
         otps.put("iikkijbdknrrdhfdrjltvgrbkkjblcbh", new YubicoOtpData((short) 0xfff, (byte) 1, (byte) 1, (short) 1));
-        testVectors.add(new TestVector(v1Key, v1PrivateId, otps));
+        testVectors.add(new OtpAeadKeyTestVector(v1Key, v1PrivateId, otps));
 
         byte[] v2Key = {(byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88,
                         (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88};
         byte[] v2PrivateId = {(byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88};
         otps = new HashMap<String, YubicoOtpData>();
         otps.put("dcihgvrhjeucvrinhdfddbjhfjftjdei", new YubicoOtpData((short) 0x8888, (byte) 0x88, (byte) 0x88, (short) 0x8888));
-        testVectors.add(new TestVector(v2Key, v2PrivateId, otps));
+        testVectors.add(new OtpAeadKeyTestVector(v2Key, v2PrivateId, otps));
 
         byte[] v3Key = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
         byte[] v3PrivateId = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
         otps = new HashMap<String, YubicoOtpData>();
         otps.put("kkkncjnvcnenkjvjgncjihljiibgbhbh", new YubicoOtpData((short) 0, (byte) 0, (byte) 0, (short) 0));
-        testVectors.add(new TestVector(v3Key, v3PrivateId, otps));
+        testVectors.add(new OtpAeadKeyTestVector(v3Key, v3PrivateId, otps));
 
         byte[] v4Key =
                 {(byte) 0xc4, (byte) 0x42, (byte) 0x28, (byte) 0x90, (byte) 0x65, (byte) 0x30, (byte) 0x76, (byte) 0xcd, (byte) 0xe7, (byte) 0x3d,
@@ -306,22 +306,8 @@ public class OtpAeadKeyTest {
         byte[] v4PrivateID = {(byte) 0x33, (byte) 0xc6, (byte) 0x9e, (byte) 0x7f, (byte) 0x24, (byte) 0x9e};
         otps = new HashMap<String, YubicoOtpData>();
         otps.put("iucvrkjiegbhidrcicvlgrcgkgurhjnj", new YubicoOtpData((short) 1, (byte) 0, (byte) 0x24, (short) 0x13a7));
-        testVectors.add(new TestVector(v4Key, v4PrivateID, otps));
+        testVectors.add(new OtpAeadKeyTestVector(v4Key, v4PrivateID, otps));
 
         return testVectors;
     }
-
-    private class TestVector {
-        private byte[] key;
-        private byte[] privateId;
-        Map<String, YubicoOtpData> otps;
-
-        public TestVector(byte[] key, byte[] privateId, Map<String, YubicoOtpData> otps) {
-            this.key = key;
-            this.privateId = privateId;
-            this.otps = otps;
-        }
-    }
-
-
 }

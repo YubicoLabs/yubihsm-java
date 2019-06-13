@@ -14,10 +14,18 @@ matrix:
       os: linux
       dist: trusty
       jdk: oraclejdk9
+    - name: 'trusty-oracle11'
+      os: linux
+      dist: trusty
+      jdk: oraclejdk11
     - name: 'xenial-openjdk10'
       os: linux
       dist: xenial
       jdk: openjdk10
+    - name: 'xenial-openjdk11'
+      os: linux
+      dist: xenial
+      jdk: openjdk11
 
 env:
   global:
