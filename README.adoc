@@ -60,7 +60,7 @@ Or
 
      $ gradle optionsTest -DoptionsTest.single=OptionsTest
 
-=== Release
+=== Release Guide
 
 Releasing is done into maven central (https://oss.sonatype.org[Sonatype]).
 
@@ -93,7 +93,7 @@ version number should be in the format `X.Y.Z-RC[U]`, where:
 https://oss.sonatype.org[Sonatype] and go to `Staging Repositories`. The uploaded files should be found in the bundle
 at the bottom of the list.
 
-        $./gradlew uploadArchives
+        $./gradlew uploadArchives -x integrationTest -x test -x optionsTest
 
 
 6. Close the bundle and release the library by running:
