@@ -29,10 +29,10 @@ matrix:
 
 env:
   global:
-    - secure: "XZh0UL7YLG5LF9N9cahIK8ao8UuhmxkXOLaO3nrPz6muOX9wT2RbXQAU7cFuXa/OmYezB+4bfhn90/tZkFIww8lUe1jjQClRmdrR/uoZt29G9VY1gY4UtvqtA+Rk66HtBNHARqz5wvRV9bXpkQBgfsCyndqcssS/JQFXQ1s2o5T5id2ijO66KTtDyU8OcjR0MQnp7KytwHLPo1yVs+bl2x17qm2JTXvBxb8XjQrxpvq6lHY69oMWTTf7xtTtLqt4D6Ne24vdoD5cnhYkY2uZPreIZqjmBTeZM27sWsHA/nDixB+Sp6kdkJaRwFgy3LSe9oIcdeLd0IxP7sKsXBHNgTSrVT/xNz5Ycq+hfqqFC5BqAQ3/wLkvagGL557+OXJBgAeHwd6OUh6T8N85SLsBoHdIm2T8Z/P7iRwrioaCfqDcDbaNa9B4Th8tUxRqcsjWM7pcyeXQxkbpb0dnIZ8pPO9st9DR2AfWKXrrXDjfJT0Ma7KZdSyP03OMs3/9SQU5YkMrErNHjQqJlKsb60S/01lOyB65D9BYd5PH7mYUd5B7mDL2yw0qbrgTJNz0j70nA15oEzNXOgXzMj46VI61oCmai2U3ayq9zVnyVXV7cTC0ZNbW/Nnkji7gbi1LuqMhDOEx6z2wrj37Jvc1KB2c5+CO6W9lo1RJQ3gn5/A9J3g="
+    - secure: "eRawyz1ErcrqFuMYJBMthEdCOYUbRih0icC+6NiJI7gHotcWoaZO3HNkPHKBQ3Ndl3jj4sC1dubJsOCbic41voz27d3UQO1NRoKJ4HCICZn0F9dOUR2P5MMRQJokR1iGzG+DgdfClT1ZrKz015YL55hHG/XdwjdXONg8mG3NMN1+H4hXdxIeP+3osR/5vLCG40tfvIwlB4XZIrrdB8JFda8i5LD1Ty7dxBJ5Tlw5aW2Qx7jBLfhNUNKu+ARzkqKlYVJJux0zzhfzD8e2c9yWUIuev/pttEv08pUOy+z1/zZtC6Uvp/Dxe1TX/xfhZ+7dY0lvG0gq0bSpUqRVAR9L5kN0NBBkiwrZHx3e/FhNcVIcaoHH46p8tug7+PIXPECST/aC/Nt1rIMT5mtcd8tFXKCVTZUzerxtmV42wt9S38/CUTlg/jcDcMj5NF9sr2lG4ZVf0odwttb1oFTTSJh1EJ1voCgkvxSucY/xmp/cIPFNgqNh9/rWDUxuscHmgHD/KkwmlSGMtqti1aIANyxwfL06s9+P1JN+gR+yhQ7B3mGwb4m7d5Yl2fe71l2aKulwu9Np+QANMyS9QfP8wyCq5vDUEZfsahlZR6IINw3aFOMK5H+GBTrAAgqtEQpZMDYU7cMbS002lRXbnXpAPH4tFZ9EtPPeYilBJ9ZDqDScVrk="
 
 before_install:
-  - openssl aes-256-cbc -k "$tlspwd" -md sha256 -in ./.ci/client-combined.pem.enc -out ./.ci/client-combined.pem -d -pbkdf2
+  - openssl aes-256-cbc -k "$tlspwd" -md sha256 -in ./.ci/client-combined.pem.enc -out ./.ci/client-combined.pem -d
 
 
 script:
